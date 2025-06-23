@@ -14,7 +14,7 @@ timezone: Asia/Shanghai
 # URL
 ## Set your site url here. For example, if you use GitHub Page, set url as 'https://username.github.io/project'
 url: https://0wnerdied.github.io/
-permalink: :year/:month/:day/:title/
+permalink: :category/:abbrlink.html
 permalink_defaults:
 pretty_urls:
   trailing_index: true # Set to false to remove trailing 'index.html' from permalinks
@@ -127,3 +127,10 @@ excerpt:
   excerpt_excludes: []
   more_excludes: []
   hideWholePostExcerpts: true
+
+# 全文搜索
+search:
+  path: search.xml
+  field: post
+  format: html
+  limit: 10000
