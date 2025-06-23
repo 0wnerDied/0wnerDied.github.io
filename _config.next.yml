@@ -26,10 +26,10 @@ custom_file_path:
   #postBodyStart: source/_data/post-body-start.njk
   #postBodyEnd: source/_data/post-body-end.njk
   #footer: source/_data/footer.njk
-  #bodyEnd: source/_data/body-end.njk
+  bodyEnd: source/_data/body-end.njk
   #variable: source/_data/variables.styl
   #mixin: source/_data/mixins.styl
-  #style: source/_data/styles.styl
+  style: source/_data/styles.styl
 
 
 # ---------------------------------------------------------------
@@ -410,14 +410,14 @@ back2top:
 
 # Reading progress bar
 reading_progress:
-  enable: false
+  enable: true
   # Available values: left | right
   start_at: left
   # Available values: top | bottom
   position: top
   reversed: false
-  color: "#37c6c0"
-  height: 3px
+  color: "#8470FF"
+  height: 5px
 
 # Bookmark Support
 bookmark:
@@ -947,3 +947,16 @@ vendors:
 css: css
 js: js
 images: images
+
+# Waline
+# For more information: https://waline.js.org, https://github.com/walinejs/waline
+waline:
+  enable: true
+  serverURL: blog-waline-mauve.vercel.app
+  locale:
+    placeholder: 善语结善缘，恶语伤人心
+  pageSize: 30
+  lang: zh-CN
+  comment_count: true
+  dark: 'html[data-darkmode]'
+  meta: []

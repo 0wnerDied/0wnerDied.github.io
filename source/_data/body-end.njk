@@ -1,0 +1,38 @@
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // 等待Waline元素加载完成
+  const checkWaline = setInterval(function() {
+    const walineEl = document.querySelector('.wl-panel');
+    if (walineEl) {
+      clearInterval(checkWaline);
+      
+      // 监听暗黑模式变化，强制更新评论区样式
+      if (typeof window.darkmode !== 'undefined') {
+        window.darkmode.addEventListener('change', function(event) {
+          setTimeout(function() {
+            const isDark = document.body.classList.contains('darkmode--activated');
+            
+            if (isDark) {
+              // 直接修改DOM元素样式
+              document.querySelectorAll('.wl-panel, .wl-card').forEach(el => {
+                el.style.setProperty('background-color', '#222', 'important');
+                el.style.setProperty('border-color', '#444', 'important');
+              });
+              
+              document.querySelectorAll('.wl-editor, .wl-input, .wl-textarea').forEach(el => {
+                el.style.setProperty('background-color', '#333', 'important');
+                el.style.setProperty('color', '#ddd', 'important');
+                el.style.setProperty('border-color', '#555', 'important');
+              });
+              
+              document.querySelectorAll('.wl-content, .wl-meta, .wl-meta span, .wl-meta a').forEach(el => {
+                el.style.setProperty('color', '#ccc', 'important');
+              });
+            }
+          }, 100);
+        });
+      }
+    }
+  }, 100);
+});
+</script>
