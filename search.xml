@@ -47,8 +47,8 @@
 <table>
 <thead>
 <tr>
-<th align="left">Class (3 bits)</th>
-<th align="left">Mnemonic</th>
+<th align="left">value</th>
+<th align="left">class</th>
 <th align="left"> 描述</th>
 </tr>
 </thead>
@@ -98,38 +98,38 @@
 <table>
 <thead>
 <tr>
-<th align="left">Mode (3 bits)</th>
-<th align="left">Mnemonic</th>
+<th align="left">value</th>
+<th align="left">mode modifier</th>
 <th align="left"> 描述</th>
 </tr>
 </thead>
 <tbody><tr>
-<td align="left"> 0x00</td>
+<td align="left"> 0</td>
 <td align="left">IMM</td>
 <td align="left"><strong> 立即数 (Immediate)</strong>，用于 <code>LDD</code> 指令加载 64 位立即数。</td>
 </tr>
 <tr>
-<td align="left">0x01</td>
+<td align="left">1</td>
 <td align="left">ABS</td>
 <td align="left"><strong> 绝对寻址 (Absolute)</strong>，用于传统 cBPF，已废弃。</td>
 </tr>
 <tr>
-<td align="left">0x02</td>
+<td align="left">2</td>
 <td align="left">IND</td>
 <td align="left"><strong> 间接寻址 (Indirect)</strong>，用于传统 cBPF，已废弃。</td>
 </tr>
 <tr>
-<td align="left">0x03</td>
+<td align="left">3</td>
 <td align="left">MEM</td>
 <td align="left"><strong> 常规内存操作 (Memory)</strong>，最常见的加载和存储模式。</td>
 </tr>
 <tr>
-<td align="left">0x04</td>
+<td align="left">4</td>
 <td align="left">MEMSX</td>
 <td align="left"><strong> 符号扩展加载 (Sign-extending load)</strong>，加载时将有符号小整数正确扩展到 64 位。</td>
 </tr>
 <tr>
-<td align="left">0x06</td>
+<td align="left">6</td>
 <td align="left">ATOMIC</td>
 <td align="left"><strong> 原子操作 (Atomic)</strong>，用于实现安全的并发数据修改。</td>
 </tr>
@@ -138,28 +138,28 @@
 <table>
 <thead>
 <tr>
-<th align="left">Size (2 bits)</th>
-<th align="left">Mnemonic</th>
+<th align="left">value</th>
+<th align="left">szie</th>
 <th align="left"> 描述</th>
 </tr>
 </thead>
 <tbody><tr>
-<td align="left"> 0x00</td>
+<td align="left"> 0</td>
 <td align="left">W</td>
 <td align="left"><strong> 字 (Word)</strong>, 4 字节</td>
 </tr>
 <tr>
-<td align="left"> 0x01</td>
+<td align="left"> 1</td>
 <td align="left">H</td>
 <td align="left"><strong> 半字 (Half-word)</strong>, 2 字节</td>
 </tr>
 <tr>
-<td align="left"> 0x02</td>
+<td align="left"> 2</td>
 <td align="left">B</td>
 <td align="left"><strong> 字节 (Byte)</strong>, 1 字节</td>
 </tr>
 <tr>
-<td align="left"> 0x03</td>
+<td align="left"> 3</td>
 <td align="left">DW</td>
 <td align="left"><strong> 双字 (Double-word)</strong>, 8 字节</td>
 </tr>
@@ -238,8 +238,8 @@
 <table>
 <thead>
 <tr>
-<th align="left">Source (1 bit)</th>
-<th align="left">Mnemonic</th>
+<th align="left">value</th>
+<th align="left">source</th>
 <th align="left"> 描述</th>
 </tr>
 </thead>
@@ -257,8 +257,8 @@
 <h4 id="2-4-1-算术指令-ALU-ALU64"><a href="#2-4-1-算术指令-ALU-ALU64" class="headerlink" title="2.4.1 算术指令 (ALU/ALU64)"></a>2.4.1 算术指令 (ALU/ALU64)</h4><table>
 <thead>
 <tr>
-<th align="left">Mnemonic</th>
-<th align="left">Code</th>
+<th align="left">name</th>
+<th align="left">code</th>
 <th align="left"> 描述与边界情况</th>
 </tr>
 </thead>
@@ -316,8 +316,8 @@
 <h4 id="2-4-2-跳转指令-JMP-JMP32"><a href="#2-4-2-跳转指令-JMP-JMP32" class="headerlink" title="2.4.2 跳转指令 (JMP/JMP32)"></a>2.4.2 跳转指令 (JMP/JMP32)</h4><table>
 <thead>
 <tr>
-<th align="left">Mnemonic</th>
-<th align="left">Code</th>
+<th align="left">code</th>
+<th align="left">value</th>
 <th align="left"> 描述</th>
 </tr>
 </thead>
