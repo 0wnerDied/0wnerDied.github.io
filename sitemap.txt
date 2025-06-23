@@ -1,2 +1,6 @@
-https://0wnerdied.github.io/uncategorized/16107.html
+https://0wnerdied.github.io/kernel/50584.html
+https://0wnerdied.github.io/tags/index.html
+https://0wnerdied.github.io/categories/index.html
 https://0wnerdied.github.io/
+https://0wnerdied.github.io/tags/ebpf/
+https://0wnerdied.github.io/categories/kernel/
