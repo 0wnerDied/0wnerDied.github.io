@@ -406,7 +406,7 @@
 </ul>
 <p>程序类型决定了 BPF 程序被调用时，<code>R1</code> 寄存器中传入的<strong>上下文 (Context)</strong> 类型（比如对于网络程序是网络包 <code>sk_buff</code>），以及它能调用的辅助函数集合。</p>
 <h2 id="六、编译、加载与校验"><a href="#六、编译、加载与校验" class="headerlink" title="六、编译、加载与校验"></a>六、编译、加载与校验</h2><p>我们通常使用 C 语言的一个子集来编写 BPF 程序，然后用 <code>LLVM/Clang</code> 将其编译成 BPF 字节码。</p>
-<figure class="highlight bash"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># 将 C 代码编译成 BPF 字节码目标文件 (.o)</span></span><br><span class="line">clang -O2 -target bpf -c my_bpf_program.c -o my_bpf_program.o</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight bash"><table><tbody><tr><td class="code"><pre><span class="line">clang -O2 -target bpf -c bpf_program.c -o bpf.o</span><br></pre></td></tr></tbody></table></figure>
 
 <p>编译出的字节码需要通过 <code>bpf()</code> 系统调用加载到内核中。现代开发通常使用 <code>libbpf</code> 这样的库来简化加载、挂载和与 Maps 交互的过程。</p>
 <p>在程序运行前，内核的<strong>校验器 (Verifier)</strong> 会对字节码进行极其严格的静态分析，确保其安全性。校验器是 eBPF 安全模型的基石，它会检查：</p>
