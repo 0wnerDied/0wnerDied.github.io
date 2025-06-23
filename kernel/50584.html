@@ -19,21 +19,22 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"0wnerdied.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js" defer></script>
 
-    <meta name="description" content="一、eBPF 工作原理总览eBPF，一个源于 Linux 内核的革命性技术，它允许我们在内核这个特权环境中安全地运行沙盒程序。值得一提的是，BPF 最初是 “伯克利数据包过滤器” 的缩写，但如今它的能力已远超网络领域，因此 “BPF” 已成为一个独立术语，而其前身则被称为 cBPF (classic BPF)。 eBPF 程序并非直接在 CPU 上运行，而是在一个位于内核中的、高度安全和高效的 B">
+    <meta name="description" content="一、eBPF 工作原理总览eBPF，一个源于 Linux 内核的革命性技术，允许我们在内核这个特权环境中安全地运行沙盒程序。值得一提的是，BPF 最初是 “伯克利数据包过滤器” 的缩写，但如今它的能力已远超网络领域，因此 “BPF” 已成为一个独立术语，而其前身则被称为 cBPF (classic BPF)。 eBPF 程序并非直接在 CPU 上运行，而是在一个位于内核中的、高度安全和高效的 BP">
 <meta property="og:type" content="article">
 <meta property="og:title" content="浅析 eBPF">
 <meta property="og:url" content="https://0wnerdied.github.io/kernel/50584.html">
 <meta property="og:site_name" content="0wnerD1ed&#39;s blog">
-<meta property="og:description" content="一、eBPF 工作原理总览eBPF，一个源于 Linux 内核的革命性技术，它允许我们在内核这个特权环境中安全地运行沙盒程序。值得一提的是，BPF 最初是 “伯克利数据包过滤器” 的缩写，但如今它的能力已远超网络领域，因此 “BPF” 已成为一个独立术语，而其前身则被称为 cBPF (classic BPF)。 eBPF 程序并非直接在 CPU 上运行，而是在一个位于内核中的、高度安全和高效的 B">
+<meta property="og:description" content="一、eBPF 工作原理总览eBPF，一个源于 Linux 内核的革命性技术，允许我们在内核这个特权环境中安全地运行沙盒程序。值得一提的是，BPF 最初是 “伯克利数据包过滤器” 的缩写，但如今它的能力已远超网络领域，因此 “BPF” 已成为一个独立术语，而其前身则被称为 cBPF (classic BPF)。 eBPF 程序并非直接在 CPU 上运行，而是在一个位于内核中的、高度安全和高效的 BP">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://0wnerdied.github.io/kernel/50584/kernel_panic.jpg">
 <meta property="og:image" content="https://0wnerdied.github.io/kernel/50584/%E6%80%BB%E8%A7%88.png">
 <meta property="og:image" content="https://0wnerdied.github.io/kernel/50584/%E8%99%9A%E6%8B%9F%E6%9C%BA.png">
 <meta property="article:published_time" content="2025-06-23T12:19:34.000Z">
-<meta property="article:modified_time" content="2025-06-23T14:26:31.506Z">
+<meta property="article:modified_time" content="2025-06-23T16:54:03.715Z">
 <meta property="article:author" content="0wnerD1ed">
 <meta property="article:tag" content="ebpf">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://0wnerdied.github.io/kernel/50584/%E6%80%BB%E8%A7%88.png">
+<meta name="twitter:image" content="https://0wnerdied.github.io/kernel/50584/kernel_panic.jpg">
 
 
 <link rel="canonical" href="https://0wnerdied.github.io/kernel/50584.html">
@@ -251,9 +252,15 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2025-06-23 20:19:34 / 修改时间：22:26:31" itemprop="dateCreated datePublished" datetime="2025-06-23T20:19:34+08:00">2025-06-23</time>
+      <time title="创建时间：2025-06-23 20:19:34" itemprop="dateCreated datePublished" datetime="2025-06-23T20:19:34+08:00">2025-06-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2025-06-24 00:54:03" itemprop="dateModified" datetime="2025-06-24T00:54:03+08:00">2025-06-24</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -310,11 +317,13 @@
     
     
     
-    <div class="post-body" itemprop="articleBody"><h2 id="一、eBPF-工作原理总览"><a href="#一、eBPF-工作原理总览" class="headerlink" title="一、eBPF 工作原理总览"></a>一、eBPF 工作原理总览</h2><p>eBPF，一个源于 Linux 内核的革命性技术，它允许我们在内核这个特权环境中安全地运行沙盒程序。值得一提的是，BPF 最初是 “伯克利数据包过滤器” 的缩写，但如今它的能力已远超网络领域，因此 “BPF” 已成为一个独立术语，而其前身则被称为 <strong>cBPF (classic BPF)</strong>。</p>
-<p>eBPF 程序并非直接在 CPU 上运行，而是在一个位于内核中的、高度安全和高效的 <strong>BPF 虚拟机 (VM)</strong> 上执行。这个虚拟机就像一个沙盒，确保了 eBPF 代码不会搞砸内核。</p>
-<p>为了让这个虚拟机能干活，我们需要给它一套指令，这就是 <strong>BPF 指令集</strong>。我们用 C 语言等高级语言写好的逻辑，通过编译器（如 LLVM/Clang）翻译成 BPF 指令集字节码，然后才能交给虚拟机执行。</p>
-<p>但光有代码执行还不够，eBPF 程序经常需要和用户空间程序或者内核的其他部分交换数据，这时就需要用到 <strong>BPF Maps</strong>。它是一种高效的键值对存储，是 eBPF 程序与外界沟通的桥梁。</p>
-<p>此外，为了让 eBPF 程序能与内核交互（比如获取当前进程 ID），内核提供了一组固定的<strong>辅助函数 (Helper Functions)</strong>。eBPF 程序只能调用这些预设的、安全的函数，从而在获得强大能力的同时，保证了内核的稳定。</p>
+    <div class="post-body" itemprop="articleBody"><h2 id="一、eBPF-工作原理总览"><a href="#一、eBPF-工作原理总览" class="headerlink" title="一、eBPF 工作原理总览"></a>一、eBPF 工作原理总览</h2><p>eBPF，一个源于 Linux 内核的革命性技术，允许我们在内核这个特权环境中安全地运行沙盒程序。值得一提的是，BPF 最初是 “伯克利数据包过滤器” 的缩写，但如今它的能力已远超网络领域，因此 “BPF” 已成为一个独立术语，而其前身则被称为 <strong>cBPF (classic BPF)</strong>。</p>
+<p>eBPF 程序并非直接在 CPU 上运行，而是在一个位于内核中的、高度安全和高效的 <strong>BPF 虚拟机</strong> 上执行。我们可以将该虚拟机理解为一个沙盒，确保 eBPF 代码不会导致 kernel panic。</p>
+<img src="/kernel/50584/kernel_panic.jpg" class="" title="panic">
+
+<p>为了让这个虚拟机正常运行，我们需要给它一套指令，这就是 <strong>BPF 指令集</strong>。我们用 C 语言等高级语言写好的逻辑，通过编译器（如 LLVM/Clang）翻译成 BPF 指令集字节码，然后才能交给虚拟机执行。</p>
+<p>但光有代码执行是不够的，eBPF 程序经常需要和用户空间程序或者内核的其他部分交换数据，这时就需要用到 <strong>BPF Maps</strong>。这是一种高效的键值对存储，是 eBPF 程序与外界沟通的桥梁。</p>
+<p>此外，为了让 eBPF 程序能与内核交互（比如获取当前进程 ID），内核提供了一组固定的<strong>辅助函数 (Helper Functions)</strong>。eBPF 程序只能调用这些预设的、安全的函数，从而在获得强大能力的同时，保证了内核稳定。</p>
 <p>最后，编译好的 BPF 字节码在通过 <code>bpf()</code> 系统调用加载到内核时，会经过一个严格的<strong>校验器 (Verifier)</strong> 检查，确保代码无害。通过后，字节码可以被<strong>即时编译器 (JIT)</strong> 翻译成原生机器码，以接近本地代码的速度执行。</p>
 <img src="/kernel/50584/%E6%80%BB%E8%A7%88.png" class="" title="总览">
 
@@ -330,7 +339,7 @@
 <img src="/kernel/50584/%E8%99%9A%E6%8B%9F%E6%9C%BA.png" class="" title="vm">
 
 <ul>
-<li><strong>指令集</strong>: BPF 指令集是 BPF 虚拟机的 “普通话”。所有指令都是固定长度的，这让处理更简单高效。</li>
+<li><strong>指令集</strong>: BPF 指令集中，所有指令都是固定长度的，运行更加简单高效。</li>
 </ul>
 <h3 id="2-1-指令格式"><a href="#2-1-指令格式" class="headerlink" title="2.1 指令格式"></a>2.1 指令格式</h3><p>BPF 指令集官方说明可以参考 Linux 内核文档：<a target="_blank" rel="noopener" href="https://web.git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/Documentation/bpf/standardization/instruction-set.rst">BPF Instruction Set</a></p>
 <p>BPF 指令有两种格式：</p>
@@ -471,7 +480,7 @@
 <td align="left"><strong> 双字 (Double-word)</strong>, 8 字节</td>
 </tr>
 </tbody></table>
-<h4 id="2-3-1-64位立即数加载-LDD"><a href="#2-3-1-64位立即数加载-LDD" class="headerlink" title="2.3.1 64位立即数加载 (LDD)"></a>2.3.1 64 位立即数加载 (LDD)</h4><p><code>LDD</code> (Class <code>0x00</code>, Mode <code>0x00</code>, Size <code>0x03</code>) 是一条非常特殊的指令，它使用 128 位的宽格式。它不仅能加载一个 64 位的常量，还能通过 <code>src_reg</code> 字段的不同取值，实现加载 Map 地址等高级功能，是连接 BPF 程序和外部资源的关键。</p>
+<h4 id="2-3-1-64位立即数加载-LDD"><a href="#2-3-1-64位立即数加载-LDD" class="headerlink" title="2.3.1 64位立即数加载 (LDD)"></a>2.3.1 64 位立即数加载 (LDD)</h4><p><code>LDD</code> (Class <code>0x00</code>, Mode <code>0x00</code>, Size <code>0x03</code>) 是一条非常特殊的指令，使用 128 位的宽格式。它不仅能加载一个 64 位的常量，还能通过 <code>src_reg</code> 字段的不同取值，实现加载 Map 地址等高级功能，是连接 BPF 程序和外部资源的关键。</p>
 <table>
 <thead>
 <tr>
@@ -512,7 +521,7 @@
 <td align="left"> Map 值地址</td>
 </tr>
 </tbody></table>
-<p>这解释了在 BPF C 代码中，我们看似直接引用的 Map 变量，在底层是如何通过 <code>ld_imm64</code> 指令被解析成实际内存地址的。</p>
+<p>上面的表格就解释了在 BPF C 代码中，表面上直接引用的 Map 变量，在底层是如何通过 <code>ld_imm64</code> 指令被解析成实际内存地址的。</p>
 <h4 id="2-3-2-常规与符号扩展加载-存储"><a href="#2-3-2-常规与符号扩展加载-存储" class="headerlink" title="2.3.2 常规与符号扩展加载/存储"></a>2.3.2 常规与符号扩展加载 / 存储</h4><ul>
 <li><strong>常规加载 / 存储 (<code>MEM</code>)</strong>:<ul>
 <li><code>*(size *) (dst_reg + offset) = src_reg</code>  (STX)</li>
@@ -680,45 +689,45 @@
 <li><code>src_reg = 1</code>: 调用<strong>程序内本地函数</strong>，<code>imm</code> 是相对于当前指令的偏移量。</li>
 <li><code>src_reg = 2</code>: 通过 <code>imm</code> 指定的 <strong>BTF ID</strong> 来调用内核辅助函数。</li>
 </ul>
-<h2 id="三、核心组件：BPF-Maps"><a href="#三、核心组件：BPF-Maps" class="headerlink" title="三、核心组件：BPF Maps"></a>三、核心组件：BPF Maps</h2><p>如果说 BPF 程序是处理数据的 “工人”，那 <strong>BPF Maps</strong> 就是工人们存放工具、交换半成品的 “仓库”。我们已经看到，<code>LDD</code> 指令是如何在底层将 Map 翻译成地址的。</p>
+<h2 id="三、核心组件：BPF-Maps"><a href="#三、核心组件：BPF-Maps" class="headerlink" title="三、核心组件：BPF Maps"></a>三、核心组件：BPF Maps</h2><p>如果说 BPF 程序是处理数据的 “工人”，那 <strong>BPF Maps</strong> 就是工人们存放工具、交换半成品的 “仓库”。前面我们已经看到，<code>LDD</code> 指令是如何在底层将 Map 翻译成地址的。</p>
 <p>BPF Maps 是一种通用的、存在于内核中的键值对存储。它有以下几个关键作用：</p>
 <ol>
-<li><strong>状态保持</strong>: BPF 程序是无状态的，一次事件触发执行完所有信息就丢失了。Maps 可以在多次执行之间保存状态，比如用它来统计某个网络包出现的次数。</li>
+<li><strong>状态保持</strong>: BPF 程序本身是无状态的，一次事件触发执行完所有信息就丢失了。Maps 可以在多次执行之间保存状态，比如，用来统计某个网络包出现的次数。</li>
 <li><strong>内外通信</strong>: 用户空间的控制程序可以通过读写 Maps，向 BPF 程序传递配置，或者从 BPF 程序中获取采集到的数据。</li>
 <li><strong>程序间通信</strong>: 一个 BPF 程序可以将数据写入 Map，另一个 BPF 程序可以从中读取，实现程序间的协作。</li>
 </ol>
 <p>内核提供了多种 Map 类型，以适应不同场景，例如：</p>
 <ul>
-<li><code>BPF_MAP_TYPE_HASH</code>: 高效的哈希表。</li>
-<li><code>BPF_MAP_TYPE_ARRAY</code>: 高效的数组。</li>
+<li><code>BPF_MAP_TYPE_HASH</code>: 高效哈希表。</li>
+<li><code>BPF_MAP_TYPE_ARRAY</code>: 高效数组。</li>
 <li><code>BPF_MAP_TYPE_PERF_EVENT_ARRAY</code>: 用于向用户空间发送性能事件数据。</li>
-<li><code>BPF_MAP_TYPE_RINGBUF</code>: 高性能的环形缓冲区，是向用户空间传递数据的现代方式。</li>
+<li><code>BPF_MAP_TYPE_RINGBUF</code>: 高性能的环形缓冲区，向用户空间传递数据。</li>
 </ul>
-<h2 id="四、能力扩展：内核辅助函数"><a href="#四、能力扩展：内核辅助函数" class="headerlink" title="四、能力扩展：内核辅助函数"></a>四、能力扩展：内核辅助函数</h2><p>为了安全，BPF 虚拟机是一个与世隔绝的沙盒，它不能随意调用内核里的任意函数。那它如何与内核交互呢？答案是 <strong>内核辅助函数 (Helper Functions)</strong>。</p>
+<h2 id="四、能力扩展：内核辅助函数"><a href="#四、能力扩展：内核辅助函数" class="headerlink" title="四、能力扩展：内核辅助函数"></a>四、能力扩展：内核辅助函数</h2><p>为了安全，BPF 虚拟机是一个完全隔离的沙盒，它不能随意调用内核里的任意函数。那它如何与内核交互呢？答案是 <strong>内核辅助函数 (Helper Functions)</strong>。</p>
 <p>正如我们在 <code>CALL</code> 指令中看到的，BPF 程序可以通过特定指令调用一份内核提供的 “白名单” 函数。这些函数就是辅助函数，它们是 eBPF 程序能力的源泉，提供了诸如：</p>
 <ul>
 <li><strong>访问 Maps</strong>: <code>bpf_map_lookup_elem()</code>、<code>bpf_map_update_elem()</code></li>
-<li><strong>获取上下文信息</strong>: <code>bpf_get_current_pid_tgid()</code> (获取进程 ID)、<code>bpf_ktime_get_ns()</code> (获取时间戳)</li>
-<li><strong> 网络包处理</strong>: <code>bpf_skb_store_bytes()</code> (修改网络包内容)</li>
-<li><strong> 打印调试</strong>: <code>bpf_printk()</code> (向内核日志打印信息)</li>
+<li><strong>获取上下文信息</strong>: <code>bpf_get_current_pid_tgid()</code>、<code>bpf_ktime_get_ns()</code></li>
+<li><strong>网络包处理</strong>: <code>bpf_skb_store_bytes()</code></li>
+<li><strong>打印调试</strong>: <code>bpf_printk()</code></li>
 </ul>
 <p>eBPF 程序只能调用这个固定的函数集合，这既赋予了它强大的能力，也从根本上保证了内核的安全。</p>
 <h2 id="五、BPF-程序类型"><a href="#五、BPF-程序类型" class="headerlink" title="五、BPF 程序类型"></a>五、BPF 程序类型</h2><p>eBPF 程序不是随便挂在内核里就能运行的，它必须附着在内核的特定<strong>挂载点 (Hook Point)</strong> 上。<strong>BPF 程序类型 (Program Type)</strong> 就定义了程序可以挂载在哪里，以及它能做什么。</p>
 <p>不同的程序类型，决定了 eBPF 的应用场景。例如：</p>
 <ul>
-<li><strong>Kprobes / Tracepoints</strong>: 用于内核态函数追踪和性能分析，是可观测性工具（如 <code>bcc</code>、<code>bpftrace</code>）的基石。</li>
+<li><strong>Kprobes / Tracepoints</strong>: 用于内核态函数追踪和性能分析，是可观测性工具（如 <code>bcc</code>、<code>bpftrace</code>）的根本。</li>
 <li><strong>XDP (eXpress Data Path)</strong>: 挂载在网卡驱动层，能在网络包进入协议栈前进行处理，实现超高性能的防火墙、负载均衡等。</li>
 <li><strong>TC (Traffic Control)</strong>: 挂载在内核网络协议栈的队列规则上，用于实现复杂的网络包过滤和流量整形。</li>
 <li><strong>LSM (Linux Security Modules)</strong>: 用于实现更灵活、更细粒度的安全策略。</li>
 </ul>
 <p>程序类型决定了 BPF 程序被调用时，<code>R1</code> 寄存器中传入的<strong>上下文 (Context)</strong> 类型（比如对于网络程序是网络包 <code>sk_buff</code>），以及它能调用的辅助函数集合。</p>
-<h2 id="六、编译、加载与校验"><a href="#六、编译、加载与校验" class="headerlink" title="六、编译、加载与校验"></a>六、编译、加载与校验</h2><p>我们通常使用 C 语言的一个子集来编写 BPF 程序，然后用 <code>LLVM/Clang</code> 将其编译成 BPF 字节码。</p>
+<h2 id="六、编译、加载与校验"><a href="#六、编译、加载与校验" class="headerlink" title="六、编译、加载与校验"></a>六、编译、加载与校验</h2><p>正常来说通常使用 C 语言的一个子集来编写 BPF 程序，然后用 <code>LLVM/Clang</code> 将其编译成 BPF 字节码。</p>
 <figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">clang -O2 -target bpf -c bpf_program.c -o bpf.o</span><br></pre></td></tr></tbody></table></figure>
 
 <p>编译出的字节码需要通过 <code>bpf()</code> 系统调用加载到内核中。现代开发通常使用 <code>libbpf</code> 这样的库来简化加载、挂载和与 Maps 交互的过程。</p>
 <p>在程序运行前，内核的<strong>校验器 (Verifier)</strong> 会对字节码进行极其严格的静态分析，确保其安全性。校验器是 eBPF 安全模型的基石，它会检查：</p>
 <ol>
-<li><strong>程序必须能终止</strong>: 禁止无限循环，通过有向无环图 (DAG) 检查确保程序不会永远执行下去。</li>
+<li><strong>程序必须能终止</strong>: 禁止无限循环，通过有向无环图检查确保程序不会永远执行下去。</li>
 <li><strong>内存访问安全</strong>: 确保不会访问越界的内存地址，不会读取未初始化的栈内存或寄存器。</li>
 <li><strong>类型安全</strong>: 检查函数调用的参数类型是否正确，对上下文的访问是否合规。</li>
 </ol>
