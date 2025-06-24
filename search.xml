@@ -501,11 +501,16 @@ Size <code>0x03</code>) 是一条非常特殊的指令，使用 128
 </tbody>
 </table>
 <p><code>CALL</code> 指令有几种不同的用法，通过 <code>src_reg</code>
-区分： - <code>src_reg = 0</code>: 调用由 <code>imm</code> 指定 ID
-的<strong>内核辅助函数</strong>。 - <code>src_reg = 1</code>:
+区分：</p>
+<ul>
+<li><code>src_reg = 0</code>: 调用由 <code>imm</code> 指定 ID
+的<strong>内核辅助函数</strong>。</li>
+<li><code>src_reg = 1</code>:
 调用<strong>程序内本地函数</strong>，<code>imm</code>
-是相对于当前指令的偏移量。 - <code>src_reg = 2</code>: 通过
-<code>imm</code> 指定的 <strong>BTF ID</strong> 来调用内核辅助函数。</p>
+是相对于当前指令的偏移量。</li>
+<li><code>src_reg = 2</code>: 通过 <code>imm</code> 指定的 <strong>BTF
+ID</strong> 来调用内核辅助函数。</li>
+</ul>
 <h2 id="核心组件bpf-maps">核心组件：BPF Maps</h2>
 <p>如果说 BPF 程序是处理数据的 “工人”，那 <strong>BPF Maps</strong>
 就是工人们存放工具、交换半成品的 “仓库”。前面我们已经看到，<code>LDD</code>
@@ -521,12 +526,15 @@ BPF 程序传递配置，或者从 BPF 程序中获取采集到的数据。</li>
 <li><strong>程序间通信</strong>: 一个 BPF 程序可以将数据写入 Map，另一个
 BPF 程序可以从中读取，实现程序间的协作。</li>
 </ol>
-<p>内核提供了多种 Map 类型，以适应不同场景，例如： -
-<code>BPF_MAP_TYPE_HASH</code>: 高效哈希表。 -
-<code>BPF_MAP_TYPE_ARRAY</code>: 高效数组。 -
-<code>BPF_MAP_TYPE_PERF_EVENT_ARRAY</code>:
-用于向用户空间发送性能事件数据。 - <code>BPF_MAP_TYPE_RINGBUF</code>:
-高性能的环形缓冲区，向用户空间传递数据。</p>
+<p>内核提供了多种 Map 类型，以适应不同场景，例如：</p>
+<ul>
+<li><code>BPF_MAP_TYPE_HASH</code>: 高效哈希表。</li>
+<li><code>BPF_MAP_TYPE_ARRAY</code>: 高效数组。</li>
+<li><code>BPF_MAP_TYPE_PERF_EVENT_ARRAY</code>:
+用于向用户空间发送性能事件数据。</li>
+<li><code>BPF_MAP_TYPE_RINGBUF</code>:
+高性能的环形缓冲区，向用户空间传递数据。</li>
+</ul>
 <h2 id="能力扩展内核辅助函数">能力扩展：内核辅助函数</h2>
 <p>为了安全，BPF
 虚拟机是一个完全隔离的沙盒，它不能随意调用内核里的任意函数。那它如何与内核交互呢？答案是
@@ -717,8 +725,8 @@ NumPy 看到你要将一个 <code>(2, 4)</code> 矩阵和一个 <code>(1, 4)</co
 <img src="/Machine-learning/36604/6-matrices1.png" class="" title="matrices1">
 <img src="/Machine-learning/36604/7-matrices2.png" class="" title="matrices2">
 <h2 id="训练过程">训练过程</h2>
-<p>我们已经知道数据是如何在网络中流动的
-(前向传播)，但网络是如何 “学习”—— 也就是如何找到正确的权重和偏置的呢？这个过程叫做<strong>训练
+<p>我们已经知道数据是如何在网络中流动的 (前向传播)，但网络是如何 “学习”
+—— 也就是如何找到正确的权重和偏置的呢？这个过程叫做<strong>训练
 (Training)</strong>。</p>
 <p>训练就像一个反馈循环：</p>
 <ul>
@@ -730,9 +738,12 @@ NumPy 看到你要将一个 <code>(2, 4)</code> 矩阵和一个 <code>(1, 4)</co
 <p>为了评估网络的表现，我们需要一个<strong>损失函数 (Loss
 Function)</strong>。这会量化预测值和真实值之间的差距。</p>
 <p>一个常用的损失函数是<strong>均方误差 (Mean Squared Error,
-MSE)</strong>： - 计算每个输出神经元的预测值与真实值之差。 -
-将这个差值平方（这样可以确保结果是正数，并且对较大的误差给予更大的 “惩罚”）。
-- 将所有输出神经元的平方差加起来，并取平均值。</p>
+MSE)</strong>：</p>
+<ul>
+<li>计算每个输出神经元的预测值与真实值之差。</li>
+<li>将这个差值平方（这样可以确保结果是正数，并且对较大的误差给予更大的 “惩罚”）。</li>
+<li>将所有输出神经元的平方差加起来，并取平均值。</li>
+</ul>
 <p>即 <code>loss = mean((pred - true)²)</code></p>
 <p>其数学公式为 (<span class="math inline"><em>k</em></span>
 是输出神经元的数量):</p>
