@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comic+Sans+MS:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancyapps-ui/5.0.36/fancybox/fancybox.css" integrity="sha256-zM8WXtG4eUn7dKKNMTuoWZub++VnSfaOpA/8PJfvTBo=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"0wnerdied.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="在上一篇文章中，我们从零开始构建了一个简单的神经网络，并理解了前向传播、反向传播和梯度下降等核心概念。然而，要让神经网络在现实世界的问题中高效工作，我们还需要掌握更多的工具和技巧。 这篇文章将作为第二部分，专注于第一部分中未能详尽涵盖的几个关键领域：  我将用上一篇文章中的代码来训练一个网络，解决一个经典问题，并观察损失函数的变化。 除了 ReLU，我还将介绍 Sigmoid 和 Tanh 等其他">
+<meta property="og:type" content="article">
+<meta property="og:title" content="从零开始的神经网络学习 (二)：实用技巧与进阶">
+<meta property="og:url" content="https://0wnerdied.github.io/Machine-learning/38196.html">
+<meta property="og:site_name" content="0wnerD1ed&#39;s blog">
+<meta property="og:description" content="在上一篇文章中，我们从零开始构建了一个简单的神经网络，并理解了前向传播、反向传播和梯度下降等核心概念。然而，要让神经网络在现实世界的问题中高效工作，我们还需要掌握更多的工具和技巧。 这篇文章将作为第二部分，专注于第一部分中未能详尽涵盖的几个关键领域：  我将用上一篇文章中的代码来训练一个网络，解决一个经典问题，并观察损失函数的变化。 除了 ReLU，我还将介绍 Sigmoid 和 Tanh 等其他">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-06-24T17:35:00.000Z">
+<meta property="article:modified_time" content="2025-06-24T18:55:21.851Z">
+<meta property="article:author" content="0wnerD1ed">
+<meta property="article:tag" content="NN">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://0wnerdied.github.io/Machine-learning/38196.html">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://0wnerdied.github.io/Machine-learning/38196.html","path":"Machine-learning/38196.html","title":"从零开始的神经网络学习 (二)：实用技巧与进阶"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>从零开始的神经网络学习 (二)：实用技巧与进阶 | 0wnerD1ed's blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fancyapps-ui/5.0.36/fancybox/fancybox.umd.js" integrity="sha256-hiUEBwFEpLF6DlB8sGXlKo4kPZ46Ui4qGpd0vrVkOm4=" crossorigin="anonymous" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pangu/4.0.7/pangu.min.js" integrity="sha256-j+yj56cdEY2CwkVtGyz18fNybFGpMGJ8JxG3GSyO2+I=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+  <script src="/js/third-party/fancybox.js" defer></script>
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js" defer></script>
+
+
+<link rel="dns-prefetch" href="blog-waline-mauve.vercel.app">
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<style>.darkmode--activated{--body-bg-color:#282828;--content-bg-color:#333;--card-bg-color:#555;--text-color:#ccc;--blockquote-color:#bbb;--link-color:#ccc;--link-hover-color:#eee;--brand-color:#ddd;--brand-hover-color:#ddd;--table-row-odd-bg-color:#282828;--table-row-hover-bg-color:#363636;--menu-item-bg-color:#555;--btn-default-bg:#222;--btn-default-color:#ccc;--btn-default-border-color:#555;--btn-default-hover-bg:#666;--btn-default-hover-color:#ccc;--btn-default-hover-border-color:#666;--highlight-background:#282b2e;--highlight-foreground:#a9b7c6;--highlight-gutter-background:#34393d;--highlight-gutter-foreground:#9ca9b6}.darkmode--activated img{opacity:.75}.darkmode--activated img:hover{opacity:.9}.darkmode--activated code{color:#69dbdc;background:0 0}button.darkmode-toggle{z-index:9999}.darkmode-ignore,img{display:flex!important}.beian img{display:inline-block!important}</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">0wnerD1ed's blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%AD%E7%BB%83%E4%B8%80%E4%B8%AA-xor-%E7%BD%91%E7%BB%9C"><span class="nav-number">1.</span> <span class="nav-text">训练一个 XOR 网络</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%86%E5%A4%87%E6%95%B0%E6%8D%AE%E5%92%8C%E7%BD%91%E7%BB%9C"><span class="nav-number">1.1.</span> <span class="nav-text">准备数据和网络</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%AD%E7%BB%83%E5%B9%B6%E8%A7%82%E5%AF%9F%E6%8D%9F%E5%A4%B1"><span class="nav-number">1.2.</span> <span class="nav-text">训练并观察损失</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E7%BB%93%E6%9E%9C"><span class="nav-number">1.3.</span> <span class="nav-text">查看结果</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B6%E5%AE%83%E7%9A%84%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0"><span class="nav-number">2.</span> <span class="nav-text">其它的激活函数</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#sigmoid"><span class="nav-number">2.1.</span> <span class="nav-text">Sigmoid</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#tanh-%E5%8F%8C%E6%9B%B2%E6%AD%A3%E5%88%87"><span class="nav-number">2.2.</span> <span class="nav-text">Tanh (双曲正切)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E4%B8%BA%E8%BE%93%E5%87%BA%E5%B1%82%E9%80%89%E6%8B%A9%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0"><span class="nav-number">2.3.</span> <span class="nav-text">如何为输出层选择激活函数？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E5%8C%96%E4%B8%8E%E6%AD%A3%E5%88%99%E5%8C%96%E6%8A%80%E5%B7%A7"><span class="nav-number">3.</span> <span class="nav-text">优化与正则化技巧</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9D%83%E9%87%8D%E5%88%9D%E5%A7%8B%E5%8C%96%E7%9A%84%E9%87%8D%E8%A6%81%E6%80%A7"><span class="nav-number">3.1.</span> <span class="nav-text">权重初始化的重要性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%B9%E9%87%8F%E5%BD%92%E4%B8%80%E5%8C%96-batch-normalization"><span class="nav-number">3.2.</span> <span class="nav-text">批量归一化 (Batch
+Normalization)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#dropout"><span class="nav-number">3.3.</span> <span class="nav-text">Dropout</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BB%BA%E8%AE%AE"><span class="nav-number">4.</span> <span class="nav-text">建议</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%83%E8%AF%95%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E7%9A%84%E6%8A%80%E5%B7%A7"><span class="nav-number">4.1.</span> <span class="nav-text">调试神经网络的技巧</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B6%85%E5%8F%82%E6%95%B0%E7%9A%84%E9%80%89%E6%8B%A9"><span class="nav-number">4.2.</span> <span class="nav-text">超参数的选择</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E5%8C%96-xor-%E7%BD%91%E7%BB%9C"><span class="nav-number">5.</span> <span class="nav-text">优化 XOR 网络</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="0wnerD1ed"
+      src="https://avatars.githubusercontent.com/u/59904423?s=400&u=e2d918cc9959b82599bb4dbfcebb8b912880b9dc&v=4">
+  <p class="site-author-name" itemprop="name">0wnerD1ed</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/0wnerDied" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;0wnerDied" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:atndko@outlook.sg" title="E-Mail → mailto:atndko@outlook.sg" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://t.me/OwnerDiedddd" title="Telegram → https:&#x2F;&#x2F;t.me&#x2F;OwnerDiedddd" rel="noopener me" target="_blank"><i class="fab fa-telegram fa-fw"></i></a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://0wnerdied.github.io/Machine-learning/38196.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars.githubusercontent.com/u/59904423?s=400&u=e2d918cc9959b82599bb4dbfcebb8b912880b9dc&v=4">
+      <meta itemprop="name" content="0wnerD1ed">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="0wnerD1ed's blog">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="从零开始的神经网络学习 (二)：实用技巧与进阶 | 0wnerD1ed's blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          从零开始的神经网络学习 (二)：实用技巧与进阶
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2025-06-25 01:35:00 / 修改时间：02:55:21" itemprop="dateCreated datePublished" datetime="2025-06-25T01:35:00+08:00">2025-06-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Machine-learning/" itemprop="url" rel="index"><span itemprop="name">Machine learning</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+    <span class="post-meta-item-icon">
+      <i class="far fa-comment"></i>
+    </span>
+    <span class="post-meta-item-text">Waline：</span>
+  
+    <a title="waline" href="/Machine-learning/38196.html#waline" itemprop="discussionUrl">
+      <span class="post-comments-count waline-comment-count" data-path="/Machine-learning/38196.html" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>12k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>18 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>在<a href="https://0wnerdied.github.io/Machine-learning/36604.html">上一篇文章</a>中，我们从零开始构建了一个简单的神经网络，并理解了前向传播、反向传播和梯度下降等核心概念。然而，要让神经网络在现实世界的问题中高效工作，我们还需要掌握更多的工具和技巧。</p>
+<p>这篇文章将作为第二部分，专注于第一部分中未能详尽涵盖的几个关键领域：</p>
+<ul>
+<li>我将用上一篇文章中的代码来训练一个网络，解决一个经典问题，并观察损失函数的变化。</li>
+<li>除了 ReLU，我还将介绍 Sigmoid 和 Tanh
+等其他常用激活函数，并讨论如何为输出层选择合适的激活函数。</li>
+<li>探讨权重初始化的重要性，并介绍批量归一化 (Batch Normalization) 和
+Dropout 等强大的技术。</li>
+<li>最后，分享一些关于调试神经网络和选择超参数的实用技巧。</li>
+</ul>
+<h2 id="训练一个-xor-网络">训练一个 XOR 网络</h2>
+<p>理论需要实践来检验。让我们使用上一篇文章中定义的
+<code>NeuralNetwork</code> 类来解决经典的 XOR 问题。XOR
+是一个非线性问题，单个神经元无法解决，因此很适合作为我们神经网络的测试案例。</p>
+<p>XOR 的真值表如下：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">输入 A</th>
+<th style="text-align: center;"> 输入 B</th>
+<th style="text-align: center;"> 输出</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"> 0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">0</td>
+</tr>
+</tbody>
+</table>
+<h3 id="准备数据和网络">准备数据和网络</h3>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># existing codes...</span></span><br><span class="line">            avg_loss = total_loss / <span class="built_in">len</span>(X)</span><br><span class="line">            <span class="comment"># 只在每1/10进度时输出一次</span></span><br><span class="line">            <span class="keyword">if</span> (epoch + <span class="number">1</span>) % <span class="built_in">max</span>(<span class="number">1</span>, epochs // <span class="number">10</span>) == <span class="number">0</span> <span class="keyword">or</span> epoch == <span class="number">0</span> <span class="keyword">or</span> epoch == epochs - <span class="number">1</span>:</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">f"Epoch <span class="subst">{epoch+<span class="number">1</span>}</span>/<span class="subst">{epochs}</span>, Loss: <span class="subst">{avg_loss:<span class="number">.6</span>f}</span>"</span>)</span><br><span class="line"><span class="comment"># existing codes...</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 1. 定义 XOR 数据集</span></span><br><span class="line">X_train = np.array([[<span class="number">0</span>, <span class="number">0</span>], [<span class="number">0</span>, <span class="number">1</span>], [<span class="number">1</span>, <span class="number">0</span>], [<span class="number">1</span>, <span class="number">1</span>]])</span><br><span class="line">y_train = np.array([[<span class="number">0</span>], [<span class="number">1</span>], [<span class="number">1</span>], [<span class="number">0</span>]])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 创建神经网络实例</span></span><br><span class="line"><span class="comment"># 2个输入节点，一个有2个节点的隐藏层，1个输出节点</span></span><br><span class="line">nn = NeuralNetwork([<span class="number">2</span>, <span class="number">2</span>, <span class="number">1</span>])</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="训练并观察损失">训练并观察损失</h3>
+<p>我们将使用较小的学习率和足够多的迭代次数来训练网络。</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 3. 训练网络</span></span><br><span class="line"><span class="comment"># XOR 是一个非线性问题，需要足够的迭代次数和合适的学习率</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"开始训练XOR网络..."</span>)</span><br><span class="line">nn.train(X_train, y_train, epochs=<span class="number">10000</span>, learning_rate=<span class="number">0.005</span>, batch_size=<span class="number">4</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">"训练完成。"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 开始训练XOR网络...</span></span><br><span class="line"><span class="comment"># Epoch 1/10000, Loss: 0.499970</span></span><br><span class="line"><span class="comment"># Epoch 1000/10000, Loss: 0.249839</span></span><br><span class="line"><span class="comment"># Epoch 2000/10000, Loss: 0.249042</span></span><br><span class="line"><span class="comment"># Epoch 3000/10000, Loss: 0.244619</span></span><br><span class="line"><span class="comment"># Epoch 4000/10000, Loss: 0.224387</span></span><br><span class="line"><span class="comment"># Epoch 5000/10000, Loss: 0.177830</span></span><br><span class="line"><span class="comment"># Epoch 6000/10000, Loss: 0.113382</span></span><br><span class="line"><span class="comment"># Epoch 7000/10000, Loss: 0.023213</span></span><br><span class="line"><span class="comment"># Epoch 8000/10000, Loss: 0.001769</span></span><br><span class="line"><span class="comment"># Epoch 9000/10000, Loss: 0.000104</span></span><br><span class="line"><span class="comment"># Epoch 10000/10000, Loss: 0.000006</span></span><br><span class="line"><span class="comment"># 训练完成。</span></span><br></pre></td></tr></tbody></table></figure>
+<p>正如我们所见，损失 (Loss)
+随着训练的进行而稳步下降，这表明我们的网络确实在学习如何解决 XOR
+问题。</p>
+<p>但要知道，训练其实是有随机性的，上面的代码在我本地测试中成功率非常低，训练十次都不一定能有一次成功，极大概率会训练失败，可以说这是一个失败的网络实现。这时就要调整参数或者更换合适的激活函数。</p>
+<h3 id="查看结果">查看结果</h3>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 4. 进行预测并展示结果</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"\n对输入进行预测:"</span>)</span><br><span class="line"><span class="keyword">for</span> x_input <span class="keyword">in</span> X_train:</span><br><span class="line">    prediction = nn.predict(x_input.reshape(<span class="number">1</span>, -<span class="number">1</span>))</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f"输入: <span class="subst">{x_input}</span>, 预测输出: <span class="subst">{prediction[<span class="number">0</span>][<span class="number">0</span>]:<span class="number">.4</span>f}</span>"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 对输入进行预测:</span></span><br><span class="line"><span class="comment"># 输入: [0 0], 预测输出: 0.0027</span></span><br><span class="line"><span class="comment"># 输入: [0 1], 预测输出: 0.9981</span></span><br><span class="line"><span class="comment"># 输入: [1 0], 预测输出: 0.9981</span></span><br><span class="line"><span class="comment"># 输入: [1 1], 预测输出: 0.0028</span></span><br></pre></td></tr></tbody></table></figure>
+<p>预测值非常接近真实值，证明这个简单的神经网络框架是有效的。</p>
+<h2 id="其它的激活函数">其它的激活函数</h2>
+<p>前面我们只介绍了
+ReLU。虽然它非常流行且有效，但了解其他激活函数以及如何为输出层做选择也同样重要。</p>
+<h3 id="sigmoid">Sigmoid</h3>
+<p>Sigmoid 函数将任意实数压缩到 (0, 1)
+区间内，所以它很适合用来表示概率。</p>
+<ul>
+<li><p><strong>公式</strong>: <span class="math display">$$ \sigma(z) =
+\frac{1}{1 + e^{-z}} $$</span></p></li>
+<li><p><strong>Python 实现</strong>: </p><figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">sigmoid</span>(<span class="params">z</span>):</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span> / (<span class="number">1</span> + np.exp(-z))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(sigmoid(np.array([-<span class="number">2</span>, <span class="number">0</span>, <span class="number">2</span>])))</span><br><span class="line"><span class="comment"># [0.11920292 0.5        0.88079708]</span></span><br></pre></td></tr></tbody></table></figure><p></p></li>
+<li><p><strong>优点</strong>: 输出在 (0, 1)
+之间，平滑且易于求导。</p></li>
+<li><p><strong>缺点</strong>:</p>
+<ul>
+<li><strong>梯度消失</strong>:
+当输入非常大或非常小时，函数的导数趋近于 0，导致梯度在反向传播时消失，使网络难以训练。</li>
+<li><strong>输出不以 0 为中心</strong>:
+输出总是正数，这可能导致后续层权重更新时朝同一个方向移动，降低收敛速度。</li>
+</ul></li>
+</ul>
+<h3 id="tanh-双曲正切">Tanh (双曲正切)</h3>
+<p>Tanh 函数会将输入压缩到 (-1, 1) 区间。</p>
+<ul>
+<li><p><strong>公式</strong>: <span class="math display">$$ tanh(z) =
+\frac{e^z - e^{-z}}{e^z + e^{-z}} $$</span></p></li>
+<li><p><strong>Python 实现</strong>: </p><figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">tanh</span>(<span class="params">z</span>):</span><br><span class="line">    <span class="keyword">return</span> np.tanh(z)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(tanh(np.array([-<span class="number">2</span>, <span class="number">0</span>, <span class="number">2</span>])))</span><br><span class="line"><span class="comment"># [-0.96402758  0.          0.96402758]</span></span><br></pre></td></tr></tbody></table></figure><p></p></li>
+<li><p><strong>优点</strong>:</p>
+<ul>
+<li><strong>以 0 为中心</strong>: 输出在 -1 和 1 之间，解决了 Sigmoid
+的一个主要缺点。</li>
+<li>通常比 Sigmoid 收敛更快。</li>
+</ul></li>
+<li><p><strong>缺点</strong>: 仍然存在梯度消失的问题。</p></li>
+</ul>
+<h3 id="如何为输出层选择激活函数">如何为输出层选择激活函数？</h3>
+<p>输出层的激活函数选择至关重要，因为它决定了网络输出的格式。</p>
+<ul>
+<li><p><strong>二元分类 (Binary Classification)</strong>:
+当你预测两个类别之一时（例如，是猫 / 不是猫），使用
+<strong>Sigmoid</strong>
+函数。它输出一个 0 到 1 之间的值，可以解释为属于正类的概率。</p></li>
+<li><p><strong>多元分类 (Multi-class Classification)</strong>:
+当你在多个类别中选择一个时（例如，数字识别 0-9），使用
+<strong>Softmax</strong>
+函数。它能将一组数字转换成概率分布，所有输出的总和为 1。</p></li>
+<li><p><strong>Softmax 实现</strong>: </p><figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">softmax</span>(<span class="params">z</span>):</span><br><span class="line">    exp_z = np.exp(z - np.<span class="built_in">max</span>(z))</span><br><span class="line">    <span class="keyword">return</span> exp_z / np.<span class="built_in">sum</span>(exp_z)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(softmax(np.array([<span class="number">2.0</span>, <span class="number">1.0</span>, <span class="number">0.1</span>])))</span><br><span class="line"><span class="comment"># [0.65900114 0.24243297 0.09856589]</span></span><br></pre></td></tr></tbody></table></figure><p></p></li>
+<li><p><strong>回归 (Regression)</strong>:
+当预测一个连续值时（例如，房价），输出层<strong>不使用任何激活函数</strong>。这样，网络就可以输出任意范围的数值。</p></li>
+</ul>
+<h2 id="优化与正则化技巧">优化与正则化技巧</h2>
+<p>为了构建更强大、更稳定的神经网络，我们需要一些高级的优化和正则化技术。</p>
+<h3 id="权重初始化的重要性">权重初始化的重要性</h3>
+<p>我们在第一部分中用简单的 <code>np.random.randn() * 0.01</code>
+来初始化权重。这虽然行得通，但不是最好的解决方案。糟糕的权重初始化可能导致梯度消失或梯度爆炸，即梯度在反向传播过程中变得过小或过大。</p>
+<p>现代的初始化方法，如 <strong>Xavier (Glorot) 初始化</strong> 和
+<strong>He
+初始化</strong>，通过智能地根据上一层的神经元数量来调整初始权重的方差，从而确保信号在网络中更稳定地传播，显著加快训练速度并提高性能。</p>
+<ul>
+<li><p><strong>Xavier 初始化</strong>: 通常与 Sigmoid 或 Tanh
+激活函数配合使用。</p></li>
+<li><p><strong>He 初始化</strong>: 专为 ReLU
+及其变体设计，是现代深度网络中的首选。</p></li>
+<li><p><strong>Xavier/He 初始化示例</strong>: </p><figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"><span class="comment"># Xavier 初始化 (适合Sigmoid/Tanh)</span></span><br><span class="line">fan_in, fan_out = <span class="number">64</span>, <span class="number">32</span></span><br><span class="line">xavier = np.random.randn(fan_in, fan_out) * np.sqrt(<span class="number">1.0</span> / fan_in)</span><br><span class="line"><span class="comment"># He 初始化 (适合ReLU)</span></span><br><span class="line">he = np.random.randn(fan_in, fan_out) * np.sqrt(<span class="number">2.0</span> / fan_in)</span><br></pre></td></tr></tbody></table></figure><p></p></li>
+</ul>
+<h3 id="批量归一化-batch-normalization">批量归一化 (Batch
+Normalization)</h3>
+<p>在每个小批量数据通过网络时，对每一层的输入进行归一化（调整为均值为 0，方差为 1），然后再进行缩放和平移。</p>
+<p><strong>好处</strong>:</p>
+<ul>
+<li><p><strong>加速训练</strong>: 允许使用更高的学习率。</p></li>
+<li><p><strong>稳定训练</strong>: 减少了对权重初始化的敏感度。</p></li>
+<li><p><strong>轻微的正则化效果</strong>:
+由于是在小批量上计算均值和方差，引入的噪声可以起到类似 Dropout
+的效果。</p></li>
+<li><p><strong>BatchNorm 示例</strong>: </p><figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">batch_norm</span>(<span class="params">x, gamma, beta, eps=<span class="number">1e-5</span></span>):</span><br><span class="line">    mu = np.mean(x, axis=<span class="number">0</span>)</span><br><span class="line">    var = np.var(x, axis=<span class="number">0</span>)</span><br><span class="line">    x_norm = (x - mu) / np.sqrt(var + eps)</span><br><span class="line">    <span class="keyword">return</span> gamma * x_norm + beta</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># x: (batch_size, features)</span></span><br><span class="line"><span class="comment"># gamma/beta: 可学习参数，初始为1和0</span></span><br></pre></td></tr></tbody></table></figure><p></p></li>
+</ul>
+<h3 id="dropout">Dropout</h3>
+<p>Dropout
+是一种简单而有效的正则化技术，用于防止网络过拟合。在训练过程中的每一步，它会以一定的概率
+<code>p</code> 随机地 “丢弃” 网络中的一部分神经元。</p>
+<p>这意味着网络不能依赖于任何一个特定的神经元，迫使它学习到更健壮、更冗余的特征表示。在测试时，所有神经元都会被使用，但它们的输出会按比例
+<code>(1-p)</code> 缩小，以平衡训练时的丢弃行为。</p>
+<ul>
+<li><strong>Dropout 示例</strong>: <figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">dropout</span>(<span class="params">x, p</span>):</span><br><span class="line">    mask = (np.random.rand(*x.shape) &gt; p).astype(<span class="built_in">float</span>)</span><br><span class="line">    <span class="keyword">return</span> x * mask / (<span class="number">1</span> - p)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 训练时: x = dropout(x, p=0.5)</span></span><br><span class="line"><span class="comment"># 推理时: 不用dropout</span></span><br></pre></td></tr></tbody></table></figure></li>
+</ul>
+<h2 id="建议">建议</h2>
+<h3 id="调试神经网络的技巧">调试神经网络的技巧</h3>
+<p>当神经网络不工作时，调试让人<del>心旷神怡</del>。下面是一些实用的检查步骤：</p>
+<ol type="1">
+<li>先用一个非常小的网络（例如一个隐藏层，少量神经元）来<strong>过拟合</strong>一小部分训练数据（例如，仅 10-20 个样本）。如果连这一步都做不到，说明模型结构或代码实现有根本性问题。</li>
+</ol>
+<ul>
+<li><strong>过拟合小数据集</strong>: <figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># X_small, y_small = 10个样本</span></span><br><span class="line">nn = NeuralNetwork([<span class="number">2</span>, <span class="number">2</span>, <span class="number">1</span>])</span><br><span class="line">nn.train(X_small, y_small, epochs=<span class="number">5000</span>, learning_rate=<span class="number">0.01</span>)</span><br><span class="line"><span class="comment"># 观察loss是否能降到极低</span></span><br></pre></td></tr></tbody></table></figure></li>
+</ul>
+<ol start="2" type="1">
+<li><p>确保输入数据 <code>X</code> 和标签 <code>y</code>
+是正确配对的。可以对数据进行可视化，检查是否存在异常值或错误。确保数据已经正确归一化。</p></li>
+<li><p>一个太高的学习率是导致损失爆炸或不收敛的最常见原因。尝试将学习率降低一个数量级（例如从
+<code>0.01</code> 到 <code>0.001</code>）。</p></li>
+</ol>
+<ul>
+<li><strong>学习率调参</strong>: <figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> lr <span class="keyword">in</span> [<span class="number">0.1</span>, <span class="number">0.01</span>, <span class="number">0.001</span>]:</span><br><span class="line">    nn.train(X, y, epochs=<span class="number">1000</span>, learning_rate=lr)</span><br><span class="line">    <span class="comment"># 观察loss曲线</span></span><br></pre></td></tr></tbody></table></figure></li>
+</ul>
+<ol start="4" type="1">
+<li>确保选择了正确的损失函数，并且在反向传播时正确计算了对应的导数。</li>
+</ol>
+<h3 id="超参数的选择">超参数的选择</h3>
+<p>超参数是在训练开始前设置的参数，例如学习率、层数等。</p>
+<ul>
+<li><strong>学习率 (Learning Rate)</strong>:
+学习率是最重要的超参数。通常从 <code>0.1</code>, <code>0.01</code>,
+<code>0.001</code> 等值开始尝试。可以使用<strong>学习率衰减 (Learning
+Rate Decay)</strong>，即在训练过程中逐渐降低学习率。</li>
+<li><strong>网络架构 (层数和神经元数量)</strong>:
+从一个隐藏层开始。如果网络无法很好地拟合训练数据，再逐步增加层的深度和 / 或宽度。通常，增加深度比增加宽度更有效。</li>
+<li><strong>批量大小 (Batch Size)</strong>: 以前通常选择 2 的幂，如 32,
+64, 128，但现在的说法是，随便选什么数都行。比如，你可以选 520
+训练一个神经网络，送给你的对象（笑
+<ul>
+<li><strong>小批量</strong>: 训练速度快，引入的噪声可能有助于泛化。</li>
+<li><strong>大批量</strong>:
+梯度估计更准确，但可能陷入局部最小值，且需要更多内存。</li>
+</ul></li>
+<li><strong>优化器 (Optimizer)</strong>:
+我们只讨论了基本的梯度下降。现代优化器如 <strong>Adam</strong>,
+<strong>RMSprop</strong>
+通常能提供更快的收敛速度和更好的性能，它们会自动调整学习率。在平常实践中，Adam
+是一个非常好的默认选择。</li>
+</ul>
+<h2 id="优化-xor-网络">优化 XOR 网络</h2>
+<p>相信看完上面的内容后，我们对神经网络有了更多的了解。现在对 XOR
+网络的代码添加以下优化：</p>
+<ul>
+<li>Neuron 支持 tanh、sigmoid、relu 三种激活函数。</li>
+<li>隐藏层用 tanh，输出层用 sigmoid。</li>
+<li>权重初始化方式根据激活函数自动选择（tanh/sigmoid 用 Xavier，relu 用
+He）。</li>
+<li>训练和预测流程自动适配。</li>
+</ul>
+<p>下面是优化后的 XOR 神经网络训练完整代码：</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Neuron</span>:</span><br><span class="line">    <span class="string">"""</span></span><br><span class="line"><span class="string">    单个神经元。支持多种激活函数。</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, num_inputs, activation=<span class="string">"relu"</span></span>):</span><br><span class="line">        <span class="variable language_">self</span>.activation_name = activation</span><br><span class="line">        <span class="comment"># 根据激活函数选择初始化方式</span></span><br><span class="line">        <span class="keyword">if</span> activation == <span class="string">"relu"</span>:</span><br><span class="line">            <span class="variable language_">self</span>.weights = np.random.randn(num_inputs, <span class="number">1</span>) * np.sqrt(<span class="number">2.0</span> / num_inputs)</span><br><span class="line">        <span class="keyword">elif</span> activation <span class="keyword">in</span> (<span class="string">"tanh"</span>, <span class="string">"sigmoid"</span>):</span><br><span class="line">            <span class="variable language_">self</span>.weights = np.random.randn(num_inputs, <span class="number">1</span>) * np.sqrt(<span class="number">1.0</span> / num_inputs)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">raise</span> ValueError(<span class="string">f"不支持的激活函数: <span class="subst">{activation}</span>"</span>)</span><br><span class="line">        <span class="variable language_">self</span>.bias = np.zeros((<span class="number">1</span>, <span class="number">1</span>))</span><br><span class="line">        <span class="variable language_">self</span>.last_input = <span class="literal">None</span></span><br><span class="line">        <span class="variable language_">self</span>.last_z = <span class="literal">None</span></span><br><span class="line">        <span class="variable language_">self</span>.last_a = <span class="literal">None</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">relu</span>(<span class="params">self, z</span>):</span><br><span class="line">        <span class="string">"""ReLU 激活函数"""</span></span><br><span class="line">        <span class="keyword">return</span> np.maximum(<span class="number">0</span>, z)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">relu_derivative</span>(<span class="params">self, z</span>):</span><br><span class="line">        <span class="string">"""ReLU 激活函数的导数"""</span></span><br><span class="line">        <span class="keyword">return</span> np.where(z &gt; <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">tanh</span>(<span class="params">self, z</span>):</span><br><span class="line">        <span class="string">"""Tanh 激活函数"""</span></span><br><span class="line">        <span class="keyword">return</span> np.tanh(z)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">tanh_derivative</span>(<span class="params">self, z</span>):</span><br><span class="line">        <span class="string">"""Tanh 激活函数的导数"""</span></span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span> - np.tanh(z) ** <span class="number">2</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">sigmoid</span>(<span class="params">self, z</span>):</span><br><span class="line">        <span class="string">"""Sigmoid 激活函数"""</span></span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span> / (<span class="number">1</span> + np.exp(-z))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">sigmoid_derivative</span>(<span class="params">self, z</span>):</span><br><span class="line">        <span class="string">"""Sigmoid 激活函数的导数"""</span></span><br><span class="line">        s = <span class="variable language_">self</span>.sigmoid(z)</span><br><span class="line">        <span class="keyword">return</span> s * (<span class="number">1</span> - s)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, activations</span>):</span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">        执行前向传播：z = a * w + b, a_out = 激活函数(z)</span></span><br><span class="line"><span class="string">        """</span></span><br><span class="line">        <span class="variable language_">self</span>.last_input = activations</span><br><span class="line">        <span class="comment"># 计算加权和 z</span></span><br><span class="line">        z = np.dot(activations, <span class="variable language_">self</span>.weights) + <span class="variable language_">self</span>.bias</span><br><span class="line">        <span class="variable language_">self</span>.last_z = z</span><br><span class="line">        <span class="comment"># 应用激活函数</span></span><br><span class="line">        <span class="keyword">if</span> <span class="variable language_">self</span>.activation_name == <span class="string">"relu"</span>:</span><br><span class="line">            a = <span class="variable language_">self</span>.relu(z)</span><br><span class="line">        <span class="keyword">elif</span> <span class="variable language_">self</span>.activation_name == <span class="string">"tanh"</span>:</span><br><span class="line">            a = <span class="variable language_">self</span>.tanh(z)</span><br><span class="line">        <span class="keyword">elif</span> <span class="variable language_">self</span>.activation_name == <span class="string">"sigmoid"</span>:</span><br><span class="line">            a = <span class="variable language_">self</span>.sigmoid(z)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">raise</span> ValueError(<span class="string">f"不支持的激活函数: <span class="subst">{self.activation_name}</span>"</span>)</span><br><span class="line">        <span class="variable language_">self</span>.last_a = a</span><br><span class="line">        <span class="keyword">return</span> a</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">backward</span>(<span class="params">self, dC_da, learning_rate</span>):</span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">        执行反向传播，计算并应用梯度。</span></span><br><span class="line"><span class="string">        dC_da: 损失函数对本神经元输出 a 的梯度 (从下一层传来)</span></span><br><span class="line"><span class="string">        """</span></span><br><span class="line">        <span class="comment"># 1. 计算 da/dz (激活函数对z的梯度)</span></span><br><span class="line">        <span class="keyword">if</span> <span class="variable language_">self</span>.activation_name == <span class="string">"relu"</span>:</span><br><span class="line">            da_dz = <span class="variable language_">self</span>.relu_derivative(<span class="variable language_">self</span>.last_z)</span><br><span class="line">        <span class="keyword">elif</span> <span class="variable language_">self</span>.activation_name == <span class="string">"tanh"</span>:</span><br><span class="line">            da_dz = <span class="variable language_">self</span>.tanh_derivative(<span class="variable language_">self</span>.last_z)</span><br><span class="line">        <span class="keyword">elif</span> <span class="variable language_">self</span>.activation_name == <span class="string">"sigmoid"</span>:</span><br><span class="line">            da_dz = <span class="variable language_">self</span>.sigmoid_derivative(<span class="variable language_">self</span>.last_z)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">raise</span> ValueError(<span class="string">f"不支持的激活函数: <span class="subst">{self.activation_name}</span>"</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 2. 计算 dC/dz (损失对z的梯度) = dC/da * da/dz</span></span><br><span class="line">        dC_dz = dC_da * da_dz</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 3. 计算 dC/dw (损失对权重的梯度) = dC/dz * dz/dw</span></span><br><span class="line">        <span class="comment">#    dz/dw = last_input, 所以 dC/dw = last_input.T * dC/dz</span></span><br><span class="line">        dC_dw = np.dot(<span class="variable language_">self</span>.last_input.T, dC_dz)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 4. 计算 dC/db (损失对偏置的梯度) = dC/dz * dz/db</span></span><br><span class="line">        <span class="comment">#    dz/db = 1, 所以 dC/db = dC/dz</span></span><br><span class="line">        dC_db = np.<span class="built_in">sum</span>(dC_dz, axis=<span class="number">0</span>, keepdims=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 5. 计算 dC/da_prev (损失对前一层激活值的梯度)，用于传给前一层</span></span><br><span class="line">        <span class="comment">#    dC/da_prev = dC/dz * dz/da_prev</span></span><br><span class="line">        <span class="comment">#    dz/da_prev = weights, 所以 dC/da_prev = dC/dz * weights.T</span></span><br><span class="line">        dC_da_prev = np.dot(dC_dz, <span class="variable language_">self</span>.weights.T)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 6. 根据梯度更新权重和偏置</span></span><br><span class="line">        <span class="variable language_">self</span>.weights -= learning_rate * dC_dw</span><br><span class="line">        <span class="variable language_">self</span>.bias -= learning_rate * dC_db</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 返回 dC/da_prev，传递给前一层继续反向传播</span></span><br><span class="line">        <span class="keyword">return</span> dC_da_prev</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Layer</span>:</span><br><span class="line">    <span class="string">"""</span></span><br><span class="line"><span class="string">    一层神经元。支持指定激活函数。</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, num_neurons, num_inputs_per_neuron, activation=<span class="string">"relu"</span></span>):</span><br><span class="line">        <span class="variable language_">self</span>.neurons = [</span><br><span class="line">            Neuron(num_inputs_per_neuron, activation) <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(num_neurons)</span><br><span class="line">        ]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, activations</span>):</span><br><span class="line">        <span class="string">"""对层中所有神经元执行前向传播"""</span></span><br><span class="line">        <span class="comment"># hstack 用于水平堆叠输出，形成一个 (batch_size, num_neurons) 的矩阵</span></span><br><span class="line">        <span class="keyword">return</span> np.hstack([neuron.forward(activations) <span class="keyword">for</span> neuron <span class="keyword">in</span> <span class="variable language_">self</span>.neurons])</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">backward</span>(<span class="params">self, dC_da, learning_rate</span>):</span><br><span class="line">        <span class="string">"""对层中所有神经元执行反向传播"""</span></span><br><span class="line">        <span class="comment"># dC_da 的形状是 (batch_size, num_neurons)</span></span><br><span class="line">        <span class="comment"># 我们需要为每个神经元传入对应的梯度 dC_da[:, [i]]</span></span><br><span class="line">        <span class="comment"># 然后将所有神经元返回的 dC/da_prev 相加，得到传给前一层的总梯度</span></span><br><span class="line">        <span class="keyword">return</span> np.<span class="built_in">sum</span>(</span><br><span class="line">            [</span><br><span class="line">                neuron.backward(dC_da[:, [i]], learning_rate)</span><br><span class="line">                <span class="keyword">for</span> i, neuron <span class="keyword">in</span> <span class="built_in">enumerate</span>(<span class="variable language_">self</span>.neurons)</span><br><span class="line">            ],</span><br><span class="line">            axis=<span class="number">0</span>,</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">NeuralNetwork</span>:</span><br><span class="line">    <span class="string">"""</span></span><br><span class="line"><span class="string">    完整的神经网络模型。</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, layer_sizes, activations=<span class="literal">None</span></span>):</span><br><span class="line">        <span class="comment"># activations: 每层的激活函数（不含输入层），如 ["tanh", "sigmoid"]</span></span><br><span class="line">        <span class="keyword">if</span> activations <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">            <span class="comment"># 默认隐藏层tanh，输出层sigmoid</span></span><br><span class="line">            activations = [<span class="string">"tanh"</span>] * (<span class="built_in">len</span>(layer_sizes) - <span class="number">2</span>) + [<span class="string">"sigmoid"</span>]</span><br><span class="line">        <span class="keyword">assert</span> <span class="built_in">len</span>(activations) == <span class="built_in">len</span>(layer_sizes) - <span class="number">1</span></span><br><span class="line">        <span class="variable language_">self</span>.layers = []</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(layer_sizes) - <span class="number">1</span>):</span><br><span class="line">            <span class="variable language_">self</span>.layers.append(</span><br><span class="line">                Layer(layer_sizes[i + <span class="number">1</span>], layer_sizes[i], activations[i])</span><br><span class="line">            )</span><br><span class="line">        <span class="variable language_">self</span>.output_activation = activations[-<span class="number">1</span>]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, activations</span>):</span><br><span class="line">        <span class="string">"""对所有层执行前向传播"""</span></span><br><span class="line">        <span class="keyword">for</span> layer <span class="keyword">in</span> <span class="variable language_">self</span>.layers:</span><br><span class="line">            activations = layer.forward(activations)</span><br><span class="line">        <span class="keyword">return</span> activations</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">mse_loss</span>(<span class="params">self, y_true, y_pred</span>):</span><br><span class="line">        <span class="string">"""均方误差损失函数"""</span></span><br><span class="line">        <span class="keyword">return</span> np.mean((y_pred - y_true) ** <span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">derivative_mse_loss</span>(<span class="params">self, y_true, y_pred</span>):</span><br><span class="line">        <span class="string">"""均方误差损失函数的导数"""</span></span><br><span class="line">        <span class="keyword">return</span> <span class="number">2</span> * (y_pred - y_true) / y_true.shape[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">train</span>(<span class="params">self, X, y, epochs, learning_rate, batch_size=<span class="number">32</span></span>):</span><br><span class="line">        <span class="string">"""训练神经网络"""</span></span><br><span class="line">        <span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="built_in">range</span>(epochs):</span><br><span class="line">            total_loss = <span class="number">0</span></span><br><span class="line">            <span class="comment"># 使用小批量梯度下降</span></span><br><span class="line">            <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>, <span class="built_in">len</span>(X), batch_size):</span><br><span class="line">                X_batch = X[i : i + batch_size]</span><br><span class="line">                y_batch = y[i : i + batch_size]</span><br><span class="line"></span><br><span class="line">                <span class="comment"># 1. 前向传播</span></span><br><span class="line">                outputs = <span class="variable language_">self</span>.forward(X_batch)</span><br><span class="line"></span><br><span class="line">                <span class="comment"># 2. 计算损失</span></span><br><span class="line">                loss = <span class="variable language_">self</span>.mse_loss(y_batch, outputs)</span><br><span class="line">                total_loss += loss * <span class="built_in">len</span>(X_batch)</span><br><span class="line"></span><br><span class="line">                <span class="comment"># 3. 计算输出层的梯度</span></span><br><span class="line">                output_gradient = <span class="variable language_">self</span>.derivative_mse_loss(y_batch, outputs)</span><br><span class="line"></span><br><span class="line">                <span class="comment"># 4. 反向传播</span></span><br><span class="line">                <span class="keyword">for</span> layer <span class="keyword">in</span> <span class="built_in">reversed</span>(<span class="variable language_">self</span>.layers):</span><br><span class="line">                    output_gradient = layer.backward(output_gradient, learning_rate)</span><br><span class="line"></span><br><span class="line">            avg_loss = total_loss / <span class="built_in">len</span>(X)</span><br><span class="line">            <span class="comment"># 只在每1/10进度时输出一次</span></span><br><span class="line">            <span class="keyword">if</span> (</span><br><span class="line">                (epoch + <span class="number">1</span>) % <span class="built_in">max</span>(<span class="number">1</span>, epochs // <span class="number">10</span>) == <span class="number">0</span></span><br><span class="line">                <span class="keyword">or</span> epoch == <span class="number">0</span></span><br><span class="line">                <span class="keyword">or</span> epoch == epochs - <span class="number">1</span></span><br><span class="line">            ):</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">f"Epoch <span class="subst">{epoch+<span class="number">1</span>}</span>/<span class="subst">{epochs}</span>, Loss: <span class="subst">{avg_loss:<span class="number">.6</span>f}</span>"</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">predict</span>(<span class="params">self, X</span>):</span><br><span class="line">        <span class="string">"""用训练好的网络进行预测"""</span></span><br><span class="line">        out = <span class="variable language_">self</span>.forward(X)</span><br><span class="line">        <span class="comment"># 输出层为sigmoid时，返回概率</span></span><br><span class="line">        <span class="keyword">if</span> <span class="variable language_">self</span>.output_activation == <span class="string">"sigmoid"</span>:</span><br><span class="line">            <span class="keyword">return</span> out</span><br><span class="line">        <span class="keyword">return</span> out</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 1. 定义 XOR 数据集</span></span><br><span class="line">X_train = np.array([[<span class="number">0</span>, <span class="number">0</span>], [<span class="number">0</span>, <span class="number">1</span>], [<span class="number">1</span>, <span class="number">0</span>], [<span class="number">1</span>, <span class="number">1</span>]])</span><br><span class="line">y_train = np.array([[<span class="number">0</span>], [<span class="number">1</span>], [<span class="number">1</span>], [<span class="number">0</span>]])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 创建神经网络实例</span></span><br><span class="line"><span class="comment"># 2个输入节点，一个有2个节点的隐藏层，1个输出节点，激活函数分别为tanh和sigmoid</span></span><br><span class="line">nn = NeuralNetwork([<span class="number">2</span>, <span class="number">2</span>, <span class="number">1</span>], activations=[<span class="string">"tanh"</span>, <span class="string">"sigmoid"</span>])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 训练网络</span></span><br><span class="line"><span class="comment"># XOR 是一个非线性问题，需要足够的迭代次数和合适的学习率</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"开始训练XOR网络..."</span>)</span><br><span class="line">nn.train(X_train, y_train, epochs=<span class="number">200000</span>, learning_rate=<span class="number">0.1</span>, batch_size=<span class="number">4</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">"训练完成。"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 进行预测并展示结果</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"\n对输入进行预测:"</span>)</span><br><span class="line"><span class="keyword">for</span> x_input <span class="keyword">in</span> X_train:</span><br><span class="line">    prediction = nn.predict(x_input.reshape(<span class="number">1</span>, -<span class="number">1</span>))</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f"输入: <span class="subst">{x_input}</span>, 预测输出: <span class="subst">{prediction[<span class="number">0</span>][<span class="number">0</span>]:<span class="number">.4</span>f}</span>"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 开始训练XOR网络...</span></span><br><span class="line"><span class="comment"># Epoch 1/200000, Loss: 0.280354</span></span><br><span class="line"><span class="comment"># Epoch 20000/200000, Loss: 0.000450</span></span><br><span class="line"><span class="comment"># Epoch 40000/200000, Loss: 0.000213</span></span><br><span class="line"><span class="comment"># Epoch 60000/200000, Loss: 0.000139</span></span><br><span class="line"><span class="comment"># Epoch 80000/200000, Loss: 0.000103</span></span><br><span class="line"><span class="comment"># Epoch 100000/200000, Loss: 0.000081</span></span><br><span class="line"><span class="comment"># Epoch 120000/200000, Loss: 0.000067</span></span><br><span class="line"><span class="comment"># Epoch 140000/200000, Loss: 0.000058</span></span><br><span class="line"><span class="comment"># Epoch 160000/200000, Loss: 0.000050</span></span><br><span class="line"><span class="comment"># Epoch 180000/200000, Loss: 0.000044</span></span><br><span class="line"><span class="comment"># Epoch 200000/200000, Loss: 0.000040</span></span><br><span class="line"><span class="comment"># 训练完成。</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 对输入进行预测:</span></span><br><span class="line"><span class="comment"># 输入: [0 0], 预测输出: 0.0055</span></span><br><span class="line"><span class="comment"># 输入: [0 1], 预测输出: 0.9928</span></span><br><span class="line"><span class="comment"># 输入: [1 0], 预测输出: 0.9928</span></span><br><span class="line"><span class="comment"># 输入: [1 1], 预测输出: 0.0049</span></span><br></pre></td></tr></tbody></table></figure>
+<p>可以明显看到 XOR
+网络的预测更加精准了，并且我在本地连续训练了很多次，几乎不再有训练失败的情况发生。显然，我们的神经网络实现可以说成功了。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>0wnerD1ed
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://0wnerdied.github.io/Machine-learning/38196.html" title="从零开始的神经网络学习 (二)：实用技巧与进阶">https://0wnerdied.github.io/Machine-learning/38196.html</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-CN" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/NN/" rel="tag"><i class="fa fa-tag"></i> NN</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/Machine-learning/36604.html" rel="prev" title="从零开始的神经网络学习 (一)：实用技巧与进阶">
+                  <i class="fa fa-angle-left"></i> 从零开始的神经网络学习 (一)：实用技巧与进阶
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="waline"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">0wnerD1ed</span>
+  </div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/0wnerDied" class="github-corner" title="在 GitHub 上关注我" aria-label="在 GitHub 上关注我" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+<script class="next-config" data-name="waline" type="application/json">{"lang":"zh-CN","enable":true,"serverURL":"blog-waline-mauve.vercel.app","cssUrl":"https://unpkg.com/@waline/client@v2/dist/waline.css","commentCount":true,"pageview":false,"locale":{"placeholder":"善语结善缘，恶语伤人心"},"pageSize":30,"comment_count":true,"dark":"html[data-darkmode]","meta":[],"el":"#waline","comment":true,"libUrl":"//unpkg.com/@waline/client@v2/dist/waline.js","path":"/Machine-learning/38196.html"}</script>
+<link rel="stylesheet" href="https://unpkg.com/@waline/client@v2/dist/waline.css">
+<script>
+document.addEventListener('page:loaded', () => {
+  NexT.utils.loadComments(CONFIG.waline.el).then(() =>
+    NexT.utils.getScript(CONFIG.waline.libUrl, { condition: window.Waline })
+  ).then(() => 
+    Waline.init(Object.assign({}, CONFIG.waline,{ el: document.querySelector(CONFIG.waline.el) }))
+  );
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/darkmode-js@1.5.7/lib/darkmode-js.min.js"></script>
+
+<script>
+var options = {
+  bottom: '64px',
+  right: '32px',
+  left: 'unset',
+  time: '0.5s',
+  mixColor: 'transparent',
+  backgroundColor: 'transparent',
+  buttonColorDark: '#100f2c',
+  buttonColorLight: '#fff',
+  saveInCookies: true,
+  label: '🌓',
+  autoMatchOsTheme: true
+}
+const darkmode = new Darkmode(options);
+window.darkmode = darkmode;
+darkmode.showWidget();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // 等待Waline元素加载完成
+  const checkWaline = setInterval(function() {
+    const walineEl = document.querySelector('.wl-panel');
+    if (walineEl) {
+      clearInterval(checkWaline);
+      
+      // 监听暗黑模式变化，强制更新评论区样式
+      if (typeof window.darkmode !== 'undefined') {
+        window.darkmode.addEventListener('change', function(event) {
+          setTimeout(function() {
+            const isDark = document.body.classList.contains('darkmode--activated');
+            
+            if (isDark) {
+              // 直接修改DOM元素样式
+              document.querySelectorAll('.wl-panel, .wl-card').forEach(el => {
+                el.style.setProperty('background-color', '#222', 'important');
+                el.style.setProperty('border-color', '#444', 'important');
+              });
+              
+              document.querySelectorAll('.wl-editor, .wl-input, .wl-textarea').forEach(el => {
+                el.style.setProperty('background-color', '#333', 'important');
+                el.style.setProperty('color', '#ddd', 'important');
+                el.style.setProperty('border-color', '#555', 'important');
+              });
+              
+              document.querySelectorAll('.wl-content, .wl-meta, .wl-meta span, .wl-meta a').forEach(el => {
+                el.style.setProperty('color', '#ccc', 'important');
+              });
+            }
+          }, 100);
+        });
+      }
+    }
+  }, 100);
+});
+</script>
+
+</body>
+</html>

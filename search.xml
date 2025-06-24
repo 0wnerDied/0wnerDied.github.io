@@ -614,7 +614,7 @@ eBPF 程序能力的源泉，提供了诸如：</p>
       </tags>
   </entry>
   <entry>
-    <title>从零开始的神经网络学习</title>
+    <title>从零开始的神经网络学习 (一)：实用技巧与进阶</title>
     <url>/Machine-learning/36604.html</url>
     <content><![CDATA[<h2 id="神经网络的概念">神经网络的概念</h2>
 <p>想象一下，我们想教计算机识别图片中的猫，但是我们不能为它编写一套硬性的规则（“如果它有尖耳朵、胡须和毛茸茸的尾巴，那它就是一只猫”），因为现实世界中的猫品种各异，<del>而且猫娘也符合上面的规则</del>。</p>
@@ -846,6 +846,218 @@ w_{old} - \eta \frac{\partial C}{\partial w} $$</span> 其中
 <h2 id="参考资料">参考资料</h2>
 <p><a href="https://github.com/DorsaRoh/Machine-Learning">Machine
 learning - DorsaRoh</a></p>
+]]></content>
+      <categories>
+        <category>Machine learning</category>
+      </categories>
+      <tags>
+        <tag>NN</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>从零开始的神经网络学习 (二)：实用技巧与进阶</title>
+    <url>/Machine-learning/38196.html</url>
+    <content><![CDATA[<p>在<a href="https://0wnerdied.github.io/Machine-learning/36604.html">上一篇文章</a>中，我们从零开始构建了一个简单的神经网络，并理解了前向传播、反向传播和梯度下降等核心概念。然而，要让神经网络在现实世界的问题中高效工作，我们还需要掌握更多的工具和技巧。</p>
+<p>这篇文章将作为第二部分，专注于第一部分中未能详尽涵盖的几个关键领域：</p>
+<ul>
+<li>我将用上一篇文章中的代码来训练一个网络，解决一个经典问题，并观察损失函数的变化。</li>
+<li>除了 ReLU，我还将介绍 Sigmoid 和 Tanh
+等其他常用激活函数，并讨论如何为输出层选择合适的激活函数。</li>
+<li>探讨权重初始化的重要性，并介绍批量归一化 (Batch Normalization) 和
+Dropout 等强大的技术。</li>
+<li>最后，分享一些关于调试神经网络和选择超参数的实用技巧。</li>
+</ul>
+<h2 id="训练一个-xor-网络">训练一个 XOR 网络</h2>
+<p>理论需要实践来检验。让我们使用上一篇文章中定义的
+<code>NeuralNetwork</code> 类来解决经典的 XOR 问题。XOR
+是一个非线性问题，单个神经元无法解决，因此很适合作为我们神经网络的测试案例。</p>
+<p>XOR 的真值表如下：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">输入 A</th>
+<th style="text-align: center;"> 输入 B</th>
+<th style="text-align: center;"> 输出</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"> 0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">0</td>
+</tr>
+</tbody>
+</table>
+<h3 id="准备数据和网络">准备数据和网络</h3>
+<figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># existing codes...</span></span><br><span class="line">            avg_loss = total_loss / <span class="built_in">len</span>(X)</span><br><span class="line">            <span class="comment"># 只在每1/10进度时输出一次</span></span><br><span class="line">            <span class="keyword">if</span> (epoch + <span class="number">1</span>) % <span class="built_in">max</span>(<span class="number">1</span>, epochs // <span class="number">10</span>) == <span class="number">0</span> <span class="keyword">or</span> epoch == <span class="number">0</span> <span class="keyword">or</span> epoch == epochs - <span class="number">1</span>:</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">f"Epoch <span class="subst">{epoch+<span class="number">1</span>}</span>/<span class="subst">{epochs}</span>, Loss: <span class="subst">{avg_loss:<span class="number">.6</span>f}</span>"</span>)</span><br><span class="line"><span class="comment"># existing codes...</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 1. 定义 XOR 数据集</span></span><br><span class="line">X_train = np.array([[<span class="number">0</span>, <span class="number">0</span>], [<span class="number">0</span>, <span class="number">1</span>], [<span class="number">1</span>, <span class="number">0</span>], [<span class="number">1</span>, <span class="number">1</span>]])</span><br><span class="line">y_train = np.array([[<span class="number">0</span>], [<span class="number">1</span>], [<span class="number">1</span>], [<span class="number">0</span>]])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 创建神经网络实例</span></span><br><span class="line"><span class="comment"># 2个输入节点，一个有2个节点的隐藏层，1个输出节点</span></span><br><span class="line">nn = NeuralNetwork([<span class="number">2</span>, <span class="number">2</span>, <span class="number">1</span>])</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="训练并观察损失">训练并观察损失</h3>
+<p>我们将使用较小的学习率和足够多的迭代次数来训练网络。</p>
+<figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># 3. 训练网络</span></span><br><span class="line"><span class="comment"># XOR 是一个非线性问题，需要足够的迭代次数和合适的学习率</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"开始训练XOR网络..."</span>)</span><br><span class="line">nn.train(X_train, y_train, epochs=<span class="number">10000</span>, learning_rate=<span class="number">0.005</span>, batch_size=<span class="number">4</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">"训练完成。"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 开始训练XOR网络...</span></span><br><span class="line"><span class="comment"># Epoch 1/10000, Loss: 0.499970</span></span><br><span class="line"><span class="comment"># Epoch 1000/10000, Loss: 0.249839</span></span><br><span class="line"><span class="comment"># Epoch 2000/10000, Loss: 0.249042</span></span><br><span class="line"><span class="comment"># Epoch 3000/10000, Loss: 0.244619</span></span><br><span class="line"><span class="comment"># Epoch 4000/10000, Loss: 0.224387</span></span><br><span class="line"><span class="comment"># Epoch 5000/10000, Loss: 0.177830</span></span><br><span class="line"><span class="comment"># Epoch 6000/10000, Loss: 0.113382</span></span><br><span class="line"><span class="comment"># Epoch 7000/10000, Loss: 0.023213</span></span><br><span class="line"><span class="comment"># Epoch 8000/10000, Loss: 0.001769</span></span><br><span class="line"><span class="comment"># Epoch 9000/10000, Loss: 0.000104</span></span><br><span class="line"><span class="comment"># Epoch 10000/10000, Loss: 0.000006</span></span><br><span class="line"><span class="comment"># 训练完成。</span></span><br></pre></td></tr></tbody></table></figure>
+<p>正如我们所见，损失 (Loss)
+随着训练的进行而稳步下降，这表明我们的网络确实在学习如何解决 XOR
+问题。</p>
+<p>但要知道，训练其实是有随机性的，上面的代码在我本地测试中成功率非常低，训练十次都不一定能有一次成功，极大概率会训练失败，可以说这是一个失败的网络实现。这时就要调整参数或者更换合适的激活函数。</p>
+<h3 id="查看结果">查看结果</h3>
+<figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># 4. 进行预测并展示结果</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"\n对输入进行预测:"</span>)</span><br><span class="line"><span class="keyword">for</span> x_input <span class="keyword">in</span> X_train:</span><br><span class="line">    prediction = nn.predict(x_input.reshape(<span class="number">1</span>, -<span class="number">1</span>))</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f"输入: <span class="subst">{x_input}</span>, 预测输出: <span class="subst">{prediction[<span class="number">0</span>][<span class="number">0</span>]:<span class="number">.4</span>f}</span>"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 对输入进行预测:</span></span><br><span class="line"><span class="comment"># 输入: [0 0], 预测输出: 0.0027</span></span><br><span class="line"><span class="comment"># 输入: [0 1], 预测输出: 0.9981</span></span><br><span class="line"><span class="comment"># 输入: [1 0], 预测输出: 0.9981</span></span><br><span class="line"><span class="comment"># 输入: [1 1], 预测输出: 0.0028</span></span><br></pre></td></tr></tbody></table></figure>
+<p>预测值非常接近真实值，证明这个简单的神经网络框架是有效的。</p>
+<h2 id="其它的激活函数">其它的激活函数</h2>
+<p>前面我们只介绍了
+ReLU。虽然它非常流行且有效，但了解其他激活函数以及如何为输出层做选择也同样重要。</p>
+<h3 id="sigmoid">Sigmoid</h3>
+<p>Sigmoid 函数将任意实数压缩到 (0, 1)
+区间内，所以它很适合用来表示概率。</p>
+<ul>
+<li><p><strong>公式</strong>: <span class="math display">$$ \sigma(z) =
+\frac{1}{1 + e^{-z}} $$</span></p></li>
+<li><p><strong>Python 实现</strong>: </p><figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">sigmoid</span>(<span class="params">z</span>):</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span> / (<span class="number">1</span> + np.exp(-z))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(sigmoid(np.array([-<span class="number">2</span>, <span class="number">0</span>, <span class="number">2</span>])))</span><br><span class="line"><span class="comment"># [0.11920292 0.5        0.88079708]</span></span><br></pre></td></tr></tbody></table></figure><p></p></li>
+<li><p><strong>优点</strong>: 输出在 (0, 1)
+之间，平滑且易于求导。</p></li>
+<li><p><strong>缺点</strong>:</p>
+<ul>
+<li><strong>梯度消失</strong>:
+当输入非常大或非常小时，函数的导数趋近于 0，导致梯度在反向传播时消失，使网络难以训练。</li>
+<li><strong>输出不以 0 为中心</strong>:
+输出总是正数，这可能导致后续层权重更新时朝同一个方向移动，降低收敛速度。</li>
+</ul></li>
+</ul>
+<h3 id="tanh-双曲正切">Tanh (双曲正切)</h3>
+<p>Tanh 函数会将输入压缩到 (-1, 1) 区间。</p>
+<ul>
+<li><p><strong>公式</strong>: <span class="math display">$$ tanh(z) =
+\frac{e^z - e^{-z}}{e^z + e^{-z}} $$</span></p></li>
+<li><p><strong>Python 实现</strong>: </p><figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">tanh</span>(<span class="params">z</span>):</span><br><span class="line">    <span class="keyword">return</span> np.tanh(z)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(tanh(np.array([-<span class="number">2</span>, <span class="number">0</span>, <span class="number">2</span>])))</span><br><span class="line"><span class="comment"># [-0.96402758  0.          0.96402758]</span></span><br></pre></td></tr></tbody></table></figure><p></p></li>
+<li><p><strong>优点</strong>:</p>
+<ul>
+<li><strong>以 0 为中心</strong>: 输出在 -1 和 1 之间，解决了 Sigmoid
+的一个主要缺点。</li>
+<li>通常比 Sigmoid 收敛更快。</li>
+</ul></li>
+<li><p><strong>缺点</strong>: 仍然存在梯度消失的问题。</p></li>
+</ul>
+<h3 id="如何为输出层选择激活函数">如何为输出层选择激活函数？</h3>
+<p>输出层的激活函数选择至关重要，因为它决定了网络输出的格式。</p>
+<ul>
+<li><p><strong>二元分类 (Binary Classification)</strong>:
+当你预测两个类别之一时（例如，是猫 / 不是猫），使用
+<strong>Sigmoid</strong>
+函数。它输出一个 0 到 1 之间的值，可以解释为属于正类的概率。</p></li>
+<li><p><strong>多元分类 (Multi-class Classification)</strong>:
+当你在多个类别中选择一个时（例如，数字识别 0-9），使用
+<strong>Softmax</strong>
+函数。它能将一组数字转换成概率分布，所有输出的总和为 1。</p></li>
+<li><p><strong>Softmax 实现</strong>: </p><figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">softmax</span>(<span class="params">z</span>):</span><br><span class="line">    exp_z = np.exp(z - np.<span class="built_in">max</span>(z))</span><br><span class="line">    <span class="keyword">return</span> exp_z / np.<span class="built_in">sum</span>(exp_z)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(softmax(np.array([<span class="number">2.0</span>, <span class="number">1.0</span>, <span class="number">0.1</span>])))</span><br><span class="line"><span class="comment"># [0.65900114 0.24243297 0.09856589]</span></span><br></pre></td></tr></tbody></table></figure><p></p></li>
+<li><p><strong>回归 (Regression)</strong>:
+当预测一个连续值时（例如，房价），输出层<strong>不使用任何激活函数</strong>。这样，网络就可以输出任意范围的数值。</p></li>
+</ul>
+<h2 id="优化与正则化技巧">优化与正则化技巧</h2>
+<p>为了构建更强大、更稳定的神经网络，我们需要一些高级的优化和正则化技术。</p>
+<h3 id="权重初始化的重要性">权重初始化的重要性</h3>
+<p>我们在第一部分中用简单的 <code>np.random.randn() * 0.01</code>
+来初始化权重。这虽然行得通，但不是最好的解决方案。糟糕的权重初始化可能导致梯度消失或梯度爆炸，即梯度在反向传播过程中变得过小或过大。</p>
+<p>现代的初始化方法，如 <strong>Xavier (Glorot) 初始化</strong> 和
+<strong>He
+初始化</strong>，通过智能地根据上一层的神经元数量来调整初始权重的方差，从而确保信号在网络中更稳定地传播，显著加快训练速度并提高性能。</p>
+<ul>
+<li><p><strong>Xavier 初始化</strong>: 通常与 Sigmoid 或 Tanh
+激活函数配合使用。</p></li>
+<li><p><strong>He 初始化</strong>: 专为 ReLU
+及其变体设计，是现代深度网络中的首选。</p></li>
+<li><p><strong>Xavier/He 初始化示例</strong>: </p><figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"><span class="comment"># Xavier 初始化 (适合Sigmoid/Tanh)</span></span><br><span class="line">fan_in, fan_out = <span class="number">64</span>, <span class="number">32</span></span><br><span class="line">xavier = np.random.randn(fan_in, fan_out) * np.sqrt(<span class="number">1.0</span> / fan_in)</span><br><span class="line"><span class="comment"># He 初始化 (适合ReLU)</span></span><br><span class="line">he = np.random.randn(fan_in, fan_out) * np.sqrt(<span class="number">2.0</span> / fan_in)</span><br></pre></td></tr></tbody></table></figure><p></p></li>
+</ul>
+<h3 id="批量归一化-batch-normalization">批量归一化 (Batch
+Normalization)</h3>
+<p>在每个小批量数据通过网络时，对每一层的输入进行归一化（调整为均值为 0，方差为 1），然后再进行缩放和平移。</p>
+<p><strong>好处</strong>:</p>
+<ul>
+<li><p><strong>加速训练</strong>: 允许使用更高的学习率。</p></li>
+<li><p><strong>稳定训练</strong>: 减少了对权重初始化的敏感度。</p></li>
+<li><p><strong>轻微的正则化效果</strong>:
+由于是在小批量上计算均值和方差，引入的噪声可以起到类似 Dropout
+的效果。</p></li>
+<li><p><strong>BatchNorm 示例</strong>: </p><figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">batch_norm</span>(<span class="params">x, gamma, beta, eps=<span class="number">1e-5</span></span>):</span><br><span class="line">    mu = np.mean(x, axis=<span class="number">0</span>)</span><br><span class="line">    var = np.var(x, axis=<span class="number">0</span>)</span><br><span class="line">    x_norm = (x - mu) / np.sqrt(var + eps)</span><br><span class="line">    <span class="keyword">return</span> gamma * x_norm + beta</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># x: (batch_size, features)</span></span><br><span class="line"><span class="comment"># gamma/beta: 可学习参数，初始为1和0</span></span><br></pre></td></tr></tbody></table></figure><p></p></li>
+</ul>
+<h3 id="dropout">Dropout</h3>
+<p>Dropout
+是一种简单而有效的正则化技术，用于防止网络过拟合。在训练过程中的每一步，它会以一定的概率
+<code>p</code> 随机地 “丢弃” 网络中的一部分神经元。</p>
+<p>这意味着网络不能依赖于任何一个特定的神经元，迫使它学习到更健壮、更冗余的特征表示。在测试时，所有神经元都会被使用，但它们的输出会按比例
+<code>(1-p)</code> 缩小，以平衡训练时的丢弃行为。</p>
+<ul>
+<li><strong>Dropout 示例</strong>: <figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">dropout</span>(<span class="params">x, p</span>):</span><br><span class="line">    mask = (np.random.rand(*x.shape) &gt; p).astype(<span class="built_in">float</span>)</span><br><span class="line">    <span class="keyword">return</span> x * mask / (<span class="number">1</span> - p)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 训练时: x = dropout(x, p=0.5)</span></span><br><span class="line"><span class="comment"># 推理时: 不用dropout</span></span><br></pre></td></tr></tbody></table></figure></li>
+</ul>
+<h2 id="建议">建议</h2>
+<h3 id="调试神经网络的技巧">调试神经网络的技巧</h3>
+<p>当神经网络不工作时，调试让人<del>心旷神怡</del>。下面是一些实用的检查步骤：</p>
+<ol type="1">
+<li>先用一个非常小的网络（例如一个隐藏层，少量神经元）来<strong>过拟合</strong>一小部分训练数据（例如，仅 10-20 个样本）。如果连这一步都做不到，说明模型结构或代码实现有根本性问题。</li>
+</ol>
+<ul>
+<li><strong>过拟合小数据集</strong>: <figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># X_small, y_small = 10个样本</span></span><br><span class="line">nn = NeuralNetwork([<span class="number">2</span>, <span class="number">2</span>, <span class="number">1</span>])</span><br><span class="line">nn.train(X_small, y_small, epochs=<span class="number">5000</span>, learning_rate=<span class="number">0.01</span>)</span><br><span class="line"><span class="comment"># 观察loss是否能降到极低</span></span><br></pre></td></tr></tbody></table></figure></li>
+</ul>
+<ol start="2" type="1">
+<li><p>确保输入数据 <code>X</code> 和标签 <code>y</code>
+是正确配对的。可以对数据进行可视化，检查是否存在异常值或错误。确保数据已经正确归一化。</p></li>
+<li><p>一个太高的学习率是导致损失爆炸或不收敛的最常见原因。尝试将学习率降低一个数量级（例如从
+<code>0.01</code> 到 <code>0.001</code>）。</p></li>
+</ol>
+<ul>
+<li><strong>学习率调参</strong>: <figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> lr <span class="keyword">in</span> [<span class="number">0.1</span>, <span class="number">0.01</span>, <span class="number">0.001</span>]:</span><br><span class="line">    nn.train(X, y, epochs=<span class="number">1000</span>, learning_rate=lr)</span><br><span class="line">    <span class="comment"># 观察loss曲线</span></span><br></pre></td></tr></tbody></table></figure></li>
+</ul>
+<ol start="4" type="1">
+<li>确保选择了正确的损失函数，并且在反向传播时正确计算了对应的导数。</li>
+</ol>
+<h3 id="超参数的选择">超参数的选择</h3>
+<p>超参数是在训练开始前设置的参数，例如学习率、层数等。</p>
+<ul>
+<li><strong>学习率 (Learning Rate)</strong>:
+学习率是最重要的超参数。通常从 <code>0.1</code>, <code>0.01</code>,
+<code>0.001</code> 等值开始尝试。可以使用<strong>学习率衰减 (Learning
+Rate Decay)</strong>，即在训练过程中逐渐降低学习率。</li>
+<li><strong>网络架构 (层数和神经元数量)</strong>:
+从一个隐藏层开始。如果网络无法很好地拟合训练数据，再逐步增加层的深度和 / 或宽度。通常，增加深度比增加宽度更有效。</li>
+<li><strong>批量大小 (Batch Size)</strong>: 以前通常选择 2 的幂，如 32,
+64, 128，但现在的说法是，随便选什么数都行。比如，你可以选 520
+训练一个神经网络，送给你的对象（笑
+<ul>
+<li><strong>小批量</strong>: 训练速度快，引入的噪声可能有助于泛化。</li>
+<li><strong>大批量</strong>:
+梯度估计更准确，但可能陷入局部最小值，且需要更多内存。</li>
+</ul></li>
+<li><strong>优化器 (Optimizer)</strong>:
+我们只讨论了基本的梯度下降。现代优化器如 <strong>Adam</strong>,
+<strong>RMSprop</strong>
+通常能提供更快的收敛速度和更好的性能，它们会自动调整学习率。在平常实践中，Adam
+是一个非常好的默认选择。</li>
+</ul>
+<h2 id="优化-xor-网络">优化 XOR 网络</h2>
+<p>相信看完上面的内容后，我们对神经网络有了更多的了解。现在对 XOR
+网络的代码添加以下优化：</p>
+<ul>
+<li>Neuron 支持 tanh、sigmoid、relu 三种激活函数。</li>
+<li>隐藏层用 tanh，输出层用 sigmoid。</li>
+<li>权重初始化方式根据激活函数自动选择（tanh/sigmoid 用 Xavier，relu 用
+He）。</li>
+<li>训练和预测流程自动适配。</li>
+</ul>
+<p>下面是优化后的 XOR 神经网络训练完整代码：</p>
+<figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Neuron</span>:</span><br><span class="line">    <span class="string">"""</span></span><br><span class="line"><span class="string">    单个神经元。支持多种激活函数。</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, num_inputs, activation=<span class="string">"relu"</span></span>):</span><br><span class="line">        <span class="variable language_">self</span>.activation_name = activation</span><br><span class="line">        <span class="comment"># 根据激活函数选择初始化方式</span></span><br><span class="line">        <span class="keyword">if</span> activation == <span class="string">"relu"</span>:</span><br><span class="line">            <span class="variable language_">self</span>.weights = np.random.randn(num_inputs, <span class="number">1</span>) * np.sqrt(<span class="number">2.0</span> / num_inputs)</span><br><span class="line">        <span class="keyword">elif</span> activation <span class="keyword">in</span> (<span class="string">"tanh"</span>, <span class="string">"sigmoid"</span>):</span><br><span class="line">            <span class="variable language_">self</span>.weights = np.random.randn(num_inputs, <span class="number">1</span>) * np.sqrt(<span class="number">1.0</span> / num_inputs)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">raise</span> ValueError(<span class="string">f"不支持的激活函数: <span class="subst">{activation}</span>"</span>)</span><br><span class="line">        <span class="variable language_">self</span>.bias = np.zeros((<span class="number">1</span>, <span class="number">1</span>))</span><br><span class="line">        <span class="variable language_">self</span>.last_input = <span class="literal">None</span></span><br><span class="line">        <span class="variable language_">self</span>.last_z = <span class="literal">None</span></span><br><span class="line">        <span class="variable language_">self</span>.last_a = <span class="literal">None</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">relu</span>(<span class="params">self, z</span>):</span><br><span class="line">        <span class="string">"""ReLU 激活函数"""</span></span><br><span class="line">        <span class="keyword">return</span> np.maximum(<span class="number">0</span>, z)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">relu_derivative</span>(<span class="params">self, z</span>):</span><br><span class="line">        <span class="string">"""ReLU 激活函数的导数"""</span></span><br><span class="line">        <span class="keyword">return</span> np.where(z &gt; <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">tanh</span>(<span class="params">self, z</span>):</span><br><span class="line">        <span class="string">"""Tanh 激活函数"""</span></span><br><span class="line">        <span class="keyword">return</span> np.tanh(z)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">tanh_derivative</span>(<span class="params">self, z</span>):</span><br><span class="line">        <span class="string">"""Tanh 激活函数的导数"""</span></span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span> - np.tanh(z) ** <span class="number">2</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">sigmoid</span>(<span class="params">self, z</span>):</span><br><span class="line">        <span class="string">"""Sigmoid 激活函数"""</span></span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span> / (<span class="number">1</span> + np.exp(-z))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">sigmoid_derivative</span>(<span class="params">self, z</span>):</span><br><span class="line">        <span class="string">"""Sigmoid 激活函数的导数"""</span></span><br><span class="line">        s = <span class="variable language_">self</span>.sigmoid(z)</span><br><span class="line">        <span class="keyword">return</span> s * (<span class="number">1</span> - s)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, activations</span>):</span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">        执行前向传播：z = a * w + b, a_out = 激活函数(z)</span></span><br><span class="line"><span class="string">        """</span></span><br><span class="line">        <span class="variable language_">self</span>.last_input = activations</span><br><span class="line">        <span class="comment"># 计算加权和 z</span></span><br><span class="line">        z = np.dot(activations, <span class="variable language_">self</span>.weights) + <span class="variable language_">self</span>.bias</span><br><span class="line">        <span class="variable language_">self</span>.last_z = z</span><br><span class="line">        <span class="comment"># 应用激活函数</span></span><br><span class="line">        <span class="keyword">if</span> <span class="variable language_">self</span>.activation_name == <span class="string">"relu"</span>:</span><br><span class="line">            a = <span class="variable language_">self</span>.relu(z)</span><br><span class="line">        <span class="keyword">elif</span> <span class="variable language_">self</span>.activation_name == <span class="string">"tanh"</span>:</span><br><span class="line">            a = <span class="variable language_">self</span>.tanh(z)</span><br><span class="line">        <span class="keyword">elif</span> <span class="variable language_">self</span>.activation_name == <span class="string">"sigmoid"</span>:</span><br><span class="line">            a = <span class="variable language_">self</span>.sigmoid(z)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">raise</span> ValueError(<span class="string">f"不支持的激活函数: <span class="subst">{self.activation_name}</span>"</span>)</span><br><span class="line">        <span class="variable language_">self</span>.last_a = a</span><br><span class="line">        <span class="keyword">return</span> a</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">backward</span>(<span class="params">self, dC_da, learning_rate</span>):</span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">        执行反向传播，计算并应用梯度。</span></span><br><span class="line"><span class="string">        dC_da: 损失函数对本神经元输出 a 的梯度 (从下一层传来)</span></span><br><span class="line"><span class="string">        """</span></span><br><span class="line">        <span class="comment"># 1. 计算 da/dz (激活函数对z的梯度)</span></span><br><span class="line">        <span class="keyword">if</span> <span class="variable language_">self</span>.activation_name == <span class="string">"relu"</span>:</span><br><span class="line">            da_dz = <span class="variable language_">self</span>.relu_derivative(<span class="variable language_">self</span>.last_z)</span><br><span class="line">        <span class="keyword">elif</span> <span class="variable language_">self</span>.activation_name == <span class="string">"tanh"</span>:</span><br><span class="line">            da_dz = <span class="variable language_">self</span>.tanh_derivative(<span class="variable language_">self</span>.last_z)</span><br><span class="line">        <span class="keyword">elif</span> <span class="variable language_">self</span>.activation_name == <span class="string">"sigmoid"</span>:</span><br><span class="line">            da_dz = <span class="variable language_">self</span>.sigmoid_derivative(<span class="variable language_">self</span>.last_z)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">raise</span> ValueError(<span class="string">f"不支持的激活函数: <span class="subst">{self.activation_name}</span>"</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 2. 计算 dC/dz (损失对z的梯度) = dC/da * da/dz</span></span><br><span class="line">        dC_dz = dC_da * da_dz</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 3. 计算 dC/dw (损失对权重的梯度) = dC/dz * dz/dw</span></span><br><span class="line">        <span class="comment">#    dz/dw = last_input, 所以 dC/dw = last_input.T * dC/dz</span></span><br><span class="line">        dC_dw = np.dot(<span class="variable language_">self</span>.last_input.T, dC_dz)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 4. 计算 dC/db (损失对偏置的梯度) = dC/dz * dz/db</span></span><br><span class="line">        <span class="comment">#    dz/db = 1, 所以 dC/db = dC/dz</span></span><br><span class="line">        dC_db = np.<span class="built_in">sum</span>(dC_dz, axis=<span class="number">0</span>, keepdims=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 5. 计算 dC/da_prev (损失对前一层激活值的梯度)，用于传给前一层</span></span><br><span class="line">        <span class="comment">#    dC/da_prev = dC/dz * dz/da_prev</span></span><br><span class="line">        <span class="comment">#    dz/da_prev = weights, 所以 dC/da_prev = dC/dz * weights.T</span></span><br><span class="line">        dC_da_prev = np.dot(dC_dz, <span class="variable language_">self</span>.weights.T)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 6. 根据梯度更新权重和偏置</span></span><br><span class="line">        <span class="variable language_">self</span>.weights -= learning_rate * dC_dw</span><br><span class="line">        <span class="variable language_">self</span>.bias -= learning_rate * dC_db</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 返回 dC/da_prev，传递给前一层继续反向传播</span></span><br><span class="line">        <span class="keyword">return</span> dC_da_prev</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Layer</span>:</span><br><span class="line">    <span class="string">"""</span></span><br><span class="line"><span class="string">    一层神经元。支持指定激活函数。</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, num_neurons, num_inputs_per_neuron, activation=<span class="string">"relu"</span></span>):</span><br><span class="line">        <span class="variable language_">self</span>.neurons = [</span><br><span class="line">            Neuron(num_inputs_per_neuron, activation) <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(num_neurons)</span><br><span class="line">        ]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, activations</span>):</span><br><span class="line">        <span class="string">"""对层中所有神经元执行前向传播"""</span></span><br><span class="line">        <span class="comment"># hstack 用于水平堆叠输出，形成一个 (batch_size, num_neurons) 的矩阵</span></span><br><span class="line">        <span class="keyword">return</span> np.hstack([neuron.forward(activations) <span class="keyword">for</span> neuron <span class="keyword">in</span> <span class="variable language_">self</span>.neurons])</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">backward</span>(<span class="params">self, dC_da, learning_rate</span>):</span><br><span class="line">        <span class="string">"""对层中所有神经元执行反向传播"""</span></span><br><span class="line">        <span class="comment"># dC_da 的形状是 (batch_size, num_neurons)</span></span><br><span class="line">        <span class="comment"># 我们需要为每个神经元传入对应的梯度 dC_da[:, [i]]</span></span><br><span class="line">        <span class="comment"># 然后将所有神经元返回的 dC/da_prev 相加，得到传给前一层的总梯度</span></span><br><span class="line">        <span class="keyword">return</span> np.<span class="built_in">sum</span>(</span><br><span class="line">            [</span><br><span class="line">                neuron.backward(dC_da[:, [i]], learning_rate)</span><br><span class="line">                <span class="keyword">for</span> i, neuron <span class="keyword">in</span> <span class="built_in">enumerate</span>(<span class="variable language_">self</span>.neurons)</span><br><span class="line">            ],</span><br><span class="line">            axis=<span class="number">0</span>,</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">NeuralNetwork</span>:</span><br><span class="line">    <span class="string">"""</span></span><br><span class="line"><span class="string">    完整的神经网络模型。</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, layer_sizes, activations=<span class="literal">None</span></span>):</span><br><span class="line">        <span class="comment"># activations: 每层的激活函数（不含输入层），如 ["tanh", "sigmoid"]</span></span><br><span class="line">        <span class="keyword">if</span> activations <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">            <span class="comment"># 默认隐藏层tanh，输出层sigmoid</span></span><br><span class="line">            activations = [<span class="string">"tanh"</span>] * (<span class="built_in">len</span>(layer_sizes) - <span class="number">2</span>) + [<span class="string">"sigmoid"</span>]</span><br><span class="line">        <span class="keyword">assert</span> <span class="built_in">len</span>(activations) == <span class="built_in">len</span>(layer_sizes) - <span class="number">1</span></span><br><span class="line">        <span class="variable language_">self</span>.layers = []</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(layer_sizes) - <span class="number">1</span>):</span><br><span class="line">            <span class="variable language_">self</span>.layers.append(</span><br><span class="line">                Layer(layer_sizes[i + <span class="number">1</span>], layer_sizes[i], activations[i])</span><br><span class="line">            )</span><br><span class="line">        <span class="variable language_">self</span>.output_activation = activations[-<span class="number">1</span>]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, activations</span>):</span><br><span class="line">        <span class="string">"""对所有层执行前向传播"""</span></span><br><span class="line">        <span class="keyword">for</span> layer <span class="keyword">in</span> <span class="variable language_">self</span>.layers:</span><br><span class="line">            activations = layer.forward(activations)</span><br><span class="line">        <span class="keyword">return</span> activations</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">mse_loss</span>(<span class="params">self, y_true, y_pred</span>):</span><br><span class="line">        <span class="string">"""均方误差损失函数"""</span></span><br><span class="line">        <span class="keyword">return</span> np.mean((y_pred - y_true) ** <span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">derivative_mse_loss</span>(<span class="params">self, y_true, y_pred</span>):</span><br><span class="line">        <span class="string">"""均方误差损失函数的导数"""</span></span><br><span class="line">        <span class="keyword">return</span> <span class="number">2</span> * (y_pred - y_true) / y_true.shape[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">train</span>(<span class="params">self, X, y, epochs, learning_rate, batch_size=<span class="number">32</span></span>):</span><br><span class="line">        <span class="string">"""训练神经网络"""</span></span><br><span class="line">        <span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="built_in">range</span>(epochs):</span><br><span class="line">            total_loss = <span class="number">0</span></span><br><span class="line">            <span class="comment"># 使用小批量梯度下降</span></span><br><span class="line">            <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>, <span class="built_in">len</span>(X), batch_size):</span><br><span class="line">                X_batch = X[i : i + batch_size]</span><br><span class="line">                y_batch = y[i : i + batch_size]</span><br><span class="line"></span><br><span class="line">                <span class="comment"># 1. 前向传播</span></span><br><span class="line">                outputs = <span class="variable language_">self</span>.forward(X_batch)</span><br><span class="line"></span><br><span class="line">                <span class="comment"># 2. 计算损失</span></span><br><span class="line">                loss = <span class="variable language_">self</span>.mse_loss(y_batch, outputs)</span><br><span class="line">                total_loss += loss * <span class="built_in">len</span>(X_batch)</span><br><span class="line"></span><br><span class="line">                <span class="comment"># 3. 计算输出层的梯度</span></span><br><span class="line">                output_gradient = <span class="variable language_">self</span>.derivative_mse_loss(y_batch, outputs)</span><br><span class="line"></span><br><span class="line">                <span class="comment"># 4. 反向传播</span></span><br><span class="line">                <span class="keyword">for</span> layer <span class="keyword">in</span> <span class="built_in">reversed</span>(<span class="variable language_">self</span>.layers):</span><br><span class="line">                    output_gradient = layer.backward(output_gradient, learning_rate)</span><br><span class="line"></span><br><span class="line">            avg_loss = total_loss / <span class="built_in">len</span>(X)</span><br><span class="line">            <span class="comment"># 只在每1/10进度时输出一次</span></span><br><span class="line">            <span class="keyword">if</span> (</span><br><span class="line">                (epoch + <span class="number">1</span>) % <span class="built_in">max</span>(<span class="number">1</span>, epochs // <span class="number">10</span>) == <span class="number">0</span></span><br><span class="line">                <span class="keyword">or</span> epoch == <span class="number">0</span></span><br><span class="line">                <span class="keyword">or</span> epoch == epochs - <span class="number">1</span></span><br><span class="line">            ):</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">f"Epoch <span class="subst">{epoch+<span class="number">1</span>}</span>/<span class="subst">{epochs}</span>, Loss: <span class="subst">{avg_loss:<span class="number">.6</span>f}</span>"</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">predict</span>(<span class="params">self, X</span>):</span><br><span class="line">        <span class="string">"""用训练好的网络进行预测"""</span></span><br><span class="line">        out = <span class="variable language_">self</span>.forward(X)</span><br><span class="line">        <span class="comment"># 输出层为sigmoid时，返回概率</span></span><br><span class="line">        <span class="keyword">if</span> <span class="variable language_">self</span>.output_activation == <span class="string">"sigmoid"</span>:</span><br><span class="line">            <span class="keyword">return</span> out</span><br><span class="line">        <span class="keyword">return</span> out</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 1. 定义 XOR 数据集</span></span><br><span class="line">X_train = np.array([[<span class="number">0</span>, <span class="number">0</span>], [<span class="number">0</span>, <span class="number">1</span>], [<span class="number">1</span>, <span class="number">0</span>], [<span class="number">1</span>, <span class="number">1</span>]])</span><br><span class="line">y_train = np.array([[<span class="number">0</span>], [<span class="number">1</span>], [<span class="number">1</span>], [<span class="number">0</span>]])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 创建神经网络实例</span></span><br><span class="line"><span class="comment"># 2个输入节点，一个有2个节点的隐藏层，1个输出节点，激活函数分别为tanh和sigmoid</span></span><br><span class="line">nn = NeuralNetwork([<span class="number">2</span>, <span class="number">2</span>, <span class="number">1</span>], activations=[<span class="string">"tanh"</span>, <span class="string">"sigmoid"</span>])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 训练网络</span></span><br><span class="line"><span class="comment"># XOR 是一个非线性问题，需要足够的迭代次数和合适的学习率</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"开始训练XOR网络..."</span>)</span><br><span class="line">nn.train(X_train, y_train, epochs=<span class="number">200000</span>, learning_rate=<span class="number">0.1</span>, batch_size=<span class="number">4</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">"训练完成。"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 进行预测并展示结果</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"\n对输入进行预测:"</span>)</span><br><span class="line"><span class="keyword">for</span> x_input <span class="keyword">in</span> X_train:</span><br><span class="line">    prediction = nn.predict(x_input.reshape(<span class="number">1</span>, -<span class="number">1</span>))</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f"输入: <span class="subst">{x_input}</span>, 预测输出: <span class="subst">{prediction[<span class="number">0</span>][<span class="number">0</span>]:<span class="number">.4</span>f}</span>"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 开始训练XOR网络...</span></span><br><span class="line"><span class="comment"># Epoch 1/200000, Loss: 0.280354</span></span><br><span class="line"><span class="comment"># Epoch 20000/200000, Loss: 0.000450</span></span><br><span class="line"><span class="comment"># Epoch 40000/200000, Loss: 0.000213</span></span><br><span class="line"><span class="comment"># Epoch 60000/200000, Loss: 0.000139</span></span><br><span class="line"><span class="comment"># Epoch 80000/200000, Loss: 0.000103</span></span><br><span class="line"><span class="comment"># Epoch 100000/200000, Loss: 0.000081</span></span><br><span class="line"><span class="comment"># Epoch 120000/200000, Loss: 0.000067</span></span><br><span class="line"><span class="comment"># Epoch 140000/200000, Loss: 0.000058</span></span><br><span class="line"><span class="comment"># Epoch 160000/200000, Loss: 0.000050</span></span><br><span class="line"><span class="comment"># Epoch 180000/200000, Loss: 0.000044</span></span><br><span class="line"><span class="comment"># Epoch 200000/200000, Loss: 0.000040</span></span><br><span class="line"><span class="comment"># 训练完成。</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 对输入进行预测:</span></span><br><span class="line"><span class="comment"># 输入: [0 0], 预测输出: 0.0055</span></span><br><span class="line"><span class="comment"># 输入: [0 1], 预测输出: 0.9928</span></span><br><span class="line"><span class="comment"># 输入: [1 0], 预测输出: 0.9928</span></span><br><span class="line"><span class="comment"># 输入: [1 1], 预测输出: 0.0049</span></span><br></pre></td></tr></tbody></table></figure>
+<p>可以明显看到 XOR
+网络的预测更加精准了，并且我在本地连续训练了很多次，几乎不再有训练失败的情况发生。显然，我们的神经网络实现可以说成功了。</p>
 ]]></content>
       <categories>
         <category>Machine learning</category>
