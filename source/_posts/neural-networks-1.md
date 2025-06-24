@@ -1,5 +1,5 @@
 ---
-title: 从零开始的神经网络学习
+title: 从零开始的神经网络学习(一)：浅析神经网络
 categories:
   - Machine learning
 tags:
