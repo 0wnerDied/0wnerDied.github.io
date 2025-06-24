@@ -134,3 +134,9 @@ search:
   field: post
   format: html
   limit: 10000
+
+math:
+  engine: 'mathjax'
+  mathjax:
+    src: custom_mathjax_source
+    config:
