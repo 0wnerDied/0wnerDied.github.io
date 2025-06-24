@@ -911,10 +911,10 @@ Dropout 等强大的技术。</li>
 <p>正如我们所见，损失 (Loss)
 随着训练的进行而稳步下降，这表明我们的网络确实在学习如何解决 XOR
 问题。</p>
-<p>但要知道，训练其实是有随机性的，上面的代码在我本地测试中成功率非常低，训练十次都不一定能有一次成功，极大概率会训练失败，可以说这是一个失败的网络实现。这时就要调整参数或者更换合适的激活函数。</p>
 <h3 id="查看结果">查看结果</h3>
 <figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment"># 4. 进行预测并展示结果</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"\n对输入进行预测:"</span>)</span><br><span class="line"><span class="keyword">for</span> x_input <span class="keyword">in</span> X_train:</span><br><span class="line">    prediction = nn.predict(x_input.reshape(<span class="number">1</span>, -<span class="number">1</span>))</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f"输入: <span class="subst">{x_input}</span>, 预测输出: <span class="subst">{prediction[<span class="number">0</span>][<span class="number">0</span>]:<span class="number">.4</span>f}</span>"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 对输入进行预测:</span></span><br><span class="line"><span class="comment"># 输入: [0 0], 预测输出: 0.0027</span></span><br><span class="line"><span class="comment"># 输入: [0 1], 预测输出: 0.9981</span></span><br><span class="line"><span class="comment"># 输入: [1 0], 预测输出: 0.9981</span></span><br><span class="line"><span class="comment"># 输入: [1 1], 预测输出: 0.0028</span></span><br></pre></td></tr></tbody></table></figure>
-<p>预测值非常接近真实值，证明这个简单的神经网络框架是有效的。</p>
+<p><del>预测值非常接近真实值，证明这个简单的神经网络框架是有效的。</del>
+其实这个结果是我精挑细选，训练了很多很多次才得到的成功预测结果，训练其实是有随机性的，上面的代码在我本地测试中成功率非常低，训练十次都不一定能有一次成功，极大概率会训练失败，可以说这是一个失败的网络实现。这时就要调整参数或者更换合适的激活函数。</p>
 <h2 id="其它的激活函数">其它的激活函数</h2>
 <p>前面我们只介绍了
 ReLU。虽然它非常流行且有效，但了解其他激活函数以及如何为输出层做选择也同样重要。</p>
