@@ -2,6 +2,24 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://0wnerdied.github.io/Machine-learning/36604.html</loc>
+    
+    <lastmod>2025-06-24</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://0wnerdied.github.io/kernel/50584.html</loc>
+    
+    <lastmod>2025-06-24</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://0wnerdied.github.io/tags/index.html</loc>
     
     <lastmod>2025-06-23</lastmod>
@@ -19,19 +37,10 @@
     <priority>0.6</priority>
   </url>
   
-  <url>
-    <loc>https://0wnerdied.github.io/kernel/50584.html</loc>
-    
-    <lastmod>2025-06-23</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
 
   <url>
     <loc>https://0wnerdied.github.io/</loc>
-    <lastmod>2025-06-23</lastmod>
+    <lastmod>2025-06-24</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -39,7 +48,14 @@
   
   <url>
     <loc>https://0wnerdied.github.io/tags/ebpf/</loc>
-    <lastmod>2025-06-23</lastmod>
+    <lastmod>2025-06-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://0wnerdied.github.io/tags/NN/</loc>
+    <lastmod>2025-06-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
@@ -48,7 +64,14 @@
   
   <url>
     <loc>https://0wnerdied.github.io/categories/kernel/</loc>
-    <lastmod>2025-06-23</lastmod>
+    <lastmod>2025-06-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://0wnerdied.github.io/categories/Machine-learning/</loc>
+    <lastmod>2025-06-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>

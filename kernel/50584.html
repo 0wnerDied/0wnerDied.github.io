@@ -20,18 +20,18 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"0wnerdied.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js" defer></script>
 
-    <meta name="description" content="一、eBPF 工作原理总览eBPF，一个源于 Linux 内核的革命性技术，允许我们在内核这个特权环境中安全地运行沙盒程序。值得一提的是，BPF 最初是 “伯克利数据包过滤器” 的缩写，但如今它的能力已远超网络领域，因此 “BPF” 已成为一个独立术语，而其前身则被称为 cBPF (classic BPF)。 eBPF 程序并非直接在 CPU 上运行，而是在一个位于内核中的、高度安全和高效的 BP">
+    <meta name="description" content="eBPF 工作原理总览 eBPF，一个源于 Linux 内核的革命性技术，允许我们在内核这个特权环境中安全地运行沙盒程序。值得一提的是，BPF 最初是 “伯克利数据包过滤器” 的缩写，但如今它的能力已远超网络领域，因此 “BPF” 已成为一个独立术语，而其前身则被称为 cBPF (classic BPF)。 eBPF 程序并非直接在 CPU 上运行，而是在一个位于内核中的、高度安全和高效的 BPF">
 <meta property="og:type" content="article">
 <meta property="og:title" content="浅析 eBPF">
 <meta property="og:url" content="https://0wnerdied.github.io/kernel/50584.html">
 <meta property="og:site_name" content="0wnerD1ed&#39;s blog">
-<meta property="og:description" content="一、eBPF 工作原理总览eBPF，一个源于 Linux 内核的革命性技术，允许我们在内核这个特权环境中安全地运行沙盒程序。值得一提的是，BPF 最初是 “伯克利数据包过滤器” 的缩写，但如今它的能力已远超网络领域，因此 “BPF” 已成为一个独立术语，而其前身则被称为 cBPF (classic BPF)。 eBPF 程序并非直接在 CPU 上运行，而是在一个位于内核中的、高度安全和高效的 BP">
+<meta property="og:description" content="eBPF 工作原理总览 eBPF，一个源于 Linux 内核的革命性技术，允许我们在内核这个特权环境中安全地运行沙盒程序。值得一提的是，BPF 最初是 “伯克利数据包过滤器” 的缩写，但如今它的能力已远超网络领域，因此 “BPF” 已成为一个独立术语，而其前身则被称为 cBPF (classic BPF)。 eBPF 程序并非直接在 CPU 上运行，而是在一个位于内核中的、高度安全和高效的 BPF">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://0wnerdied.github.io/kernel/50584/kernel_panic.jpg">
 <meta property="og:image" content="https://0wnerdied.github.io/kernel/50584/%E6%80%BB%E8%A7%88.png">
 <meta property="og:image" content="https://0wnerdied.github.io/kernel/50584/%E8%99%9A%E6%8B%9F%E6%9C%BA.png">
 <meta property="article:published_time" content="2025-06-23T12:19:34.000Z">
-<meta property="article:modified_time" content="2025-06-23T17:17:23.916Z">
+<meta property="article:modified_time" content="2025-06-24T09:50:12.624Z">
 <meta property="article:author" content="0wnerD1ed">
 <meta property="article:tag" content="ebpf">
 <meta name="twitter:card" content="summary">
@@ -74,6 +74,12 @@
   <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 
 
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js" defer></script>
 
 
 <link rel="dns-prefetch" href="blog-waline-mauve.vercel.app">
@@ -163,7 +169,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81eBPF-%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86%E6%80%BB%E8%A7%88"><span class="nav-number">1.</span> <span class="nav-text">一、eBPF 工作原理总览</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81BPF-%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B8%8E%E6%8C%87%E4%BB%A4%E9%9B%86"><span class="nav-number">2.</span> <span class="nav-text">二、BPF 虚拟机与指令集</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E6%8C%87%E4%BB%A4%E6%A0%BC%E5%BC%8F"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 指令格式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-%E6%93%8D%E4%BD%9C%E7%A0%81-Opcode"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 操作码 (Opcode)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-%E5%AD%98%E5%8F%96%E6%8C%87%E4%BB%A4-LD-LDX-ST-STX"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 存取指令 (LD&#x2F;LDX, ST&#x2F;STX)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-1-64%E4%BD%8D%E7%AB%8B%E5%8D%B3%E6%95%B0%E5%8A%A0%E8%BD%BD-LDD"><span class="nav-number">2.3.1.</span> <span class="nav-text">2.3.1 64 位立即数加载 (LDD)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-2-%E5%B8%B8%E8%A7%84%E4%B8%8E%E7%AC%A6%E5%8F%B7%E6%89%A9%E5%B1%95%E5%8A%A0%E8%BD%BD-%E5%AD%98%E5%82%A8"><span class="nav-number">2.3.2.</span> <span class="nav-text">2.3.2 常规与符号扩展加载 &#x2F; 存储</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-3-%E5%8E%9F%E5%AD%90%E6%93%8D%E4%BD%9C-Atomic"><span class="nav-number">2.3.3.</span> <span class="nav-text">2.3.3 原子操作 (Atomic)</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-%E7%AE%97%E6%9C%AF%E4%B8%8E%E8%B7%B3%E8%BD%AC%E6%8C%87%E4%BB%A4-ALU-JMP"><span class="nav-number">2.4.</span> <span class="nav-text">2.4 算术与跳转指令 (ALU&#x2F;JMP)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-4-1-%E7%AE%97%E6%9C%AF%E6%8C%87%E4%BB%A4-ALU-ALU64"><span class="nav-number">2.4.1.</span> <span class="nav-text">2.4.1 算术指令 (ALU&#x2F;ALU64)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-4-2-%E8%B7%B3%E8%BD%AC%E6%8C%87%E4%BB%A4-JMP-JMP32"><span class="nav-number">2.4.2.</span> <span class="nav-text">2.4.2 跳转指令 (JMP&#x2F;JMP32)</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%EF%BC%9ABPF-Maps"><span class="nav-number">3.</span> <span class="nav-text">三、核心组件：BPF Maps</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E8%83%BD%E5%8A%9B%E6%89%A9%E5%B1%95%EF%BC%9A%E5%86%85%E6%A0%B8%E8%BE%85%E5%8A%A9%E5%87%BD%E6%95%B0"><span class="nav-number">4.</span> <span class="nav-text">四、能力扩展：内核辅助函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81BPF-%E7%A8%8B%E5%BA%8F%E7%B1%BB%E5%9E%8B"><span class="nav-number">5.</span> <span class="nav-text">五、BPF 程序类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%AD%E3%80%81%E7%BC%96%E8%AF%91%E3%80%81%E5%8A%A0%E8%BD%BD%E4%B8%8E%E6%A0%A1%E9%AA%8C"><span class="nav-number">6.</span> <span class="nav-text">六、编译、加载与校验</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%83%E3%80%81%E6%89%A7%E8%A1%8C%EF%BC%9A%E8%A7%A3%E9%87%8A%E5%99%A8%E4%B8%8E-JIT-%E7%BC%96%E8%AF%91%E5%99%A8"><span class="nav-number">7.</span> <span class="nav-text">七、执行：解释器与 JIT 编译器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#7-1-%E8%A7%A3%E9%87%8A%E5%99%A8-Interpreter"><span class="nav-number">7.1.</span> <span class="nav-text">7.1 解释器 (Interpreter)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-2-JIT-%E7%BC%96%E8%AF%91%E5%99%A8-Just-In-Time"><span class="nav-number">7.2.</span> <span class="nav-text">7.2 JIT 编译器 (Just-In-Time)</span></a></li></ol></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#ebpf-%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86%E6%80%BB%E8%A7%88"><span class="nav-number">1.</span> <span class="nav-text">eBPF 工作原理总览</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bpf-%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B8%8E%E6%8C%87%E4%BB%A4%E9%9B%86"><span class="nav-number">2.</span> <span class="nav-text">BPF 虚拟机与指令集</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8C%87%E4%BB%A4%E6%A0%BC%E5%BC%8F"><span class="nav-number">2.1.</span> <span class="nav-text">指令格式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%93%8D%E4%BD%9C%E7%A0%81-opcode"><span class="nav-number">2.2.</span> <span class="nav-text">操作码 (Opcode)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%98%E5%8F%96%E6%8C%87%E4%BB%A4-ldldx-ststx"><span class="nav-number">2.3.</span> <span class="nav-text">存取指令 (LD&#x2F;LDX, ST&#x2F;STX)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%8D%E7%AB%8B%E5%8D%B3%E6%95%B0%E5%8A%A0%E8%BD%BD-ldd"><span class="nav-number">2.3.1.</span> <span class="nav-text">64 位立即数加载 (LDD)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B8%B8%E8%A7%84%E4%B8%8E%E7%AC%A6%E5%8F%B7%E6%89%A9%E5%B1%95%E5%8A%A0%E8%BD%BD%E5%AD%98%E5%82%A8"><span class="nav-number">2.3.2.</span> <span class="nav-text">常规与符号扩展加载 &#x2F; 存储</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8E%9F%E5%AD%90%E6%93%8D%E4%BD%9C-atomic"><span class="nav-number">2.3.3.</span> <span class="nav-text">原子操作 (Atomic)</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%97%E6%9C%AF%E4%B8%8E%E8%B7%B3%E8%BD%AC%E6%8C%87%E4%BB%A4-alujmp"><span class="nav-number">2.4.</span> <span class="nav-text">算术与跳转指令 (ALU&#x2F;JMP)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AE%97%E6%9C%AF%E6%8C%87%E4%BB%A4-alualu64"><span class="nav-number">2.4.1.</span> <span class="nav-text">算术指令 (ALU&#x2F;ALU64)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%B7%B3%E8%BD%AC%E6%8C%87%E4%BB%A4-jmpjmp32"><span class="nav-number">2.4.2.</span> <span class="nav-text">跳转指令 (JMP&#x2F;JMP32)</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6bpf-maps"><span class="nav-number">3.</span> <span class="nav-text">核心组件：BPF Maps</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%83%BD%E5%8A%9B%E6%89%A9%E5%B1%95%E5%86%85%E6%A0%B8%E8%BE%85%E5%8A%A9%E5%87%BD%E6%95%B0"><span class="nav-number">4.</span> <span class="nav-text">能力扩展：内核辅助函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bpf-%E7%A8%8B%E5%BA%8F%E7%B1%BB%E5%9E%8B"><span class="nav-number">5.</span> <span class="nav-text">BPF 程序类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E5%8A%A0%E8%BD%BD%E4%B8%8E%E6%A0%A1%E9%AA%8C"><span class="nav-number">6.</span> <span class="nav-text">编译、加载与校验</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%A7%E8%A1%8C%E8%A7%A3%E9%87%8A%E5%99%A8%E4%B8%8E-jit-%E7%BC%96%E8%AF%91%E5%99%A8"><span class="nav-number">7.</span> <span class="nav-text">执行：解释器与 JIT 编译器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%87%8A%E5%99%A8-interpreter"><span class="nav-number">7.1.</span> <span class="nav-text">解释器 (Interpreter)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#jit-%E7%BC%96%E8%AF%91%E5%99%A8-just-in-time"><span class="nav-number">7.2.</span> <span class="nav-text">JIT 编译器 (Just-In-Time)</span></a></li></ol></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -178,18 +184,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">1</span>
+          <span class="site-state-item-count">2</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-count">2</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-count">2</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -263,7 +269,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2025-06-24 01:17:23" itemprop="dateModified" datetime="2025-06-24T01:17:23+08:00">2025-06-24</time>
+      <time title="修改时间：2025-06-24 17:50:12" itemprop="dateModified" datetime="2025-06-24T17:50:12+08:00">2025-06-24</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -303,7 +309,7 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>6.1k</span>
+      <span>5.8k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -320,426 +326,600 @@
     
     
     
-    <div class="post-body" itemprop="articleBody"><h2 id="一、eBPF-工作原理总览"><a href="#一、eBPF-工作原理总览" class="headerlink" title="一、eBPF 工作原理总览"></a>一、eBPF 工作原理总览</h2><p>eBPF，一个源于 Linux 内核的革命性技术，允许我们在内核这个特权环境中安全地运行沙盒程序。值得一提的是，BPF 最初是 “伯克利数据包过滤器” 的缩写，但如今它的能力已远超网络领域，因此 “BPF” 已成为一个独立术语，而其前身则被称为 <strong>cBPF (classic BPF)</strong>。</p>
-<p>eBPF 程序并非直接在 CPU 上运行，而是在一个位于内核中的、高度安全和高效的 <strong>BPF 虚拟机</strong> 上执行。我们可以将该虚拟机理解为一个沙盒，确保 eBPF 代码不会导致 kernel panic。</p>
+    <div class="post-body" itemprop="articleBody"><h2 id="ebpf-工作原理总览">eBPF 工作原理总览</h2>
+<p>eBPF，一个源于 Linux
+内核的革命性技术，允许我们在内核这个特权环境中安全地运行沙盒程序。值得一提的是，BPF
+最初是 “伯克利数据包过滤器” 的缩写，但如今它的能力已远超网络领域，因此
+“BPF” 已成为一个独立术语，而其前身则被称为 <strong>cBPF (classic
+BPF)</strong>。</p>
+<p>eBPF 程序并非直接在 CPU
+上运行，而是在一个位于内核中的、高度安全和高效的 <strong>BPF
+虚拟机</strong> 上执行。我们可以将该虚拟机理解为一个沙盒，确保 eBPF
+代码不会导致 kernel panic。</p>
 <img src="/kernel/50584/kernel_panic.jpg" class="" title="panic">
-
-<p>为了让这个虚拟机正常运行，我们需要给它一套指令，这就是 <strong>BPF 指令集</strong>。我们用 C 语言等高级语言写好的逻辑，通过编译器（如 LLVM/Clang）翻译成 BPF 指令集字节码，然后才能交给虚拟机执行。</p>
-<p>但光有代码执行是不够的，eBPF 程序经常需要和用户空间程序或者内核的其他部分交换数据，这时就需要用到 <strong>BPF Maps</strong>。这是一种高效的键值对存储，是 eBPF 程序与外界沟通的桥梁。</p>
-<p>此外，为了让 eBPF 程序能与内核交互（比如获取当前进程 ID），内核提供了一组固定的<strong>辅助函数 (Helper Functions)</strong>。eBPF 程序只能调用这些预设的、安全的函数，从而在获得强大能力的同时，保证了内核稳定。</p>
-<p>最后，编译好的 BPF 字节码在通过 <code>bpf()</code> 系统调用加载到内核时，会经过一个严格的<strong>校验器 (Verifier)</strong> 检查，确保代码无害。通过后，字节码可以被<strong>即时编译器 (JIT)</strong> 翻译成原生机器码，以接近本地代码的速度执行。</p>
+<p>为了让这个虚拟机正常运行，我们需要给它一套指令，这就是 <strong>BPF
+指令集</strong>。我们用 C 语言等高级语言写好的逻辑，通过编译器（如
+LLVM/Clang）翻译成 BPF 指令集字节码，然后才能交给虚拟机执行。</p>
+<p>但光有代码执行是不够的，eBPF
+程序经常需要和用户空间程序或者内核的其他部分交换数据，这时就需要用到
+<strong>BPF Maps</strong>。这是一种高效的键值对存储，是 eBPF
+程序与外界沟通的桥梁。</p>
+<p>此外，为了让 eBPF 程序能与内核交互（比如获取当前进程
+ID），内核提供了一组固定的<strong>辅助函数 (Helper
+Functions)</strong>。eBPF
+程序只能调用这些预设的、安全的函数，从而在获得强大能力的同时，保证了内核稳定。</p>
+<p>最后，编译好的 BPF 字节码在通过 <code>bpf()</code>
+系统调用加载到内核时，会经过一个严格的<strong>校验器 (Verifier)</strong>
+检查，确保代码无害。通过后，字节码可以被<strong>即时编译器
+(JIT)</strong> 翻译成原生机器码，以接近本地代码的速度执行。</p>
 <img src="/kernel/50584/%E6%80%BB%E8%A7%88.png" class="" title="总览">
-
 <p>接下来，我们将逐一拆解这些核心组件。</p>
-<h2 id="二、BPF-虚拟机与指令集"><a href="#二、BPF-虚拟机与指令集" class="headerlink" title="二、BPF 虚拟机与指令集"></a>二、BPF 虚拟机与指令集</h2><p>BPF 程序运行在一个小巧而高效的虚拟机上。这个虚拟机有自己的一套寄存器和指令集，就像一个微型的 CPU。</p>
+<h2 id="bpf-虚拟机与指令集">BPF 虚拟机与指令集</h2>
+<p>BPF
+程序运行在一个小巧而高效的虚拟机上。这个虚拟机有自己的一套寄存器和指令集，就像一个微型的
+CPU。</p>
 <ul>
-<li><strong>寄存器</strong>: BPF 虚拟机有 11 个 64 位寄存器。<ul>
-<li><code>R0</code> - <code>R9</code>: 通用寄存器，用于计算、存储数据和传递参数。</li>
+<li><strong>寄存器</strong>: BPF 虚拟机有 11 个 64 位寄存器。
+<ul>
+<li><code>R0</code> - <code>R9</code>:
+通用寄存器，用于计算、存储数据和传递参数。</li>
 <li><code>R10</code>: 只读的帧指针寄存器，用于访问栈空间。</li>
-</ul>
-</li>
+</ul></li>
 </ul>
 <img src="/kernel/50584/%E8%99%9A%E6%8B%9F%E6%9C%BA.png" class="" title="vm">
-
 <ul>
-<li><strong>指令集</strong>: BPF 指令集中，所有指令都是固定长度的，运行更加简单高效。</li>
+<li><strong>指令集</strong>: BPF
+指令集中，所有指令都是固定长度的，运行更加简单高效。</li>
 </ul>
-<h3 id="2-1-指令格式"><a href="#2-1-指令格式" class="headerlink" title="2.1 指令格式"></a>2.1 指令格式</h3><p>BPF 指令集官方说明可以参考 Linux 内核文档：<a target="_blank" rel="noopener" href="https://web.git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/Documentation/bpf/standardization/instruction-set.rst">BPF Instruction Set</a></p>
+<h3 id="指令格式">指令格式</h3>
+<p>BPF 指令集官方说明可以参考 Linux 内核文档：<a target="_blank" rel="noopener" href="https://web.git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/Documentation/bpf/standardization/instruction-set.rst">BPF
+Instruction Set</a></p>
 <p>BPF 指令有两种格式：</p>
-<ol>
-<li><p><strong>基本指令 (64-bit)</strong>: 这是最常见的格式，由操作码、寄存器、偏移量和立即数组成。所有未使用的字段都必须为零。</p>
+<ol type="1">
+<li><strong>基本指令 (64-bit)</strong>:
+这是最常见的格式，由操作码、寄存器、偏移量和立即数组成。所有未使用的字段都必须为零。
 <ul>
 <li><code>opcode</code>: 8 bit (操作码)</li>
-<li><code>regs</code>: 8 bit (目标寄存器: 4 bit, 源寄存器: 4 bit)，在大端序和小端序主机上，这两个 4-bit 字段的顺序是相反的。</li>
+<li><code>regs</code>: 8 bit (目标寄存器: 4 bit, 源寄存器: 4
+bit)，在大端序和小端序主机上，这两个 4-bit 字段的顺序是相反的。</li>
 <li><code>offset</code>: 16 bit (偏移量)</li>
 <li><code>imm</code>: 32 bit (立即数)</li>
-</ul>
-</li>
-<li><p><strong> 宽指令 (128-bit)</strong>: 专用于加载一个 64 位的立即数 ，(<code>ld_imm64</code>)。它由两个连续的 64 位指令构成。</p>
+</ul></li>
+<li><strong> 宽指令 (128-bit)</strong>: 专用于加载一个 64 位的立即数
+，(<code>ld_imm64</code>)。它由两个连续的 64 位指令构成。
 <ul>
-<li>第一个 64 位指令：正常的基本指令格式，其中 imm 字段存放 64 位立即数的低 32 位</li>
-<li>第二个 64 位指令：前 32 位（opcode + regs + offset）必须全部为 0，imm 字段存放 64 位立即数的高 32 位</li>
-</ul>
-</li>
+<li>第一个 64 位指令：正常的基本指令格式，其中 imm 字段存放 64
+位立即数的低 32 位</li>
+<li>第二个 64 位指令：前 32 位（opcode + regs + offset）必须全部为
+0，imm 字段存放 64 位立即数的高 32 位</li>
+</ul></li>
 </ol>
-<h3 id="2-2-操作码-Opcode"><a href="#2-2-操作码-Opcode" class="headerlink" title="2.2 操作码 (Opcode)"></a>2.2 操作码 (Opcode)</h3><p><code>opcode</code> 决定了一条指令做什么。它的最后 3 位定义了指令的<strong>类别 (Class)</strong>。</p>
+<h3 id="操作码-opcode">操作码 (Opcode)</h3>
+<p><code>opcode</code> 决定了一条指令做什么。它的最后 3
+位定义了指令的<strong>类别 (Class)</strong>。</p>
 <table>
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
 <thead>
 <tr>
-<th align="left">value</th>
-<th align="left">class</th>
-<th align="left"> 描述</th>
+<th style="text-align: left;">value</th>
+<th style="text-align: left;">class</th>
+<th style="text-align: left;"> 描述</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="left"> 0x00</td>
-<td align="left">LD</td>
-<td align="left"><strong> 加载 (Load)</strong>，非标准加载操作，主要用于 <code>ld_imm64</code> 宽指令。</td>
+<tbody>
+<tr>
+<td style="text-align: left;"> 0x00</td>
+<td style="text-align: left;">LD</td>
+<td style="text-align: left;"><strong> 加载
+(Load)</strong>，非标准加载操作，主要用于 <code>ld_imm64</code>
+宽指令。</td>
 </tr>
 <tr>
-<td align="left">0x01</td>
-<td align="left">LDX</td>
-<td align="left"><strong> 加载 (Load)</strong>，从内存读取数据到寄存器。</td>
+<td style="text-align: left;">0x01</td>
+<td style="text-align: left;">LDX</td>
+<td style="text-align: left;"><strong> 加载
+(Load)</strong>，从内存读取数据到寄存器。</td>
 </tr>
 <tr>
-<td align="left">0x02</td>
-<td align="left">ST</td>
-<td align="left"><strong> 存储 (Store)</strong>，将立即数写入内存。</td>
+<td style="text-align: left;">0x02</td>
+<td style="text-align: left;">ST</td>
+<td style="text-align: left;"><strong> 存储
+(Store)</strong>，将立即数写入内存。</td>
 </tr>
 <tr>
-<td align="left">0x03</td>
-<td align="left">STX</td>
-<td align="left"><strong> 存储 (Store)</strong>，将寄存器的值写入内存。</td>
+<td style="text-align: left;">0x03</td>
+<td style="text-align: left;">STX</td>
+<td style="text-align: left;"><strong> 存储
+(Store)</strong>，将寄存器的值写入内存。</td>
 </tr>
 <tr>
-<td align="left">0x04</td>
-<td align="left">ALU</td>
-<td align="left">32 位算术与逻辑运算。</td>
+<td style="text-align: left;">0x04</td>
+<td style="text-align: left;">ALU</td>
+<td style="text-align: left;">32 位算术与逻辑运算。</td>
 </tr>
 <tr>
-<td align="left">0x05</td>
-<td align="left">JMP</td>
-<td align="left"><strong> 跳转 (Jump)</strong>，64 位操作数的条件或无条件跳转。</td>
+<td style="text-align: left;">0x05</td>
+<td style="text-align: left;">JMP</td>
+<td style="text-align: left;"><strong> 跳转
+(Jump)</strong>，64 位操作数的条件或无条件跳转。</td>
 </tr>
 <tr>
-<td align="left">0x06</td>
-<td align="left">JMP32</td>
-<td align="left"><strong> 跳转 (Jump)</strong>，32 位操作数的条件或无条件跳转。</td>
+<td style="text-align: left;">0x06</td>
+<td style="text-align: left;">JMP32</td>
+<td style="text-align: left;"><strong> 跳转
+(Jump)</strong>，32 位操作数的条件或无条件跳转。</td>
 </tr>
 <tr>
-<td align="left">0x07</td>
-<td align="left">ALU64</td>
-<td align="left">64 位算术与逻辑运算。</td>
+<td style="text-align: left;">0x07</td>
+<td style="text-align: left;">ALU64</td>
+<td style="text-align: left;">64 位算术与逻辑运算。</td>
 </tr>
-</tbody></table>
-<h3 id="2-3-存取指令-LD-LDX-ST-STX"><a href="#2-3-存取指令-LD-LDX-ST-STX" class="headerlink" title="2.3 存取指令 (LD/LDX, ST/STX)"></a>2.3 存取指令 (LD/LDX, ST/STX)</h3><p>这类指令负责在寄存器和内存之间搬运数据。它的 <code>opcode</code> 除了类别外，还包含了<strong>寻址模式 (Mode)</strong> 和<strong>数据大小 (Size)</strong>。</p>
+</tbody>
+</table>
+<h3 id="存取指令-ldldx-ststx">存取指令 (LD/LDX, ST/STX)</h3>
+<p>这类指令负责在寄存器和内存之间搬运数据。它的 <code>opcode</code>
+除了类别外，还包含了<strong>寻址模式 (Mode)</strong> 和<strong>数据大小
+(Size)</strong>。</p>
 <p><strong>寻址模式 (Mode)</strong></p>
 <table>
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
 <thead>
 <tr>
-<th align="left">value</th>
-<th align="left">mode modifier</th>
-<th align="left"> 描述</th>
+<th style="text-align: left;">value</th>
+<th style="text-align: left;">mode modifier</th>
+<th style="text-align: left;"> 描述</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="left"> 0</td>
-<td align="left">IMM</td>
-<td align="left"><strong> 立即数 (Immediate)</strong>，用于 <code>LDD</code> 指令加载 64 位立即数。</td>
+<tbody>
+<tr>
+<td style="text-align: left;"> 0</td>
+<td style="text-align: left;">IMM</td>
+<td style="text-align: left;"><strong> 立即数 (Immediate)</strong>，用于
+<code>LDD</code> 指令加载 64 位立即数。</td>
 </tr>
 <tr>
-<td align="left">1</td>
-<td align="left">ABS</td>
-<td align="left"><strong> 绝对寻址 (Absolute)</strong>，用于传统 cBPF，已废弃。</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">ABS</td>
+<td style="text-align: left;"><strong> 绝对寻址
+(Absolute)</strong>，用于传统 cBPF，已废弃。</td>
 </tr>
 <tr>
-<td align="left">2</td>
-<td align="left">IND</td>
-<td align="left"><strong> 间接寻址 (Indirect)</strong>，用于传统 cBPF，已废弃。</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">IND</td>
+<td style="text-align: left;"><strong> 间接寻址
+(Indirect)</strong>，用于传统 cBPF，已废弃。</td>
 </tr>
 <tr>
-<td align="left">3</td>
-<td align="left">MEM</td>
-<td align="left"><strong> 常规内存操作 (Memory)</strong>，最常见的加载和存储模式。</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">MEM</td>
+<td style="text-align: left;"><strong> 常规内存操作
+(Memory)</strong>，最常见的加载和存储模式。</td>
 </tr>
 <tr>
-<td align="left">4</td>
-<td align="left">MEMSX</td>
-<td align="left"><strong> 符号扩展加载 (Sign-extending load)</strong>，加载时将有符号小整数正确扩展到 64 位。</td>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">MEMSX</td>
+<td style="text-align: left;"><strong> 符号扩展加载 (Sign-extending
+load)</strong>，加载时将有符号小整数正确扩展到 64 位。</td>
 </tr>
 <tr>
-<td align="left">6</td>
-<td align="left">ATOMIC</td>
-<td align="left"><strong> 原子操作 (Atomic)</strong>，用于实现安全的并发数据修改。</td>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">ATOMIC</td>
+<td style="text-align: left;"><strong> 原子操作
+(Atomic)</strong>，用于实现安全的并发数据修改。</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <p><strong>数据大小 (Size)</strong></p>
 <table>
 <thead>
 <tr>
-<th align="left">value</th>
-<th align="left">szie</th>
-<th align="left"> 描述</th>
+<th style="text-align: left;">value</th>
+<th style="text-align: left;">szie</th>
+<th style="text-align: left;"> 描述</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="left"> 0</td>
-<td align="left">W</td>
-<td align="left"><strong> 字 (Word)</strong>, 4 字节</td>
+<tbody>
+<tr>
+<td style="text-align: left;"> 0</td>
+<td style="text-align: left;">W</td>
+<td style="text-align: left;"><strong> 字 (Word)</strong>, 4 字节</td>
 </tr>
 <tr>
-<td align="left"> 1</td>
-<td align="left">H</td>
-<td align="left"><strong> 半字 (Half-word)</strong>, 2 字节</td>
+<td style="text-align: left;"> 1</td>
+<td style="text-align: left;">H</td>
+<td style="text-align: left;"><strong> 半字 (Half-word)</strong>, 2
+字节</td>
 </tr>
 <tr>
-<td align="left"> 2</td>
-<td align="left">B</td>
-<td align="left"><strong> 字节 (Byte)</strong>, 1 字节</td>
+<td style="text-align: left;"> 2</td>
+<td style="text-align: left;">B</td>
+<td style="text-align: left;"><strong> 字节 (Byte)</strong>, 1 字节</td>
 </tr>
 <tr>
-<td align="left"> 3</td>
-<td align="left">DW</td>
-<td align="left"><strong> 双字 (Double-word)</strong>, 8 字节</td>
+<td style="text-align: left;"> 3</td>
+<td style="text-align: left;">DW</td>
+<td style="text-align: left;"><strong> 双字 (Double-word)</strong>, 8
+字节</td>
 </tr>
-</tbody></table>
-<h4 id="2-3-1-64位立即数加载-LDD"><a href="#2-3-1-64位立即数加载-LDD" class="headerlink" title="2.3.1 64位立即数加载 (LDD)"></a>2.3.1 64 位立即数加载 (LDD)</h4><p><code>LDD</code> (Class <code>0x00</code>, Mode <code>0x00</code>, Size <code>0x03</code>) 是一条非常特殊的指令，使用 128 位的宽格式。它不仅能加载一个 64 位的常量，还能通过 <code>src_reg</code> 字段的不同取值，实现加载 Map 地址等高级功能，是连接 BPF 程序和外部资源的关键。</p>
+</tbody>
+</table>
+<h4 id="位立即数加载-ldd">64 位立即数加载 (LDD)</h4>
+<p><code>LDD</code> (Class <code>0x00</code>, Mode <code>0x00</code>,
+Size <code>0x03</code>) 是一条非常特殊的指令，使用 128
+位的宽格式。它不仅能加载一个 64 位的常量，还能通过 <code>src_reg</code>
+字段的不同取值，实现加载 Map 地址等高级功能，是连接 BPF
+程序和外部资源的关键。</p>
 <table>
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
 <thead>
 <tr>
-<th align="left"><code>src_reg</code></th>
-<th align="left">伪代码</th>
-<th align="left"><code>imm</code> 类型</th>
-<th align="left">目标寄存器类型</th>
+<th style="text-align: left;"><code>src_reg</code></th>
+<th style="text-align: left;">伪代码</th>
+<th style="text-align: left;"><code>imm</code> 类型</th>
+<th style="text-align: left;">目标寄存器类型</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="left"> 0x0</td>
-<td align="left"><code>dst = (next_imm &lt;&lt; 32) | imm</code></td>
-<td align="left">整数</td>
-<td align="left">整数</td>
+<tbody>
+<tr>
+<td style="text-align: left;"> 0x0</td>
+<td style="text-align: left;"><code>dst = (next_imm &lt;&lt; 32) \| imm</code></td>
+<td style="text-align: left;">整数</td>
+<td style="text-align: left;">整数</td>
 </tr>
 <tr>
-<td align="left"> 0x1</td>
-<td align="left"><code>dst = map_by_fd(imm)</code></td>
-<td align="left">Map 文件描述符</td>
-<td align="left"> Map 地址</td>
+<td style="text-align: left;"> 0x1</td>
+<td style="text-align: left;"><code>dst = map_by_fd(imm)</code></td>
+<td style="text-align: left;">Map 文件描述符</td>
+<td style="text-align: left;"> Map 地址</td>
 </tr>
 <tr>
-<td align="left"> 0x2</td>
-<td align="left"><code>dst = map_val(map_by_fd(imm)) + next_imm</code></td>
-<td align="left">Map 文件描述符</td>
-<td align="left"> Map 值地址</td>
+<td style="text-align: left;"> 0x2</td>
+<td style="text-align: left;"><code>dst = map_val(map_by_fd(imm)) + next_imm</code></td>
+<td style="text-align: left;">Map 文件描述符</td>
+<td style="text-align: left;"> Map 值地址</td>
 </tr>
 <tr>
-<td align="left"> 0x5</td>
-<td align="left"><code>dst = map_by_idx(imm)</code></td>
-<td align="left">Map 程序内索引</td>
-<td align="left"> Map 地址</td>
+<td style="text-align: left;"> 0x5</td>
+<td style="text-align: left;"><code>dst = map_by_idx(imm)</code></td>
+<td style="text-align: left;">Map 程序内索引</td>
+<td style="text-align: left;"> Map 地址</td>
 </tr>
 <tr>
-<td align="left"> 0x6</td>
-<td align="left"><code>dst = map_val(map_by_idx(imm)) + next_imm</code></td>
-<td align="left">Map 程序内索引</td>
-<td align="left"> Map 值地址</td>
+<td style="text-align: left;"> 0x6</td>
+<td style="text-align: left;"><code>dst = map_val(map_by_idx(imm)) + next_imm</code></td>
+<td style="text-align: left;">Map 程序内索引</td>
+<td style="text-align: left;"> Map 值地址</td>
 </tr>
-</tbody></table>
-<p>上面的表格就解释了在 BPF C 代码中，表面上直接引用的 Map 变量，在底层是如何通过 <code>ld_imm64</code> 指令被解析成实际内存地址的。</p>
-<h4 id="2-3-2-常规与符号扩展加载-存储"><a href="#2-3-2-常规与符号扩展加载-存储" class="headerlink" title="2.3.2 常规与符号扩展加载/存储"></a>2.3.2 常规与符号扩展加载 / 存储</h4><ul>
-<li><strong>常规加载 / 存储 (<code>MEM</code>)</strong>:<ul>
-<li><code>*(size *) (dst_reg + offset) = src_reg</code>  (STX)</li>
-<li><code>*(size *) (dst_reg + offset) = imm</code>      (ST)</li>
-<li><code>dst_reg = *(unsigned size *) (src_reg + offset)</code> (LDX)</li>
-</ul>
-</li>
-<li><strong> 符号扩展加载 (<code>MEMSX</code>)</strong>:<ul>
-<li><code>dst_reg = *(signed size *) (src_reg + offset)</code> (LDX)</li>
-<li> 用于从内存加载一个有符号的小整数（如 <code>s8</code>, <code>s16</code>）到 64 位寄存器时，能正确地将符号位扩展到高位，保持数值不变。</li>
-</ul>
-</li>
-</ul>
-<h4 id="2-3-3-原子操作-Atomic"><a href="#2-3-3-原子操作-Atomic" class="headerlink" title="2.3.3 原子操作 (Atomic)"></a>2.3.3 原子操作 (Atomic)</h4><p>原子操作通过 <code>STX</code> 指令实现，使用 <code>ATOMIC</code> 寻址模式，支持 32 位 (<code>W</code>) 和 64 位 (<code>DW</code>) 操作。<code>imm</code> 字段用于编码具体的操作。</p>
+</tbody>
+</table>
+<p>上面的表格就解释了在 BPF C 代码中，表面上直接引用的 Map
+变量，在底层是如何通过 <code>ld_imm64</code>
+指令被解析成实际内存地址的。</p>
+<h4 id="常规与符号扩展加载存储">常规与符号扩展加载 / 存储</h4>
 <ul>
-<li><strong>简单原子操作</strong>: <code>imm</code> 字段的值与算术指令类似。<ul>
-<li><code>ADD (0x00)</code>: <code>*(size *)(dst + offset) += src</code></li>
-<li><code>OR (0x40)</code>, <code>AND (0x50)</code>, <code>XOR (0xa0)</code></li>
+<li><strong>常规加载 / 存储 (<code>MEM</code>)</strong>:
+<ul>
+<li><code>*(size *) (dst_reg + offset) = src_reg</code> (STX)</li>
+<li><code>*(size *) (dst_reg + offset) = imm</code> (ST)</li>
+<li><code>dst_reg = *(unsigned size *) (src_reg + offset)</code>
+(LDX)</li>
+</ul></li>
+<li><strong> 符号扩展加载 (<code>MEMSX</code>)</strong>:
+<ul>
+<li><code>dst_reg = *(signed size *) (src_reg + offset)</code>
+(LDX)</li>
+<li> 用于从内存加载一个有符号的小整数（如 <code>s8</code>,
+<code>s16</code>）到 64
+位寄存器时，能正确地将符号位扩展到高位，保持数值不变。</li>
+</ul></li>
 </ul>
-</li>
-<li><strong>复杂原子操作</strong>:<ul>
-<li><code>XCHG (0xe1)</code>: 原子地交换 <code>src</code> 和 <code>*(dst + offset)</code> 的值。</li>
-<li><code>CMPXCHG (0xf1)</code>: 原子地比较 <code>*(dst + offset)</code> 和 <code>R0</code>，如果相等，则将 <code>src</code> 写入 <code>*(dst + offset)</code>。无论如何，都将内存旧值加载回 <code>R0</code>。</li>
+<h4 id="原子操作-atomic">原子操作 (Atomic)</h4>
+<p>原子操作通过 <code>STX</code> 指令实现，使用 <code>ATOMIC</code>
+寻址模式，支持 32 位 (<code>W</code>) 和 64 位 (<code>DW</code>)
+操作。<code>imm</code> 字段用于编码具体的操作。</p>
+<ul>
+<li><strong>简单原子操作</strong>: <code>imm</code>
+字段的值与算术指令类似。
+<ul>
+<li><code>ADD (0x00)</code>:
+<code>*(size *)(dst + offset) += src</code></li>
+<li><code>OR (0x40)</code>, <code>AND (0x50)</code>,
+<code>XOR (0xa0)</code></li>
+</ul></li>
+<li><strong>复杂原子操作</strong>:
+<ul>
+<li><code>XCHG (0xe1)</code>: 原子地交换 <code>src</code> 和
+<code>*(dst + offset)</code> 的值。</li>
+<li><code>CMPXCHG (0xf1)</code>: 原子地比较 <code>*(dst + offset)</code>
+和 <code>R0</code>，如果相等，则将 <code>src</code> 写入
+<code>*(dst + offset)</code>。无论如何，都将内存旧值加载回
+<code>R0</code>。</li>
+</ul></li>
+<li><strong>FETCH 修饰符</strong>: 如果 <code>imm</code> 中包含
+<code>FETCH (0x01)</code>
+标志，操作会在执行后，将内存中的<strong>旧值</strong>返回到
+<code>src_reg</code>。<code>XCHG</code> 和 <code>CMPXCHG</code>
+总是隐式包含 <code>FETCH</code>。</li>
 </ul>
-</li>
-<li><strong>FETCH 修饰符</strong>: 如果 <code>imm</code> 中包含 <code>FETCH (0x01)</code> 标志，操作会在执行后，将内存中的<strong>旧值</strong>返回到 <code>src_reg</code>。<code>XCHG</code> 和 <code>CMPXCHG</code> 总是隐式包含 <code>FETCH</code>。</li>
-</ul>
-<h3 id="2-4-算术与跳转指令-ALU-JMP"><a href="#2-4-算术与跳转指令-ALU-JMP" class="headerlink" title="2.4 算术与跳转指令 (ALU/JMP)"></a>2.4 算术与跳转指令 (ALU/JMP)</h3><p>这类指令的 <code>opcode</code> 除了类别，还包含<strong>操作码 (Code)</strong> 和<strong>源 (Source)</strong>。</p>
+<h3 id="算术与跳转指令-alujmp">算术与跳转指令 (ALU/JMP)</h3>
+<p>这类指令的 <code>opcode</code> 除了类别，还包含<strong>操作码
+(Code)</strong> 和<strong>源 (Source)</strong>。</p>
 <p><strong>操作数来源 (Source)</strong></p>
 <table>
 <thead>
 <tr>
-<th align="left">value</th>
-<th align="left">source</th>
-<th align="left"> 描述</th>
+<th style="text-align: left;">value</th>
+<th style="text-align: left;">source</th>
+<th style="text-align: left;"> 描述</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="left"> 0</td>
-<td align="left">K</td>
-<td align="left"> 操作数是一个 32 位立即数 <code>imm</code>。</td>
+<tbody>
+<tr>
+<td style="text-align: left;"> 0</td>
+<td style="text-align: left;">K</td>
+<td style="text-align: left;"> 操作数是一个 32 位立即数
+<code>imm</code>。</td>
 </tr>
 <tr>
-<td align="left">1</td>
-<td align="left">X</td>
-<td align="left"> 操作数是另一个寄存器 <code>src_reg</code>。</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">X</td>
+<td style="text-align: left;"> 操作数是另一个寄存器
+<code>src_reg</code>。</td>
 </tr>
-</tbody></table>
-<h4 id="2-4-1-算术指令-ALU-ALU64"><a href="#2-4-1-算术指令-ALU-ALU64" class="headerlink" title="2.4.1 算术指令 (ALU/ALU64)"></a>2.4.1 算术指令 (ALU/ALU64)</h4><table>
+</tbody>
+</table>
+<h4 id="算术指令-alualu64">算术指令 (ALU/ALU64)</h4>
+<table>
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
 <thead>
 <tr>
-<th align="left">name</th>
-<th align="left">code</th>
-<th align="left"> 描述与边界情况</th>
+<th style="text-align: left;">name</th>
+<th style="text-align: left;">code</th>
+<th style="text-align: left;"> 描述与边界情况</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="left"> ADD/SUB</td>
-<td align="left">0x0/0x1</td>
-<td align="left"> 加 / 减法，允许溢出回绕。</td>
+<tbody>
+<tr>
+<td style="text-align: left;"> ADD/SUB</td>
+<td style="text-align: left;">0x0/0x1</td>
+<td style="text-align: left;"> 加 / 减法，允许溢出回绕。</td>
 </tr>
 <tr>
-<td align="left">MUL/DIV</td>
-<td align="left">0x2/0x3</td>
-<td align="left"> 乘 / 除法。<strong>除以零时，结果为 0</strong>。有符号除法 <code>SDIV</code> 中，<code>LLONG_MIN / -1</code> 结果仍为 <code>LLONG_MIN</code>。</td>
+<td style="text-align: left;">MUL/DIV</td>
+<td style="text-align: left;">0x2/0x3</td>
+<td style="text-align: left;"> 乘 / 除法。<strong>除以零时，结果为
+0</strong>。有符号除法 <code>SDIV</code> 中，<code>LLONG_MIN / -1</code>
+结果仍为 <code>LLONG_MIN</code>。</td>
 </tr>
 <tr>
-<td align="left">MOD</td>
-<td align="left">0x9</td>
-<td align="left"> 取模。<strong>对零取模时，ALU64 下 dst 不变，ALU32 下 dst 高 32 位清零</strong>。有符号取模 <code>SMOD</code> 中，<code>LLONG_MIN % -1</code> 结果为 0。</td>
+<td style="text-align: left;">MOD</td>
+<td style="text-align: left;">0x9</td>
+<td style="text-align: left;"> 取模。<strong>对零取模时，ALU64 下 dst
+不变，ALU32 下 dst 高 32 位清零</strong>。有符号取模 <code>SMOD</code>
+中，<code>LLONG_MIN % -1</code> 结果为 0。</td>
 </tr>
 <tr>
-<td align="left">OR/AND/XOR</td>
-<td align="left">0x4/0x5/0xa</td>
-<td align="left"> 按位或 / 与 / 异或。</td>
+<td style="text-align: left;">OR/AND/XOR</td>
+<td style="text-align: left;">0x4/0x5/0xa</td>
+<td style="text-align: left;"> 按位或 / 与 / 异或。</td>
 </tr>
 <tr>
-<td align="left">LSH/RSH</td>
-<td align="left">0x6/0x7</td>
-<td align="left"> 逻辑左 / 右移。移动位数会被 <code>&amp; 63</code> (64 位) 或 <code>&amp; 31</code> (32 位) 屏蔽。</td>
+<td style="text-align: left;">LSH/RSH</td>
+<td style="text-align: left;">0x6/0x7</td>
+<td style="text-align: left;"> 逻辑左 / 右移。移动位数会被
+<code>&amp; 63</code> (64 位) 或 <code>&amp; 31</code> (32 位) 屏蔽。</td>
 </tr>
 <tr>
-<td align="left">ARSH</td>
-<td align="left">0xc</td>
-<td align="left"> 算术右移（带符号扩展）。</td>
+<td style="text-align: left;">ARSH</td>
+<td style="text-align: left;">0xc</td>
+<td style="text-align: left;"> 算术右移（带符号扩展）。</td>
 </tr>
 <tr>
-<td align="left">NEG</td>
-<td align="left">0x8</td>
-<td align="left"> 取负。</td>
+<td style="text-align: left;">NEG</td>
+<td style="text-align: left;">0x8</td>
+<td style="text-align: left;"> 取负。</td>
 </tr>
 <tr>
-<td align="left">MOV</td>
-<td align="left">0xb</td>
-<td align="left"> 移动。</td>
+<td style="text-align: left;">MOV</td>
+<td style="text-align: left;">0xb</td>
+<td style="text-align: left;"> 移动。</td>
 </tr>
 <tr>
-<td align="left">MOVSX</td>
-<td align="left">0xb</td>
-<td align="left"><strong> 符号扩展移动</strong>。从 <code>src</code> 移动 <code>s8</code>, <code>s16</code> 或 <code>s32</code> 到 <code>dst</code> 并进行符号扩展。</td>
+<td style="text-align: left;">MOVSX</td>
+<td style="text-align: left;">0xb</td>
+<td style="text-align: left;"><strong> 符号扩展移动</strong>。从
+<code>src</code> 移动 <code>s8</code>, <code>s16</code> 或
+<code>s32</code> 到 <code>dst</code> 并进行符号扩展。</td>
 </tr>
 <tr>
-<td align="left">END</td>
-<td align="left">0xd</td>
-<td align="left"><strong> 字节序转换</strong>。<code>ALU</code> 模式下，<code>source</code> 位决定是转为小端 (<code>LE</code>) 还是大端 (<code>BE</code>)。<code>ALU64</code> 模式下，进行无条件的大小端翻转 (<code>bswap</code>)。<code>imm</code> 决定宽度 (16/32/64)。</td>
+<td style="text-align: left;">END</td>
+<td style="text-align: left;">0xd</td>
+<td style="text-align: left;"><strong> 字节序转换</strong>。<code>ALU</code>
+模式下，<code>source</code> 位决定是转为小端 (<code>LE</code>) 还是大端
+(<code>BE</code>)。<code>ALU64</code> 模式下，进行无条件的大小端翻转
+(<code>bswap</code>)。<code>imm</code> 决定宽度 (16/32/64)。</td>
 </tr>
-</tbody></table>
-<h4 id="2-4-2-跳转指令-JMP-JMP32"><a href="#2-4-2-跳转指令-JMP-JMP32" class="headerlink" title="2.4.2 跳转指令 (JMP/JMP32)"></a>2.4.2 跳转指令 (JMP/JMP32)</h4><table>
+</tbody>
+</table>
+<h4 id="跳转指令-jmpjmp32">跳转指令 (JMP/JMP32)</h4>
+<table>
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
 <thead>
 <tr>
-<th align="left">code</th>
-<th align="left">value</th>
-<th align="left"> 描述</th>
+<th style="text-align: left;">code</th>
+<th style="text-align: left;">value</th>
+<th style="text-align: left;"> 描述</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="left"> JA</td>
-<td align="left">0x0</td>
-<td align="left"> 无条件跳转。<code>JMP</code> 版用 <code>offset</code> (16 位)，<code>JMP32</code> 版用 <code>imm</code> (32 位)。</td>
+<tbody>
+<tr>
+<td style="text-align: left;"> JA</td>
+<td style="text-align: left;">0x0</td>
+<td style="text-align: left;"> 无条件跳转。<code>JMP</code> 版用
+<code>offset</code> (16 位)，<code>JMP32</code> 版用 <code>imm</code>
+(32 位)。</td>
 </tr>
 <tr>
-<td align="left">JEQ/JNE</td>
-<td align="left">0x1/0x5</td>
-<td align="left"> 等于 / 不等于则跳转。</td>
+<td style="text-align: left;">JEQ/JNE</td>
+<td style="text-align: left;">0x1/0x5</td>
+<td style="text-align: left;"> 等于 / 不等于则跳转。</td>
 </tr>
 <tr>
-<td align="left">JGT/JGE</td>
-<td align="left">0x2/0x3</td>
-<td align="left"><strong> 无符号</strong>大于 / 大于等于则跳转。</td>
+<td style="text-align: left;">JGT/JGE</td>
+<td style="text-align: left;">0x2/0x3</td>
+<td style="text-align: left;"><strong> 无符号</strong>大于 / 大于等于则跳转。</td>
 </tr>
 <tr>
-<td align="left">JLT/JLE</td>
-<td align="left">0xa/0xb</td>
-<td align="left"><strong> 无符号</strong>小于 / 小于等于则跳转。</td>
+<td style="text-align: left;">JLT/JLE</td>
+<td style="text-align: left;">0xa/0xb</td>
+<td style="text-align: left;"><strong> 无符号</strong>小于 / 小于等于则跳转。</td>
 </tr>
 <tr>
-<td align="left">JSGT/JSGE</td>
-<td align="left">0x6/0x7</td>
-<td align="left"><strong> 有符号</strong>大于 / 大于等于则跳转。</td>
+<td style="text-align: left;">JSGT/JSGE</td>
+<td style="text-align: left;">0x6/0x7</td>
+<td style="text-align: left;"><strong> 有符号</strong>大于 / 大于等于则跳转。</td>
 </tr>
 <tr>
-<td align="left">JSLT/JSLE</td>
-<td align="left">0xc/0xd</td>
-<td align="left"><strong> 有符号</strong>小于 / 小于等于则跳转。</td>
+<td style="text-align: left;">JSLT/JSLE</td>
+<td style="text-align: left;">0xc/0xd</td>
+<td style="text-align: left;"><strong> 有符号</strong>小于 / 小于等于则跳转。</td>
 </tr>
 <tr>
-<td align="left">JSET</td>
-<td align="left">0x4</td>
-<td align="left"> 按位与结果非零则跳转。</td>
+<td style="text-align: left;">JSET</td>
+<td style="text-align: left;">0x4</td>
+<td style="text-align: left;"> 按位与结果非零则跳转。</td>
 </tr>
 <tr>
-<td align="left">CALL</td>
-<td align="left">0x8</td>
-<td align="left"><strong> 函数调用</strong>。这是 eBPF 能力扩展的核心。</td>
+<td style="text-align: left;">CALL</td>
+<td style="text-align: left;">0x8</td>
+<td style="text-align: left;"><strong> 函数调用</strong>。这是 eBPF
+能力扩展的核心。</td>
 </tr>
 <tr>
-<td align="left">EXIT</td>
-<td align="left">0x9</td>
-<td align="left"><strong> 程序返回</strong>，终止执行。在子函数中调用则返回到调用点。</td>
+<td style="text-align: left;">EXIT</td>
+<td style="text-align: left;">0x9</td>
+<td style="text-align: left;"><strong> 程序返回</strong>，终止执行。在子函数中调用则返回到调用点。</td>
 </tr>
-</tbody></table>
-<p><code>CALL</code> 指令有几种不同的用法，通过 <code>src_reg</code> 区分：</p>
-<ul>
-<li><code>src_reg = 0</code>: 调用由 <code>imm</code> 指定 ID 的<strong>内核辅助函数</strong>。</li>
-<li><code>src_reg = 1</code>: 调用<strong>程序内本地函数</strong>，<code>imm</code> 是相对于当前指令的偏移量。</li>
-<li><code>src_reg = 2</code>: 通过 <code>imm</code> 指定的 <strong>BTF ID</strong> 来调用内核辅助函数。</li>
-</ul>
-<h2 id="三、核心组件：BPF-Maps"><a href="#三、核心组件：BPF-Maps" class="headerlink" title="三、核心组件：BPF Maps"></a>三、核心组件：BPF Maps</h2><p>如果说 BPF 程序是处理数据的 “工人”，那 <strong>BPF Maps</strong> 就是工人们存放工具、交换半成品的 “仓库”。前面我们已经看到，<code>LDD</code> 指令是如何在底层将 Map 翻译成地址的。</p>
-<p>BPF Maps 是一种通用的、存在于内核中的键值对存储。它有以下几个关键作用：</p>
-<ol>
-<li><strong>状态保持</strong>: BPF 程序本身是无状态的，一次事件触发执行完所有信息就丢失了。Maps 可以在多次执行之间保存状态，比如，用来统计某个网络包出现的次数。</li>
-<li><strong>内外通信</strong>: 用户空间的控制程序可以通过读写 Maps，向 BPF 程序传递配置，或者从 BPF 程序中获取采集到的数据。</li>
-<li><strong>程序间通信</strong>: 一个 BPF 程序可以将数据写入 Map，另一个 BPF 程序可以从中读取，实现程序间的协作。</li>
+</tbody>
+</table>
+<p><code>CALL</code> 指令有几种不同的用法，通过 <code>src_reg</code>
+区分： - <code>src_reg = 0</code>: 调用由 <code>imm</code> 指定 ID
+的<strong>内核辅助函数</strong>。 - <code>src_reg = 1</code>:
+调用<strong>程序内本地函数</strong>，<code>imm</code>
+是相对于当前指令的偏移量。 - <code>src_reg = 2</code>: 通过
+<code>imm</code> 指定的 <strong>BTF ID</strong> 来调用内核辅助函数。</p>
+<h2 id="核心组件bpf-maps">核心组件：BPF Maps</h2>
+<p>如果说 BPF 程序是处理数据的 “工人”，那 <strong>BPF Maps</strong>
+就是工人们存放工具、交换半成品的 “仓库”。前面我们已经看到，<code>LDD</code>
+指令是如何在底层将 Map 翻译成地址的。</p>
+<p>BPF Maps
+是一种通用的、存在于内核中的键值对存储。它有以下几个关键作用：</p>
+<ol type="1">
+<li><strong>状态保持</strong>: BPF
+程序本身是无状态的，一次事件触发执行完所有信息就丢失了。Maps
+可以在多次执行之间保存状态，比如，用来统计某个网络包出现的次数。</li>
+<li><strong>内外通信</strong>: 用户空间的控制程序可以通过读写 Maps，向
+BPF 程序传递配置，或者从 BPF 程序中获取采集到的数据。</li>
+<li><strong>程序间通信</strong>: 一个 BPF 程序可以将数据写入 Map，另一个
+BPF 程序可以从中读取，实现程序间的协作。</li>
 </ol>
-<p>内核提供了多种 Map 类型，以适应不同场景，例如：</p>
+<p>内核提供了多种 Map 类型，以适应不同场景，例如： -
+<code>BPF_MAP_TYPE_HASH</code>: 高效哈希表。 -
+<code>BPF_MAP_TYPE_ARRAY</code>: 高效数组。 -
+<code>BPF_MAP_TYPE_PERF_EVENT_ARRAY</code>:
+用于向用户空间发送性能事件数据。 - <code>BPF_MAP_TYPE_RINGBUF</code>:
+高性能的环形缓冲区，向用户空间传递数据。</p>
+<h2 id="能力扩展内核辅助函数">能力扩展：内核辅助函数</h2>
+<p>为了安全，BPF
+虚拟机是一个完全隔离的沙盒，它不能随意调用内核里的任意函数。那它如何与内核交互呢？答案是
+<strong>内核辅助函数 (Helper Functions)</strong>。</p>
+<p>正如我们在 <code>CALL</code> 指令中看到的，BPF
+程序可以通过特定指令调用一份内核提供的 “白名单” 函数。这些函数就是辅助函数，它们是
+eBPF 程序能力的源泉，提供了诸如：</p>
 <ul>
-<li><code>BPF_MAP_TYPE_HASH</code>: 高效哈希表。</li>
-<li><code>BPF_MAP_TYPE_ARRAY</code>: 高效数组。</li>
-<li><code>BPF_MAP_TYPE_PERF_EVENT_ARRAY</code>: 用于向用户空间发送性能事件数据。</li>
-<li><code>BPF_MAP_TYPE_RINGBUF</code>: 高性能的环形缓冲区，向用户空间传递数据。</li>
-</ul>
-<h2 id="四、能力扩展：内核辅助函数"><a href="#四、能力扩展：内核辅助函数" class="headerlink" title="四、能力扩展：内核辅助函数"></a>四、能力扩展：内核辅助函数</h2><p>为了安全，BPF 虚拟机是一个完全隔离的沙盒，它不能随意调用内核里的任意函数。那它如何与内核交互呢？答案是 <strong>内核辅助函数 (Helper Functions)</strong>。</p>
-<p>正如我们在 <code>CALL</code> 指令中看到的，BPF 程序可以通过特定指令调用一份内核提供的 “白名单” 函数。这些函数就是辅助函数，它们是 eBPF 程序能力的源泉，提供了诸如：</p>
-<ul>
-<li><strong>访问 Maps</strong>: <code>bpf_map_lookup_elem()</code>、<code>bpf_map_update_elem()</code></li>
-<li><strong>获取上下文信息</strong>: <code>bpf_get_current_pid_tgid()</code>、<code>bpf_ktime_get_ns()</code></li>
+<li><strong>访问 Maps</strong>:
+<code>bpf_map_lookup_elem()</code>、<code>bpf_map_update_elem()</code></li>
+<li><strong>获取上下文信息</strong>:
+<code>bpf_get_current_pid_tgid()</code>、<code>bpf_ktime_get_ns()</code></li>
 <li><strong>网络包处理</strong>: <code>bpf_skb_store_bytes()</code></li>
 <li><strong>打印调试</strong>: <code>bpf_printk()</code></li>
 </ul>
-<p>eBPF 程序只能调用这个固定的函数集合，这既赋予了它强大的能力，也从根本上保证了内核的安全。</p>
-<h2 id="五、BPF-程序类型"><a href="#五、BPF-程序类型" class="headerlink" title="五、BPF 程序类型"></a>五、BPF 程序类型</h2><p>eBPF 程序不是随便挂在内核里就能运行的，它必须附着在内核的特定<strong>挂载点 (Hook Point)</strong> 上。<strong>BPF 程序类型 (Program Type)</strong> 就定义了程序可以挂载在哪里，以及它能做什么。</p>
+<p>eBPF
+程序只能调用这个固定的函数集合，这既赋予了它强大的能力，也从根本上保证了内核的安全。</p>
+<h2 id="bpf-程序类型">BPF 程序类型</h2>
+<p>eBPF
+程序不是随便挂在内核里就能运行的，它必须附着在内核的特定<strong>挂载点
+(Hook Point)</strong> 上。<strong>BPF 程序类型 (Program Type)</strong>
+就定义了程序可以挂载在哪里，以及它能做什么。</p>
 <p>不同的程序类型，决定了 eBPF 的应用场景。例如：</p>
 <ul>
-<li><strong>Kprobes / Tracepoints</strong>: 用于内核态函数追踪和性能分析，是可观测性工具（如 <code>bcc</code>、<code>bpftrace</code>）的根本。</li>
-<li><strong>XDP (eXpress Data Path)</strong>: 挂载在网卡驱动层，能在网络包进入协议栈前进行处理，实现超高性能的防火墙、负载均衡等。</li>
-<li><strong>TC (Traffic Control)</strong>: 挂载在内核网络协议栈的队列规则上，用于实现复杂的网络包过滤和流量整形。</li>
-<li><strong>LSM (Linux Security Modules)</strong>: 用于实现更灵活、更细粒度的安全策略。</li>
+<li><strong>Kprobes / Tracepoints</strong>:
+用于内核态函数追踪和性能分析，是可观测性工具（如
+<code>bcc</code>、<code>bpftrace</code>）的根本。</li>
+<li><strong>XDP (eXpress Data Path)</strong>:
+挂载在网卡驱动层，能在网络包进入协议栈前进行处理，实现超高性能的防火墙、负载均衡等。</li>
+<li><strong>TC (Traffic Control)</strong>:
+挂载在内核网络协议栈的队列规则上，用于实现复杂的网络包过滤和流量整形。</li>
+<li><strong>LSM (Linux Security Modules)</strong>:
+用于实现更灵活、更细粒度的安全策略。</li>
 </ul>
-<p>程序类型决定了 BPF 程序被调用时，<code>R1</code> 寄存器中传入的<strong>上下文 (Context)</strong> 类型（比如对于网络程序是网络包 <code>sk_buff</code>），以及它能调用的辅助函数集合。</p>
-<h2 id="六、编译、加载与校验"><a href="#六、编译、加载与校验" class="headerlink" title="六、编译、加载与校验"></a>六、编译、加载与校验</h2><p>正常来说通常使用 C 语言的一个子集来编写 BPF 程序，然后用 <code>LLVM/Clang</code> 将其编译成 BPF 字节码。</p>
+<p>程序类型决定了 BPF 程序被调用时，<code>R1</code>
+寄存器中传入的<strong>上下文 (Context)</strong>
+类型（比如对于网络程序是网络包
+<code>sk_buff</code>），以及它能调用的辅助函数集合。</p>
+<h2 id="编译加载与校验">编译、加载与校验</h2>
+<p>正常来说通常使用 C 语言的一个子集来编写 BPF 程序，然后用
+<code>LLVM/Clang</code> 将其编译成 BPF 字节码。</p>
 <figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">clang -O2 -target bpf -c bpf_program.c -o bpf.o</span><br></pre></td></tr></tbody></table></figure>
-
-<p>编译出的字节码需要通过 <code>bpf()</code> 系统调用加载到内核中。现代开发通常使用 <code>libbpf</code> 这样的库来简化加载、挂载和与 Maps 交互的过程。</p>
-<p>在程序运行前，内核的<strong>校验器 (Verifier)</strong> 会对字节码进行极其严格的静态分析，确保其安全性。校验器是 eBPF 安全模型的基石，它会检查：</p>
-<ol>
-<li><strong>程序必须能终止</strong>: 禁止无限循环，通过有向无环图检查确保程序不会永远执行下去。</li>
-<li><strong>内存访问安全</strong>: 确保不会访问越界的内存地址，不会读取未初始化的栈内存或寄存器。</li>
-<li><strong>类型安全</strong>: 检查函数调用的参数类型是否正确，对上下文的访问是否合规。</li>
+<p>编译出的字节码需要通过 <code>bpf()</code>
+系统调用加载到内核中。现代开发通常使用 <code>libbpf</code>
+这样的库来简化加载、挂载和与 Maps 交互的过程。</p>
+<p>在程序运行前，内核的<strong>校验器 (Verifier)</strong>
+会对字节码进行极其严格的静态分析，确保其安全性。校验器是 eBPF
+安全模型的基石，它会检查：</p>
+<ol type="1">
+<li><strong>程序必须能终止</strong>:
+禁止无限循环，通过有向无环图检查确保程序不会永远执行下去。</li>
+<li><strong>内存访问安全</strong>:
+确保不会访问越界的内存地址，不会读取未初始化的栈内存或寄存器。</li>
+<li><strong>类型安全</strong>:
+检查函数调用的参数类型是否正确，对上下文的访问是否合规。</li>
 </ol>
 <p>只有通过校验的 BPF 程序才被认为是安全的，并被允许加载到内核中。</p>
-<h2 id="七、执行：解释器与-JIT-编译器"><a href="#七、执行：解释器与-JIT-编译器" class="headerlink" title="七、执行：解释器与 JIT 编译器"></a>七、执行：解释器与 JIT 编译器</h2><p>通过校验后，BPF 字节码终于可以执行了。内核提供了两种执行方式：</p>
-<h3 id="7-1-解释器-Interpreter"><a href="#7-1-解释器-Interpreter" class="headerlink" title="7.1 解释器 (Interpreter)"></a>7.1 解释器 (Interpreter)</h3><p>解释器会逐条读取 BPF 字节码并模拟执行。它非常安全，但效率相对较低，因为每条指令都需要软件模拟。</p>
-<h3 id="7-2-JIT-编译器-Just-In-Time"><a href="#7-2-JIT-编译器-Just-In-Time" class="headerlink" title="7.2 JIT 编译器 (Just-In-Time)"></a>7.2 JIT 编译器 (Just-In-Time)</h3><p>为了追求极致性能，eBPF 支持<strong>即时编译 (JIT)</strong>。在程序加载时，JIT 编译器会将整个 BPF 字节码动态地翻译成目标机器（如 x86-64, ARM64）的原生指令。</p>
-<p>这样，当事件触发 BPF 程序时，CPU 可以直接执行这些编译好的原生指令，省去了逐条解释的开销，从而大大提高了执行效率，性能几乎与原生内核模块无异。</p>
-<p>每个支持的 CPU 架构都有自己的 JIT 编译器实现，例如内核源码中的 <code>bpf_jit_comp.c</code>。</p>
+<h2 id="执行解释器与-jit-编译器">执行：解释器与 JIT 编译器</h2>
+<p>通过校验后，BPF 字节码终于可以执行了。内核提供了两种执行方式：</p>
+<h3 id="解释器-interpreter">解释器 (Interpreter)</h3>
+<p>解释器会逐条读取 BPF
+字节码并模拟执行。它非常安全，但效率相对较低，因为每条指令都需要软件模拟。</p>
+<h3 id="jit-编译器-just-in-time">JIT 编译器 (Just-In-Time)</h3>
+<p>为了追求极致性能，eBPF 支持<strong>即时编译
+(JIT)</strong>。在程序加载时，JIT 编译器会将整个 BPF
+字节码动态地翻译成目标机器（如 x86-64, ARM64）的原生指令。</p>
+<p>这样，当事件触发 BPF 程序时，CPU
+可以直接执行这些编译好的原生指令，省去了逐条解释的开销，从而大大提高了执行效率，性能几乎与原生内核模块无异。</p>
+<p>每个支持的 CPU 架构都有自己的 JIT 编译器实现，例如内核源码中的
+<code>bpf_jit_comp.c</code>。</p>
 
     </div>
 
@@ -771,6 +951,15 @@
 
         
 
+          <div class="post-nav">
+            <div class="post-nav-item">
+            </div>
+            <div class="post-nav-item">
+                <a href="/Machine-learning/36604.html" rel="next" title="从零开始的神经网络学习">
+                  从零开始的神经网络学习 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
     </footer>
   </article>
 </div>
