@@ -470,3 +470,7 @@ class NeuralNetwork:
         """用训练好的网络进行预测"""
         return self.forward(X)
 ```
+
+## 参考资料
+
+[Machine learning - DorsaRoh](https://github.com/DorsaRoh/Machine-Learning)
