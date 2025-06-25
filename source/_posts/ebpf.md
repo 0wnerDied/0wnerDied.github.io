@@ -52,7 +52,7 @@ BPF 指令有两种格式：
     - `offset`: 16 bit (偏移量)
     - `imm`: 32 bit (立即数)
 
-2.  **宽指令 (128-bit)**: 专用于加载一个 64 位的立即数 ，(`ld_imm64`)。它由两个连续的 64 位指令构成。
+2.  **宽指令 (128-bit)**: 专用于加载一个 64 位的立即数（ld_imm64）。它由两个连续的 64 位指令构成。
     - 第一个 64 位指令：正常的基本指令格式，其中 imm 字段存放 64 位立即数的低 32 位
     - 第二个 64 位指令：前 32 位（opcode + regs + offset）必须全部为 0，imm 字段存放 64 位立即数的高 32 位
 
@@ -79,7 +79,7 @@ BPF 指令有两种格式：
 
 | value | mode modifier | 描述 |
 | :--- | :--- | :--- |
-| 0 | IMM | **立即数 (Immediate)**，用于 `LDD` 指令加载64位立即数。 |
+| 0 | IMM | **立即数 (Immediate)**，用于 `ld_imm64` 指令加载64位立即数。 |
 | 1 | ABS | **绝对寻址 (Absolute)**，用于传统 cBPF，已废弃。 |
 | 2 | IND | **间接寻址 (Indirect)**，用于传统 cBPF，已废弃。 |
 | 3 | MEM | **常规内存操作 (Memory)**，最常见的加载和存储模式。 |
@@ -88,16 +88,16 @@ BPF 指令有两种格式：
 
 **数据大小 (Size)**
 
-| value | szie | 描述 |
+| value | size | 描述 |
 | :--- | :--- | :--- |
 | 0 | W | **字 (Word)**, 4 字节 |
 | 1 | H | **半字 (Half-word)**, 2 字节 |
 | 2 | B | **字节 (Byte)**, 1 字节 |
 | 3 | DW | **双字 (Double-word)**, 8 字节 |
 
-#### 64位立即数加载 (LDD)
+#### 64位立即数加载 (ld_imm64)
 
-`LDD` (Class `0x00`, Mode `0x00`, Size `0x03`) 是一条非常特殊的指令，使用 128 位的宽格式。它不仅能加载一个 64 位的常量，还能通过 `src_reg` 字段的不同取值，实现加载 Map 地址等高级功能，是连接 BPF 程序和外部资源的关键。
+`ld_imm64` (Class `0x00`, Mode `0x00`, Size `0x03`) 是一条非常特殊的指令，使用 128 位的宽格式。它不仅能加载一个 64 位的常量，还能通过 `src_reg` 字段的不同取值，实现加载 Map 地址等高级功能，是连接 BPF 程序和外部资源的关键。
 
 | `src_reg` | 伪代码 | `imm` 类型 | 目标寄存器类型 |
 | :--- | :--- | :--- | :--- |
@@ -179,7 +179,7 @@ BPF 指令有两种格式：
 
 ## 核心组件：BPF Maps
 
-如果说 BPF 程序是处理数据的“工人”，那 **BPF Maps** 就是工人们存放工具、交换半成品的“仓库”。前面我们已经看到，`LDD` 指令是如何在底层将 Map 翻译成地址的。
+如果说 BPF 程序是处理数据的“工人”，那 **BPF Maps** 就是工人们存放工具、交换半成品的“仓库”。前面我们已经看到，`ld_imm64` 指令是如何在底层将 Map 翻译成地址的。
 
 BPF Maps 是一种通用的、存在于内核中的键值对存储。它有以下几个关键作用：
 
@@ -193,6 +193,8 @@ BPF Maps 是一种通用的、存在于内核中的键值对存储。它有以�
 - `BPF_MAP_TYPE_ARRAY`: 高效数组。
 - `BPF_MAP_TYPE_PERF_EVENT_ARRAY`: 用于向用户空间发送性能事件数据。
 - `BPF_MAP_TYPE_RINGBUF`: 高性能的环形缓冲区，向用户空间传递数据。
+- `BPF_MAP_TYPE_LRU_HASH`: 带 LRU 淘汰的哈希表，适合连接追踪。  
+- `BPF_MAP_TYPE_ARRAY_OF_MAPS` / `BPF_MAP_TYPE_HASH_OF_MAPS`: Map 嵌套，用于多 namespace 或多租户隔离。
 
 ## 能力扩展：内核辅助函数
 
@@ -238,6 +240,28 @@ clang -O2 -target bpf -c bpf_program.c -o bpf.o
 
 只有通过校验的 BPF 程序才被认为是安全的，并被允许加载到内核中。
 
+<details>
+<summary>Verifier 常见拒绝示例</summary>
+
+| 报错片段 | 触发原因 |
+|----------|----------|
+| invalid indirect read from stack | 读到未初始化栈空间 |
+| possible pointer arithmetic on ctx | 对只读 ctx 指针做算术 |
+| jump out of range | 分支过深 / offset 溢出 |
+
+</details>
+
+### CO-RE（Compile Once – Run Everywhere）
+
+如果目标机器内核启用了 [BTF](https://www.kernel.org/doc/html/latest/bpf/btf.html)，建议在编译时打开 CO-RE：
+
+```bash
+clang -g -O2 -target bpf -D__TARGET_ARCH_$(uname -m) \
+      -c prog.c -o prog.o
+```
+
+同一个 `.o` 文件可跨 5.x/6.x 内核直接重定位字段，无需重编译。
+
 ## 执行：解释器与 JIT 编译器
 
 通过校验后，BPF 字节码终于可以执行了。内核提供了两种执行方式：
@@ -253,3 +277,19 @@ clang -O2 -target bpf -c bpf_program.c -o bpf.o
 这样，当事件触发 BPF 程序时，CPU 可以直接执行这些编译好的原生指令，省去了逐条解释的开销，从而大大提高了执行效率，性能几乎与原生内核模块无异。
 
 每个支持的 CPU 架构都有自己的 JIT 编译器实现，例如内核源码中的 `bpf_jit_comp.c`。
+
+## 运行 Demo
+
+```bash
+git clone https://github.com/libbpf/libbpf-bootstrap.git
+cd libbpf-bootstrap/examples/c/minimal
+make minimal
+sudo ./minimal
+sudo cat /sys/kernel/debug/tracing/trace_pipe
+           <...>-3840345 [010] d... 3220701.101143: bpf_trace_printk: BPF triggered from PID 3840345.
+           <...>-3840345 [010] d... 3220702.101265: bpf_trace_printk: BPF triggered from PID 3840345.
+```
+
+详细使用方法可以查看项目的 README 文件。
+
+> **Takeaway**: eBPF = 事件驱动 + 沙盒字节码 + Map + Helper + Verifier + JIT
