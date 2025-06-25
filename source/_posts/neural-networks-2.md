@@ -164,12 +164,12 @@ $$ tanh(z) = \frac{e^z - e^{-z}}{e^z + e^{-z}} $$
 
 
   def softmax(z):
-      exp_z = np.exp(z - np.max(z))
-      return exp_z / np.sum(exp_z)
+      exp_z = np.exp(z - np.max(z, axis=1, keepdims=True))
+      return exp_z / np.sum(exp_z, axis=1, keepdims=True)
 
 
-  print(softmax(np.array([2.0, 1.0, 0.1])))
-  # [0.65900114 0.24243297 0.09856589]
+  print(softmax(np.array([[2.0, 1.0, 0.1]])))
+  # [[0.65900114 0.24243297 0.09856589]]
   ```
 
 - **回归 (Regression)**: 当预测一个连续值时（例如，房价），输出层**不使用任何激活函数**。这样，网络就可以输出任意范围的数值。
@@ -240,6 +240,25 @@ Dropout 是一种简单而有效的正则化技术，用于防止网络过拟合
   # 训练时: x = dropout(x, p=0.5)
   # 推理时: 不用dropout
   ```
+
+## 损失函数的选择
+
+在二元分类任务中，输出层通常用 sigmoid 激活，最合适的损失函数是**二元交叉熵（Binary Cross Entropy, BCE）**，而不是均方误差（MSE）。
+
+- **BCE 公式**，其中 $y$ 是真实标签（0或1），$p$ 是 sigmoid 输出概率：
+$$
+L = -[y \cdot \ln p + (1-y) \cdot \ln(1-p)]
+$$
+
+- **BCE 导数**：
+$$
+\frac{\partial L}{\partial p} = -\frac{y}{p} + \frac{1-y}{1-p}
+$$
+
+- **区别**：
+
+  - MSE 在 sigmoid 饱和区间梯度更容易消失，收敛慢。
+  - BCE 更适合概率输出，收敛快。
 
 ## 建议
 
@@ -345,7 +364,7 @@ class Neuron:
         """
         self.last_input = activations
         # 计算加权和 z
-        z = np.dot(activations, self.weights) + self.bias
+        z = activations @ self.weights + self.bias
         self.last_z = z
         # 应用激活函数
         if self.activation_name == "relu":
@@ -379,7 +398,7 @@ class Neuron:
 
         # 3. 计算 dC/dw (损失对权重的梯度) = dC/dz * dz/dw
         #    dz/dw = last_input, 所以 dC/dw = last_input.T * dC/dz
-        dC_dw = np.dot(self.last_input.T, dC_dz)
+        dC_dw = self.last_input.T @ dC_dz
 
         # 4. 计算 dC/db (损失对偏置的梯度) = dC/dz * dz/db
         #    dz/db = 1, 所以 dC/db = dC/dz
@@ -388,7 +407,7 @@ class Neuron:
         # 5. 计算 dC/da_prev (损失对前一层激活值的梯度)，用于传给前一层
         #    dC/da_prev = dC/dz * dz/da_prev
         #    dz/da_prev = weights, 所以 dC/da_prev = dC/dz * weights.T
-        dC_da_prev = np.dot(dC_dz, self.weights.T)
+        dC_da_prev = dC_dz @ self.weights.T
 
         # 6. 根据梯度更新权重和偏置
         self.weights -= learning_rate * dC_dw
@@ -459,31 +478,40 @@ class NeuralNetwork:
         """均方误差损失函数的导数"""
         return 2 * (y_pred - y_true) / y_true.shape[0]
 
+    def bce_loss(self, y_true, y_pred, eps=1e-8):
+        """二元交叉熵损失函数"""
+        y_pred = np.clip(y_pred, eps, 1 - eps)
+        return -np.mean(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))
+
+    def derivative_bce_loss(self, y_true, y_pred, eps=1e-8):
+        """二元交叉熵损失函数的导数"""
+        y_pred = np.clip(y_pred, eps, 1 - eps)
+        return (y_pred - y_true) / (y_pred * (1 - y_pred) * y_true.shape[0])
+
     def train(self, X, y, epochs, learning_rate, batch_size=32):
         """训练神经网络"""
         for epoch in range(epochs):
             total_loss = 0
-            # 使用小批量梯度下降
             for i in range(0, len(X), batch_size):
                 X_batch = X[i : i + batch_size]
                 y_batch = y[i : i + batch_size]
 
-                # 1. 前向传播
                 outputs = self.forward(X_batch)
 
-                # 2. 计算损失
-                loss = self.mse_loss(y_batch, outputs)
+                # 自动选择损失函数
+                if self.output_activation == "sigmoid":
+                    loss = self.bce_loss(y_batch, outputs)
+                    output_gradient = self.derivative_bce_loss(y_batch, outputs)
+                else:
+                    loss = self.mse_loss(y_batch, outputs)
+                    output_gradient = self.derivative_mse_loss(y_batch, outputs)
+
                 total_loss += loss * len(X_batch)
 
-                # 3. 计算输出层的梯度
-                output_gradient = self.derivative_mse_loss(y_batch, outputs)
-
-                # 4. 反向传播
                 for layer in reversed(self.layers):
                     output_gradient = layer.backward(output_gradient, learning_rate)
 
             avg_loss = total_loss / len(X)
-            # 只在每1/10进度时输出一次
             if (
                 (epoch + 1) % max(1, epochs // 10) == 0
                 or epoch == 0
@@ -492,9 +520,7 @@ class NeuralNetwork:
                 print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.6f}")
 
     def predict(self, X):
-        """用训练好的网络进行预测"""
         out = self.forward(X)
-        # 输出层为sigmoid时，返回概率
         if self.output_activation == "sigmoid":
             return out
         return out
@@ -521,24 +547,26 @@ for x_input in X_train:
     print(f"输入: {x_input}, 预测输出: {prediction[0][0]:.4f}")
 
 # 开始训练XOR网络...
-# Epoch 1/200000, Loss: 0.280354
-# Epoch 20000/200000, Loss: 0.000450
-# Epoch 40000/200000, Loss: 0.000213
-# Epoch 60000/200000, Loss: 0.000139
-# Epoch 80000/200000, Loss: 0.000103
-# Epoch 100000/200000, Loss: 0.000081
-# Epoch 120000/200000, Loss: 0.000067
-# Epoch 140000/200000, Loss: 0.000058
-# Epoch 160000/200000, Loss: 0.000050
-# Epoch 180000/200000, Loss: 0.000044
-# Epoch 200000/200000, Loss: 0.000040
+# Epoch 1/200000, Loss: 0.710580
+# Epoch 20000/200000, Loss: 0.001633
+# Epoch 40000/200000, Loss: 0.000789
+# Epoch 60000/200000, Loss: 0.000520
+# Epoch 80000/200000, Loss: 0.000387
+# Epoch 100000/200000, Loss: 0.000308
+# Epoch 120000/200000, Loss: 0.000256
+# Epoch 140000/200000, Loss: 0.000219
+# Epoch 160000/200000, Loss: 0.000191
+# Epoch 180000/200000, Loss: 0.000170
+# Epoch 200000/200000, Loss: 0.000153
 # 训练完成。
 
 # 对输入进行预测:
-# 输入: [0 0], 预测输出: 0.0055
-# 输入: [0 1], 预测输出: 0.9928
-# 输入: [1 0], 预测输出: 0.9928
-# 输入: [1 1], 预测输出: 0.0049
+# 输入: [0 0], 预测输出: 0.0002
+# 输入: [0 1], 预测输出: 0.9999
+# 输入: [1 0], 预测输出: 0.9999
+# 输入: [1 1], 预测输出: 0.0002
 ```
 
 可以明显看到 XOR 网络的预测更加精准了，并且我在本地连续训练了很多次，几乎不再有训练失败的情况发生。显然，我们的神经网络实现可以说成功了。
+
+本篇中的 Layer/Neuron 结构采用 for-loop + np.hstack，便于理解原理。实际程序中建议采用全矩阵化实现以提升效率。

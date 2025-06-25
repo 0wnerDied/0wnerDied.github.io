@@ -104,6 +104,8 @@ mathjax: true
 
 当神经网络变得很大时，逐个计算每个神经元的加权和会非常慢。幸运的是，我们可以使用线性代数中的矩阵运算来一次性完成一整层神经元的计算。
 
+> 注：下文所有涉及的 `@` 运算符为 Python 3.5+ 的矩阵乘法（matmul），推荐用于神经网络等线性代数场景。`np.dot` 在一维时是内积，二维时是矩阵乘法，但 `@` 始终表示矩阵乘法，更直观。
+
 我们可以把：
 
 - 一层的输入激活值看作一个向量 `A`。
@@ -112,9 +114,9 @@ mathjax: true
 
 那么，下一层所有神经元的预激活值 `Z` 就可以通过一个简单的公式计算出来：
 
-`Z = A · W + B`
+`Z = A @ W + B`
 
-其中 `·` 代表点积。
+其中 `@` 代表矩阵乘法。
 
 假设我们有一个包含2个样本的批次（batch），每个样本有3个特征（输入），我们要将其传入一个有4个神经元的隐藏层。
 
@@ -132,7 +134,7 @@ print("权重: ", weights)
 biases = np.random.rand(1, 4)
 print("偏置: ", biases)
 
-Z = np.dot(activations, weights) + biases
+Z = activations @ weights + biases
 
 print("Z 的形状:", Z.shape)
 print("Z 的值:\n", Z)
@@ -243,6 +245,8 @@ print("loss = ", loss)
 ```
 
 我们的目标就是通过调整权重和偏置，让这个损失值**尽可能小**。
+
+> 实际上，对于分类任务，更常用的是 softmax 激活配合交叉熵损失（cross-entropy loss）。这里以 MSE 为例只是因为演示方便，后续章节会详细介绍分类场景的常用方法。
 
 ![cost](./neural-networks-1/8-cost.png)
 
@@ -378,8 +382,7 @@ def backward(self, dC_da, learning_rate):
     # 3. 计算 dC/dw (损失对权重的梯度) = dC/dz * dz/dw
     # dz/dw = a_prev，dC/dw = a_prev.T @ dC/dz
     # 这里 a_prev 是输入，dC/dz 是“误差信号”，矩阵乘法一次性算出所有权重的梯度
-    # @ 是矩阵乘法符号
-    dC_dw = np.dot(self.last_input.T, dC_dz)
+    dC_dw = self.last_input.T @ dC_dz
 
     # 4. 计算 dC/db (损失对偏置的梯度) = dC/dz * dz/db
     # dz/db = 1，dC/db = sum(dC/dz)
@@ -387,8 +390,7 @@ def backward(self, dC_da, learning_rate):
 
     # 5. 计算 dC/da_prev (损失对前一层激活值的梯度)，用于传给前一层
     # dC/da_prev = dC/dz * dz/da_prev，dz/da_prev = weights
-    # 这一步是“误差信号”向前一层传播
-    dC_da_prev = np.dot(dC_dz, self.weights.T)
+    dC_da_prev = dC_dz @ self.weights.T
 
     # 6. 根据梯度更新权重和偏置
     self.weights -= learning_rate * dC_dw
@@ -441,11 +443,11 @@ class Neuron:
 
     def forward(self, activations):
         """
-        执行前向传播：z = a * w + b, a_out = relu(z)
+        执行前向传播：z = a @ w + b, a_out = relu(z)
         """
         self.last_input = activations
         # 计算加权和 z
-        z = np.dot(activations, self.weights) + self.bias
+        z = activations @ self.weights + self.bias
         self.last_z = z
         # 应用激活函数
         return self.relu(z)
@@ -466,8 +468,7 @@ class Neuron:
         # 3. 计算 dC/dw (损失对权重的梯度) = dC/dz * dz/dw
         # dz/dw = a_prev，dC/dw = a_prev.T @ dC/dz
         # 这里 a_prev 是输入，dC/dz 是“误差信号”，矩阵乘法一次性算出所有权重的梯度
-        # @ 是矩阵乘法符号
-        dC_dw = np.dot(self.last_input.T, dC_dz)
+        dC_dw = self.last_input.T @ dC_dz
 
         # 4. 计算 dC/db (损失对偏置的梯度) = dC/dz * dz/db
         # dz/db = 1，dC/db = sum(dC/dz)
@@ -475,8 +476,7 @@ class Neuron:
 
         # 5. 计算 dC/da_prev (损失对前一层激活值的梯度)，用于传给前一层
         # dC/da_prev = dC/dz * dz/da_prev，dz/da_prev = weights
-        # 这一步是“误差信号”向前一层传播
-        dC_da_prev = np.dot(dC_dz, self.weights.T)
+        dC_da_prev = dC_dz @ self.weights.T
 
         # 6. 根据梯度更新权重和偏置
         self.weights -= learning_rate * dC_dw
@@ -572,4 +572,5 @@ class NeuralNetwork:
 
 ## 参考资料
 
-[Machine learning - DorsaRoh](https://github.com/DorsaRoh/Machine-Learning)
+- Ian Goodfellow, Yoshua Bengio, Aaron Courville. [Deep Learning](https://www.deeplearningbook.org/)
+- [Machine learning - DorsaRoh](https://github.com/DorsaRoh/Machine-Learning)
