@@ -46,3 +46,53 @@ html body .wl-textarea {
     border-color: #555 !important;
   }
 }
+
+// 亮色模式
+body:not(.darkmode--activated) {
+  // 代码块
+  pre, code, .highlight {
+    background: $code-bg-light !important;
+    color: $code-text-light !important;
+    border-radius: $material-radius !important;
+    border: 1px solid $code-border-light !important;
+    box-shadow: none !important;
+    font-family: 'JetBrains Mono', 'Fira Mono', 'Menlo', 'Consolas', monospace;
+  }
+  .highlight .hljs-comment, .highlight .hljs-quote {
+    color: #90a4ae !important;
+  }
+  .highlight .hljs-keyword, .highlight .hljs-selector-tag, .highlight .hljs-section {
+    color: #1976d2 !important;
+  }
+  .highlight .hljs-string, .highlight .hljs-title, .highlight .hljs-name {
+    color: #388e3c !important;
+  }
+  .highlight .hljs-number, .highlight .hljs-literal {
+    color: #e64a19 !important;
+  }
+}
+
+// 暗黑模式
+body.darkmode--activated {
+  // 代码块
+  pre, code, .highlight {
+    background: $code-bg-dark !important;
+    color: $code-text-dark !important;
+    border-radius: $material-radius !important;
+    border: 1px solid $code-border-dark !important;
+    box-shadow: none !important;
+    font-family: 'JetBrains Mono', 'Fira Mono', 'Menlo', 'Consolas', monospace;
+  }
+  .highlight .hljs-comment, .highlight .hljs-quote {
+    color: #607d8b !important;
+  }
+  .highlight .hljs-keyword, .highlight .hljs-selector-tag, .highlight .hljs-section {
+    color: #90caf9 !important;
+  }
+  .highlight .hljs-string, .highlight .hljs-title, .highlight .hljs-name {
+    color: #81c784 !important;
+  }
+  .highlight .hljs-number, .highlight .hljs-literal {
+    color: #ffab91 !important;
+  }
+}
