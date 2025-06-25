@@ -2,6 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://0wnerdied.github.io/kernel/50584.html</loc>
+    
+    <lastmod>2025-06-25</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://0wnerdied.github.io/Machine-learning/38196.html</loc>
     
     <lastmod>2025-06-25</lastmod>
@@ -14,15 +23,6 @@
     <loc>https://0wnerdied.github.io/Machine-learning/36604.html</loc>
     
     <lastmod>2025-06-25</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://0wnerdied.github.io/kernel/50584.html</loc>
-    
-    <lastmod>2025-06-24</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>

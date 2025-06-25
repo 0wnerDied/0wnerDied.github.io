@@ -62,8 +62,8 @@ bit)，在大端序和小端序主机上，这两个 4-bit 字段的顺序是相
 <li><code>offset</code>: 16 bit (偏移量)</li>
 <li><code>imm</code>: 32 bit (立即数)</li>
 </ul></li>
-<li><strong> 宽指令 (128-bit)</strong>: 专用于加载一个 64 位的立即数
-，(<code>ld_imm64</code>)。它由两个连续的 64 位指令构成。
+<li><strong> 宽指令 (128-bit)</strong>: 专用于加载一个 64
+位的立即数（ld_imm64）。它由两个连续的 64 位指令构成。
 <ul>
 <li>第一个 64 位指令：正常的基本指令格式，其中 imm 字段存放 64
 位立即数的低 32 位</li>
@@ -160,7 +160,7 @@ bit)，在大端序和小端序主机上，这两个 4-bit 字段的顺序是相
 <td style="text-align: left;"> 0</td>
 <td style="text-align: left;">IMM</td>
 <td style="text-align: left;"><strong> 立即数 (Immediate)</strong>，用于
-<code>LDD</code> 指令加载 64 位立即数。</td>
+<code>ld_imm64</code> 指令加载 64 位立即数。</td>
 </tr>
 <tr>
 <td style="text-align: left;">1</td>
@@ -199,7 +199,7 @@ load)</strong>，加载时将有符号小整数正确扩展到 64 位。</td>
 <thead>
 <tr>
 <th style="text-align: left;">value</th>
-<th style="text-align: left;">szie</th>
+<th style="text-align: left;">size</th>
 <th style="text-align: left;"> 描述</th>
 </tr>
 </thead>
@@ -228,12 +228,12 @@ load)</strong>，加载时将有符号小整数正确扩展到 64 位。</td>
 </tr>
 </tbody>
 </table>
-<h4 id="位立即数加载-ldd">64 位立即数加载 (LDD)</h4>
-<p><code>LDD</code> (Class <code>0x00</code>, Mode <code>0x00</code>,
-Size <code>0x03</code>) 是一条非常特殊的指令，使用 128
-位的宽格式。它不仅能加载一个 64 位的常量，还能通过 <code>src_reg</code>
-字段的不同取值，实现加载 Map 地址等高级功能，是连接 BPF
-程序和外部资源的关键。</p>
+<h4 id="位立即数加载-ld_imm64">64 位立即数加载 (ld_imm64)</h4>
+<p><code>ld_imm64</code> (Class <code>0x00</code>, Mode
+<code>0x00</code>, Size <code>0x03</code>) 是一条非常特殊的指令，使用
+128 位的宽格式。它不仅能加载一个 64 位的常量，还能通过
+<code>src_reg</code> 字段的不同取值，实现加载 Map 地址等高级功能，是连接
+BPF 程序和外部资源的关键。</p>
 <table>
 <colgroup>
 <col style="width: 25%">
@@ -513,7 +513,7 @@ ID</strong> 来调用内核辅助函数。</li>
 </ul>
 <h2 id="核心组件bpf-maps">核心组件：BPF Maps</h2>
 <p>如果说 BPF 程序是处理数据的 “工人”，那 <strong>BPF Maps</strong>
-就是工人们存放工具、交换半成品的 “仓库”。前面我们已经看到，<code>LDD</code>
+就是工人们存放工具、交换半成品的 “仓库”。前面我们已经看到，<code>ld_imm64</code>
 指令是如何在底层将 Map 翻译成地址的。</p>
 <p>BPF Maps
 是一种通用的、存在于内核中的键值对存储。它有以下几个关键作用：</p>
@@ -534,6 +534,12 @@ BPF 程序可以从中读取，实现程序间的协作。</li>
 用于向用户空间发送性能事件数据。</li>
 <li><code>BPF_MAP_TYPE_RINGBUF</code>:
 高性能的环形缓冲区，向用户空间传递数据。</li>
+<li><code>BPF_MAP_TYPE_LRU_HASH</code>: 带 LRU
+淘汰的哈希表，适合连接追踪。<br>
+</li>
+<li><code>BPF_MAP_TYPE_ARRAY_OF_MAPS</code> /
+<code>BPF_MAP_TYPE_HASH_OF_MAPS</code>: Map 嵌套，用于多 namespace
+或多租户隔离。</li>
 </ul>
 <h2 id="能力扩展内核辅助函数">能力扩展：内核辅助函数</h2>
 <p>为了安全，BPF
@@ -592,6 +598,40 @@ eBPF 程序能力的源泉，提供了诸如：</p>
 检查函数调用的参数类型是否正确，对上下文的访问是否合规。</li>
 </ol>
 <p>只有通过校验的 BPF 程序才被认为是安全的，并被允许加载到内核中。</p>
+<details>
+<summary>
+Verifier 常见拒绝示例
+</summary>
+<table>
+<thead>
+<tr>
+<th>报错片段</th>
+<th>触发原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td> invalid indirect read from stack</td>
+<td> 读到未初始化栈空间</td>
+</tr>
+<tr>
+<td> possible pointer arithmetic on ctx</td>
+<td> 对只读 ctx 指针做算术</td>
+</tr>
+<tr>
+<td> jump out of range</td>
+<td> 分支过深 /offset 溢出</td>
+</tr>
+</tbody>
+</table>
+</details>
+<h3 id="co-recompile-once-run-everywhere">CO-RE（Compile Once – Run
+Everywhere）</h3>
+<p>如果目标机器内核启用了 <a href="https://www.kernel.org/doc/html/latest/bpf/btf.html">BTF</a>，建议在编译时打开
+CO-RE：</p>
+<figure class="highlight bash"><table><tbody><tr><td class="code"><pre><span class="line">clang -g -O2 -target bpf -D__TARGET_ARCH_$(<span class="built_in">uname</span> -m) \</span><br><span class="line">      -c prog.c -o prog.o</span><br></pre></td></tr></tbody></table></figure>
+<p>同一个 <code>.o</code> 文件可跨 5.x/6.x
+内核直接重定位字段，无需重编译。</p>
 <h2 id="执行解释器与-jit-编译器">执行：解释器与 JIT 编译器</h2>
 <p>通过校验后，BPF 字节码终于可以执行了。内核提供了两种执行方式：</p>
 <h3 id="解释器-interpreter">解释器 (Interpreter)</h3>
@@ -605,6 +645,13 @@ eBPF 程序能力的源泉，提供了诸如：</p>
 可以直接执行这些编译好的原生指令，省去了逐条解释的开销，从而大大提高了执行效率，性能几乎与原生内核模块无异。</p>
 <p>每个支持的 CPU 架构都有自己的 JIT 编译器实现，例如内核源码中的
 <code>bpf_jit_comp.c</code>。</p>
+<h2 id="运行-demo">运行 Demo</h2>
+<figure class="highlight bash"><table><tbody><tr><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/libbpf/libbpf-bootstrap.git</span><br><span class="line"><span class="built_in">cd</span> libbpf-bootstrap/examples/c/minimal</span><br><span class="line">make minimal</span><br><span class="line"><span class="built_in">sudo</span> ./minimal</span><br><span class="line"><span class="built_in">sudo</span> <span class="built_in">cat</span> /sys/kernel/debug/tracing/trace_pipe</span><br><span class="line">           &lt;...&gt;-3840345 [010] d... 3220701.101143: bpf_trace_printk: BPF triggered from PID 3840345.</span><br><span class="line">           &lt;...&gt;-3840345 [010] d... 3220702.101265: bpf_trace_printk: BPF triggered from PID 3840345.</span><br></pre></td></tr></tbody></table></figure>
+<p>详细使用方法可以查看项目的 README 文件。</p>
+<blockquote>
+<p><strong>Takeaway</strong>: eBPF = 事件驱动 + 沙盒字节码 + Map +
+Helper + Verifier + JIT</p>
+</blockquote>
 ]]></content>
       <categories>
         <category>kernel</category>

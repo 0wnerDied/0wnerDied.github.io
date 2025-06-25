@@ -1331,7 +1331,7 @@ pre code {
     vertical-align: middle;
   }
   .links-of-author a::before {
-    background: #46b9e2;
+    background: #69cdcc;
     display: inline-block;
     margin-right: 3px;
     transform: translateY(-2px);
@@ -2982,4 +2982,60 @@ html body .wl-textarea {
   background-color: #333 !important;
   color: #ddd !important;
   border-color: #555 !important;
+}
+body:not(.darkmode--activated) pre,
+body:not(.darkmode--activated) code,
+body:not(.darkmode--activated) .highlight {
+  background: $code-bg-light !important;
+  color: $code-text-light !important;
+  border-radius: $material-radius !important;
+  border: 1px solid $code-border-light !important;
+  box-shadow: none !important;
+  font-family: 'JetBrains Mono', 'Fira Mono', 'Menlo', 'Consolas', monospace;
+}
+body:not(.darkmode--activated) .highlight .hljs-comment,
+body:not(.darkmode--activated) .highlight .hljs-quote {
+  color: #90a4ae !important;
+}
+body:not(.darkmode--activated) .highlight .hljs-keyword,
+body:not(.darkmode--activated) .highlight .hljs-selector-tag,
+body:not(.darkmode--activated) .highlight .hljs-section {
+  color: #1976d2 !important;
+}
+body:not(.darkmode--activated) .highlight .hljs-string,
+body:not(.darkmode--activated) .highlight .hljs-title,
+body:not(.darkmode--activated) .highlight .hljs-name {
+  color: #388e3c !important;
+}
+body:not(.darkmode--activated) .highlight .hljs-number,
+body:not(.darkmode--activated) .highlight .hljs-literal {
+  color: #e64a19 !important;
+}
+body.darkmode--activated pre,
+body.darkmode--activated code,
+body.darkmode--activated .highlight {
+  background: $code-bg-dark !important;
+  color: $code-text-dark !important;
+  border-radius: $material-radius !important;
+  border: 1px solid $code-border-dark !important;
+  box-shadow: none !important;
+  font-family: 'JetBrains Mono', 'Fira Mono', 'Menlo', 'Consolas', monospace;
+}
+body.darkmode--activated .highlight .hljs-comment,
+body.darkmode--activated .highlight .hljs-quote {
+  color: #607d8b !important;
+}
+body.darkmode--activated .highlight .hljs-keyword,
+body.darkmode--activated .highlight .hljs-selector-tag,
+body.darkmode--activated .highlight .hljs-section {
+  color: #90caf9 !important;
+}
+body.darkmode--activated .highlight .hljs-string,
+body.darkmode--activated .highlight .hljs-title,
+body.darkmode--activated .highlight .hljs-name {
+  color: #81c784 !important;
+}
+body.darkmode--activated .highlight .hljs-number,
+body.darkmode--activated .highlight .hljs-literal {
+  color: #ffab91 !important;
 }

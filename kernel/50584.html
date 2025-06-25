@@ -31,7 +31,7 @@
 <meta property="og:image" content="https://0wnerdied.github.io/kernel/50584/%E6%80%BB%E8%A7%88.png">
 <meta property="og:image" content="https://0wnerdied.github.io/kernel/50584/%E8%99%9A%E6%8B%9F%E6%9C%BA.png">
 <meta property="article:published_time" content="2025-06-23T12:19:34.000Z">
-<meta property="article:modified_time" content="2025-06-24T10:03:27.567Z">
+<meta property="article:modified_time" content="2025-06-25T14:26:10.499Z">
 <meta property="article:author" content="0wnerD1ed">
 <meta property="article:tag" content="ebpf">
 <meta name="twitter:card" content="summary">
@@ -169,7 +169,8 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#ebpf-%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86%E6%80%BB%E8%A7%88"><span class="nav-number">1.</span> <span class="nav-text">eBPF 工作原理总览</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bpf-%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B8%8E%E6%8C%87%E4%BB%A4%E9%9B%86"><span class="nav-number">2.</span> <span class="nav-text">BPF 虚拟机与指令集</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8C%87%E4%BB%A4%E6%A0%BC%E5%BC%8F"><span class="nav-number">2.1.</span> <span class="nav-text">指令格式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%93%8D%E4%BD%9C%E7%A0%81-opcode"><span class="nav-number">2.2.</span> <span class="nav-text">操作码 (Opcode)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%98%E5%8F%96%E6%8C%87%E4%BB%A4-ldldx-ststx"><span class="nav-number">2.3.</span> <span class="nav-text">存取指令 (LD&#x2F;LDX, ST&#x2F;STX)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%8D%E7%AB%8B%E5%8D%B3%E6%95%B0%E5%8A%A0%E8%BD%BD-ldd"><span class="nav-number">2.3.1.</span> <span class="nav-text">64 位立即数加载 (LDD)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B8%B8%E8%A7%84%E4%B8%8E%E7%AC%A6%E5%8F%B7%E6%89%A9%E5%B1%95%E5%8A%A0%E8%BD%BD%E5%AD%98%E5%82%A8"><span class="nav-number">2.3.2.</span> <span class="nav-text">常规与符号扩展加载 &#x2F; 存储</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8E%9F%E5%AD%90%E6%93%8D%E4%BD%9C-atomic"><span class="nav-number">2.3.3.</span> <span class="nav-text">原子操作 (Atomic)</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%97%E6%9C%AF%E4%B8%8E%E8%B7%B3%E8%BD%AC%E6%8C%87%E4%BB%A4-alujmp"><span class="nav-number">2.4.</span> <span class="nav-text">算术与跳转指令 (ALU&#x2F;JMP)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AE%97%E6%9C%AF%E6%8C%87%E4%BB%A4-alualu64"><span class="nav-number">2.4.1.</span> <span class="nav-text">算术指令 (ALU&#x2F;ALU64)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%B7%B3%E8%BD%AC%E6%8C%87%E4%BB%A4-jmpjmp32"><span class="nav-number">2.4.2.</span> <span class="nav-text">跳转指令 (JMP&#x2F;JMP32)</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6bpf-maps"><span class="nav-number">3.</span> <span class="nav-text">核心组件：BPF Maps</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%83%BD%E5%8A%9B%E6%89%A9%E5%B1%95%E5%86%85%E6%A0%B8%E8%BE%85%E5%8A%A9%E5%87%BD%E6%95%B0"><span class="nav-number">4.</span> <span class="nav-text">能力扩展：内核辅助函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bpf-%E7%A8%8B%E5%BA%8F%E7%B1%BB%E5%9E%8B"><span class="nav-number">5.</span> <span class="nav-text">BPF 程序类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E5%8A%A0%E8%BD%BD%E4%B8%8E%E6%A0%A1%E9%AA%8C"><span class="nav-number">6.</span> <span class="nav-text">编译、加载与校验</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%A7%E8%A1%8C%E8%A7%A3%E9%87%8A%E5%99%A8%E4%B8%8E-jit-%E7%BC%96%E8%AF%91%E5%99%A8"><span class="nav-number">7.</span> <span class="nav-text">执行：解释器与 JIT 编译器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%87%8A%E5%99%A8-interpreter"><span class="nav-number">7.1.</span> <span class="nav-text">解释器 (Interpreter)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#jit-%E7%BC%96%E8%AF%91%E5%99%A8-just-in-time"><span class="nav-number">7.2.</span> <span class="nav-text">JIT 编译器 (Just-In-Time)</span></a></li></ol></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#ebpf-%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86%E6%80%BB%E8%A7%88"><span class="nav-number">1.</span> <span class="nav-text">eBPF 工作原理总览</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bpf-%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B8%8E%E6%8C%87%E4%BB%A4%E9%9B%86"><span class="nav-number">2.</span> <span class="nav-text">BPF 虚拟机与指令集</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8C%87%E4%BB%A4%E6%A0%BC%E5%BC%8F"><span class="nav-number">2.1.</span> <span class="nav-text">指令格式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%93%8D%E4%BD%9C%E7%A0%81-opcode"><span class="nav-number">2.2.</span> <span class="nav-text">操作码 (Opcode)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%98%E5%8F%96%E6%8C%87%E4%BB%A4-ldldx-ststx"><span class="nav-number">2.3.</span> <span class="nav-text">存取指令 (LD&#x2F;LDX, ST&#x2F;STX)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%8D%E7%AB%8B%E5%8D%B3%E6%95%B0%E5%8A%A0%E8%BD%BD-ld_imm64"><span class="nav-number">2.3.1.</span> <span class="nav-text">64 位立即数加载 (ld_imm64)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B8%B8%E8%A7%84%E4%B8%8E%E7%AC%A6%E5%8F%B7%E6%89%A9%E5%B1%95%E5%8A%A0%E8%BD%BD%E5%AD%98%E5%82%A8"><span class="nav-number">2.3.2.</span> <span class="nav-text">常规与符号扩展加载 &#x2F; 存储</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8E%9F%E5%AD%90%E6%93%8D%E4%BD%9C-atomic"><span class="nav-number">2.3.3.</span> <span class="nav-text">原子操作 (Atomic)</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%97%E6%9C%AF%E4%B8%8E%E8%B7%B3%E8%BD%AC%E6%8C%87%E4%BB%A4-alujmp"><span class="nav-number">2.4.</span> <span class="nav-text">算术与跳转指令 (ALU&#x2F;JMP)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AE%97%E6%9C%AF%E6%8C%87%E4%BB%A4-alualu64"><span class="nav-number">2.4.1.</span> <span class="nav-text">算术指令 (ALU&#x2F;ALU64)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%B7%B3%E8%BD%AC%E6%8C%87%E4%BB%A4-jmpjmp32"><span class="nav-number">2.4.2.</span> <span class="nav-text">跳转指令 (JMP&#x2F;JMP32)</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6bpf-maps"><span class="nav-number">3.</span> <span class="nav-text">核心组件：BPF Maps</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%83%BD%E5%8A%9B%E6%89%A9%E5%B1%95%E5%86%85%E6%A0%B8%E8%BE%85%E5%8A%A9%E5%87%BD%E6%95%B0"><span class="nav-number">4.</span> <span class="nav-text">能力扩展：内核辅助函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bpf-%E7%A8%8B%E5%BA%8F%E7%B1%BB%E5%9E%8B"><span class="nav-number">5.</span> <span class="nav-text">BPF 程序类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E5%8A%A0%E8%BD%BD%E4%B8%8E%E6%A0%A1%E9%AA%8C"><span class="nav-number">6.</span> <span class="nav-text">编译、加载与校验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#co-recompile-once-run-everywhere"><span class="nav-number">6.1.</span> <span class="nav-text">CO-RE（Compile Once – Run
+Everywhere）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%A7%E8%A1%8C%E8%A7%A3%E9%87%8A%E5%99%A8%E4%B8%8E-jit-%E7%BC%96%E8%AF%91%E5%99%A8"><span class="nav-number">7.</span> <span class="nav-text">执行：解释器与 JIT 编译器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%87%8A%E5%99%A8-interpreter"><span class="nav-number">7.1.</span> <span class="nav-text">解释器 (Interpreter)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#jit-%E7%BC%96%E8%AF%91%E5%99%A8-just-in-time"><span class="nav-number">7.2.</span> <span class="nav-text">JIT 编译器 (Just-In-Time)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C-demo"><span class="nav-number">8.</span> <span class="nav-text">运行 Demo</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -269,7 +270,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2025-06-24 18:03:27" itemprop="dateModified" datetime="2025-06-24T18:03:27+08:00">2025-06-24</time>
+      <time title="修改时间：2025-06-25 22:26:10" itemprop="dateModified" datetime="2025-06-25T22:26:10+08:00">2025-06-25</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -309,14 +310,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>5.8k</span>
+      <span>6.7k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>9 分钟</span>
+      <span>10 分钟</span>
     </span>
 </div>
 
@@ -385,8 +386,8 @@ bit)，在大端序和小端序主机上，这两个 4-bit 字段的顺序是相
 <li><code>offset</code>: 16 bit (偏移量)</li>
 <li><code>imm</code>: 32 bit (立即数)</li>
 </ul></li>
-<li><strong> 宽指令 (128-bit)</strong>: 专用于加载一个 64 位的立即数
-，(<code>ld_imm64</code>)。它由两个连续的 64 位指令构成。
+<li><strong> 宽指令 (128-bit)</strong>: 专用于加载一个 64
+位的立即数（ld_imm64）。它由两个连续的 64 位指令构成。
 <ul>
 <li>第一个 64 位指令：正常的基本指令格式，其中 imm 字段存放 64
 位立即数的低 32 位</li>
@@ -483,7 +484,7 @@ bit)，在大端序和小端序主机上，这两个 4-bit 字段的顺序是相
 <td style="text-align: left;"> 0</td>
 <td style="text-align: left;">IMM</td>
 <td style="text-align: left;"><strong> 立即数 (Immediate)</strong>，用于
-<code>LDD</code> 指令加载 64 位立即数。</td>
+<code>ld_imm64</code> 指令加载 64 位立即数。</td>
 </tr>
 <tr>
 <td style="text-align: left;">1</td>
@@ -522,7 +523,7 @@ load)</strong>，加载时将有符号小整数正确扩展到 64 位。</td>
 <thead>
 <tr>
 <th style="text-align: left;">value</th>
-<th style="text-align: left;">szie</th>
+<th style="text-align: left;">size</th>
 <th style="text-align: left;"> 描述</th>
 </tr>
 </thead>
@@ -551,12 +552,12 @@ load)</strong>，加载时将有符号小整数正确扩展到 64 位。</td>
 </tr>
 </tbody>
 </table>
-<h4 id="位立即数加载-ldd">64 位立即数加载 (LDD)</h4>
-<p><code>LDD</code> (Class <code>0x00</code>, Mode <code>0x00</code>,
-Size <code>0x03</code>) 是一条非常特殊的指令，使用 128
-位的宽格式。它不仅能加载一个 64 位的常量，还能通过 <code>src_reg</code>
-字段的不同取值，实现加载 Map 地址等高级功能，是连接 BPF
-程序和外部资源的关键。</p>
+<h4 id="位立即数加载-ld_imm64">64 位立即数加载 (ld_imm64)</h4>
+<p><code>ld_imm64</code> (Class <code>0x00</code>, Mode
+<code>0x00</code>, Size <code>0x03</code>) 是一条非常特殊的指令，使用
+128 位的宽格式。它不仅能加载一个 64 位的常量，还能通过
+<code>src_reg</code> 字段的不同取值，实现加载 Map 地址等高级功能，是连接
+BPF 程序和外部资源的关键。</p>
 <table>
 <colgroup>
 <col style="width: 25%">
@@ -836,7 +837,7 @@ ID</strong> 来调用内核辅助函数。</li>
 </ul>
 <h2 id="核心组件bpf-maps">核心组件：BPF Maps</h2>
 <p>如果说 BPF 程序是处理数据的 “工人”，那 <strong>BPF Maps</strong>
-就是工人们存放工具、交换半成品的 “仓库”。前面我们已经看到，<code>LDD</code>
+就是工人们存放工具、交换半成品的 “仓库”。前面我们已经看到，<code>ld_imm64</code>
 指令是如何在底层将 Map 翻译成地址的。</p>
 <p>BPF Maps
 是一种通用的、存在于内核中的键值对存储。它有以下几个关键作用：</p>
@@ -857,6 +858,12 @@ BPF 程序可以从中读取，实现程序间的协作。</li>
 用于向用户空间发送性能事件数据。</li>
 <li><code>BPF_MAP_TYPE_RINGBUF</code>:
 高性能的环形缓冲区，向用户空间传递数据。</li>
+<li><code>BPF_MAP_TYPE_LRU_HASH</code>: 带 LRU
+淘汰的哈希表，适合连接追踪。<br>
+</li>
+<li><code>BPF_MAP_TYPE_ARRAY_OF_MAPS</code> /
+<code>BPF_MAP_TYPE_HASH_OF_MAPS</code>: Map 嵌套，用于多 namespace
+或多租户隔离。</li>
 </ul>
 <h2 id="能力扩展内核辅助函数">能力扩展：内核辅助函数</h2>
 <p>为了安全，BPF
@@ -915,6 +922,40 @@ eBPF 程序能力的源泉，提供了诸如：</p>
 检查函数调用的参数类型是否正确，对上下文的访问是否合规。</li>
 </ol>
 <p>只有通过校验的 BPF 程序才被认为是安全的，并被允许加载到内核中。</p>
+<details>
+<summary>
+Verifier 常见拒绝示例
+</summary>
+<table>
+<thead>
+<tr>
+<th>报错片段</th>
+<th>触发原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td> invalid indirect read from stack</td>
+<td> 读到未初始化栈空间</td>
+</tr>
+<tr>
+<td> possible pointer arithmetic on ctx</td>
+<td> 对只读 ctx 指针做算术</td>
+</tr>
+<tr>
+<td> jump out of range</td>
+<td> 分支过深 /offset 溢出</td>
+</tr>
+</tbody>
+</table>
+</details>
+<h3 id="co-recompile-once-run-everywhere">CO-RE（Compile Once – Run
+Everywhere）</h3>
+<p>如果目标机器内核启用了 <a target="_blank" rel="noopener" href="https://www.kernel.org/doc/html/latest/bpf/btf.html">BTF</a>，建议在编译时打开
+CO-RE：</p>
+<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">clang -g -O2 -target bpf -D__TARGET_ARCH_$(<span class="built_in">uname</span> -m) \</span><br><span class="line">      -c prog.c -o prog.o</span><br></pre></td></tr></tbody></table></figure>
+<p>同一个 <code>.o</code> 文件可跨 5.x/6.x
+内核直接重定位字段，无需重编译。</p>
 <h2 id="执行解释器与-jit-编译器">执行：解释器与 JIT 编译器</h2>
 <p>通过校验后，BPF 字节码终于可以执行了。内核提供了两种执行方式：</p>
 <h3 id="解释器-interpreter">解释器 (Interpreter)</h3>
@@ -928,6 +969,13 @@ eBPF 程序能力的源泉，提供了诸如：</p>
 可以直接执行这些编译好的原生指令，省去了逐条解释的开销，从而大大提高了执行效率，性能几乎与原生内核模块无异。</p>
 <p>每个支持的 CPU 架构都有自己的 JIT 编译器实现，例如内核源码中的
 <code>bpf_jit_comp.c</code>。</p>
+<h2 id="运行-demo">运行 Demo</h2>
+<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/libbpf/libbpf-bootstrap.git</span><br><span class="line"><span class="built_in">cd</span> libbpf-bootstrap/examples/c/minimal</span><br><span class="line">make minimal</span><br><span class="line"><span class="built_in">sudo</span> ./minimal</span><br><span class="line"><span class="built_in">sudo</span> <span class="built_in">cat</span> /sys/kernel/debug/tracing/trace_pipe</span><br><span class="line">           &lt;...&gt;-3840345 [010] d... 3220701.101143: bpf_trace_printk: BPF triggered from PID 3840345.</span><br><span class="line">           &lt;...&gt;-3840345 [010] d... 3220702.101265: bpf_trace_printk: BPF triggered from PID 3840345.</span><br></pre></td></tr></tbody></table></figure>
+<p>详细使用方法可以查看项目的 README 文件。</p>
+<blockquote>
+<p><strong>Takeaway</strong>: eBPF = 事件驱动 + 沙盒字节码 + Map +
+Helper + Verifier + JIT</p>
+</blockquote>
 
     </div>
 
