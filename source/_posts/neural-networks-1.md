@@ -276,6 +276,8 @@ $$ w_{new} = w_{old} - \eta \frac{\partial C}{\partial w} $$
 
 在一次预测后，我们得到了总的误差。反向传播会从输出层开始，反向地通过网络，计算出每个权重和偏置对这个总误差“贡献”了多少责任。
 
+#### 单个权重的的链式法则责任推导
+
 这个过程依赖于微积分中的**链式法则**。我们想知道改变一个权重 `w` 会如何影响最终的损失 `C` (即梯度 `∂C/∂w`)。这个梯度可以被分解为几个部分的乘积：
 
 $$ \frac{\partial C}{\partial w} = \frac{\partial C}{\partial a} \times \frac{\partial a}{\partial z} \times \frac{\partial z}{\partial w} $$
@@ -295,14 +297,106 @@ $$ \frac{\partial C}{\partial w} = \frac{\partial C}{\partial a} \times \frac{\p
 
 综上，为了计算一个权重的梯度（`∂C/∂w`），我们把这三份“责任”相乘：(来自前一层的输入 `a_prev`) × (激活函数的导数) × (从后一层传回来的误差)。这就是反向传播的核心计算。
 
-![backprop](./neural-networks-1/10-backprop.png)
+#### 多层神经网络的链式法则责任传递
 
-- **对于输出层的权重**：它们对误差的贡献比较直接，可以相对容易地计算出来。
-- **对于隐藏层的权重**：它们对误差的贡献是间接的，通过影响下一层的神经元来实现。反向传播算法会把下一层计算出的“误差信号”传播回来，并根据连接的权重进行分配。
+上述推导是针对单个权重的梯度，便于理解本质。而在实际代码实现中，一般用矩阵运算一次性计算整层的所有权重和偏置的梯度，这样程序的运算效率更高。代码中的 `dC_da`、`da_dz`、`dC_dz`、`dC_dw`、`dC_db`、`dC_da_prev` 等变量，都是批量（矩阵/向量）形式的“责任”传递，和理论推导一一对应，只是用矩阵方式高效实现。
 
-最终，我们会得到网络中**每一个**权重和偏置的梯度。这个梯度告诉我们，为了降低损失，这个参数应该增加还是减少，以及改变的幅度。
+在多层神经网络中，反向传播的“责任”会一层层传递。我们以第 $l$ 层为例，假设：
 
-![backprop2](./neural-networks-1/11-backprop-2.png)
+- $a^{[l]}$：第 $l$ 层的输出（激活值）
+- $z^{[l]}$：第 $l$ 层的加权和
+- $W^{[l]}$、$b^{[l]}$：第 $l$ 层的权重和偏置
+
+前向传播：
+$$
+\begin{align}
+z^{[l]} &= W^{[l]} a^{[l-1]} + b^{[l]} \\
+a^{[l]} &= f(z^{[l]})
+\end{align}
+$$
+
+反向传播：
+
+第一个“误差信号” $\frac{\partial C}{\partial a^{[L]}}$（损失对输出层激活的梯度）是直接由损失函数和真实标签计算得到。例如对于均方误差（MSE）损失 $C = \frac{1}{2}(a^{[L]} - y)^2$，有 $\frac{\partial C}{\partial a^{[L]}} = a^{[L]} - y$。
+
+“真实标签”指的是训练数据中每个样本的正确答案，也叫“目标值”或“ground truth”。比如：
+
+- 图像分类任务中，真实标签就是图片实际对应的类别（如“猫”或“狗”）。
+- 回归任务中，真实标签就是希望模型预测出来的那个数值。
+
+在反向传播时，假设我们已经得到了 $\frac{\partial C}{\partial a^{[l]}}$，则：
+
+1. 计算 $\frac{\partial C}{\partial z^{[l]}}$。其中，符号 $\odot$ 表示逐元素乘法：
+$$
+\delta^{[l]} = \frac{\partial C}{\partial z^{[l]}} = \frac{\partial C}{\partial a^{[l]}} \odot f'(z^{[l]})
+$$
+
+2. 计算本层参数的梯度，这里的 $m$ 是 batch size：
+$$
+\begin{align}
+\frac{\partial C}{\partial W^{[l]}} &= \delta^{[l]} (a^{[l-1]})^T \\
+\frac{\partial C}{\partial b^{[l]}} &= \sum_{i=1}^m \delta^{[l]}_i
+\end{align}
+$$
+
+3. 计算传递给前一层的“责任”：
+$$
+\frac{\partial C}{\partial a^{[l-1]}} = (W^{[l]})^T \delta^{[l]}
+$$
+
+这样，误差信号 $\delta$ 就一层层地传递回去。
+
+![backpropagation](./neural-networks-1/10-backpropagation.png)
+
+**变量对应关系**：
+
+| 公式符号                        | 代码变量名      | 含义                         |
+|:-------------------------------|:---------------|:---------------------------------|
+| $\frac{\partial C}{\partial a^{[l]}}$ | `dC_da`        | 损失对本层激活的梯度 (来自 $l+1$ 层) |
+| $f'(z^{[l]})$                   | `da_dz`        | 激活函数对加权和的导数            |
+| $\delta^{[l]}$                  | `dC_dz`        | 损失对本层加权和的梯度            |
+| $\frac{\partial C}{\partial W^{[l]}}$ | `dC_dw`        | 损失对本层权重的梯度              |
+| $\frac{\partial C}{\partial b^{[l]}}$ | `dC_db`        | 损失对本层偏置的梯度              |
+| $\frac{\partial C}{\partial a^{[l-1]}}$ | `dC_da_prev`   | 损失对前一层激活的梯度 (传递回 $l-1$ 层) |
+
+下面的代码段详细解释了每个变量的含义和它与理论公式的对应关系。
+
+```python
+def backward(self, dC_da, learning_rate):
+    """
+    执行反向传播，计算并应用梯度。
+    dC_da: 损失函数对本神经元输出 a 的梯度 (从下一层传来)
+    """
+    # 1. 计算 da/dz (激活函数对z的梯度)
+    # 对应链式法则中的 ∂a/∂z，形状与 z 相同
+    da_dz = self.relu_derivative(self.last_z)
+
+    # 2. 计算 dC/dz (损失对z的梯度) = dC/da * da/dz
+    # 对应链式法则中的 ∂C/∂a × ∂a/∂z，形状与 z 相同
+    dC_dz = dC_da * da_dz
+
+    # 3. 计算 dC/dw (损失对权重的梯度) = dC/dz * dz/dw
+    # dz/dw = a_prev，dC/dw = a_prev.T @ dC/dz
+    # 这里 a_prev 是输入，dC/dz 是“误差信号”，矩阵乘法一次性算出所有权重的梯度
+    # @ 是矩阵乘法符号
+    dC_dw = np.dot(self.last_input.T, dC_dz)
+
+    # 4. 计算 dC/db (损失对偏置的梯度) = dC/dz * dz/db
+    # dz/db = 1，dC/db = sum(dC/dz)
+    dC_db = np.sum(dC_dz, axis=0, keepdims=True)
+
+    # 5. 计算 dC/da_prev (损失对前一层激活值的梯度)，用于传给前一层
+    # dC/da_prev = dC/dz * dz/da_prev，dz/da_prev = weights
+    # 这一步是“误差信号”向前一层传播
+    dC_da_prev = np.dot(dC_dz, self.weights.T)
+
+    # 6. 根据梯度更新权重和偏置
+    self.weights -= learning_rate * dC_dw
+    self.bias -= learning_rate * dC_db
+
+    # 返回 dC/da_prev，传递给前一层继续反向传播
+    return dC_da_prev
+```
 
 ### 总结训练循环
 
@@ -362,22 +456,26 @@ class Neuron:
         dC_da: 损失函数对本神经元输出 a 的梯度 (从下一层传来)
         """
         # 1. 计算 da/dz (激活函数对z的梯度)
+        # 对应链式法则中的 ∂a/∂z，形状与 z 相同
         da_dz = self.relu_derivative(self.last_z)
 
         # 2. 计算 dC/dz (损失对z的梯度) = dC/da * da/dz
+        # 对应链式法则中的 ∂C/∂a × ∂a/∂z，形状与 z 相同
         dC_dz = dC_da * da_dz
 
         # 3. 计算 dC/dw (损失对权重的梯度) = dC/dz * dz/dw
-        #    dz/dw = last_input, 所以 dC/dw = last_input.T * dC/dz
+        # dz/dw = a_prev，dC/dw = a_prev.T @ dC/dz
+        # 这里 a_prev 是输入，dC/dz 是“误差信号”，矩阵乘法一次性算出所有权重的梯度
+        # @ 是矩阵乘法符号
         dC_dw = np.dot(self.last_input.T, dC_dz)
 
         # 4. 计算 dC/db (损失对偏置的梯度) = dC/dz * dz/db
-        #    dz/db = 1, 所以 dC/db = dC/dz
+        # dz/db = 1，dC/db = sum(dC/dz)
         dC_db = np.sum(dC_dz, axis=0, keepdims=True)
 
         # 5. 计算 dC/da_prev (损失对前一层激活值的梯度)，用于传给前一层
-        #    dC/da_prev = dC/dz * dz/da_prev
-        #    dz/da_prev = weights, 所以 dC/da_prev = dC/dz * weights.T
+        # dC/da_prev = dC/dz * dz/da_prev，dz/da_prev = weights
+        # 这一步是“误差信号”向前一层传播
         dC_da_prev = np.dot(dC_dz, self.weights.T)
 
         # 6. 根据梯度更新权重和偏置
