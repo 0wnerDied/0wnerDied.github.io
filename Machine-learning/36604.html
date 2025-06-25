@@ -35,8 +35,9 @@
 <meta property="og:image" content="https://0wnerdied.github.io/Machine-learning/36604/7-matrices2.png">
 <meta property="og:image" content="https://0wnerdied.github.io/Machine-learning/36604/8-cost.png">
 <meta property="og:image" content="https://0wnerdied.github.io/Machine-learning/36604/9-gradientDescent.png">
+<meta property="og:image" content="https://0wnerdied.github.io/Machine-learning/36604/10-backpropagation.png">
 <meta property="article:published_time" content="2025-06-24T06:21:00.000Z">
-<meta property="article:modified_time" content="2025-06-25T06:03:18.247Z">
+<meta property="article:modified_time" content="2025-06-25T06:54:58.830Z">
 <meta property="article:author" content="0wnerD1ed">
 <meta property="article:tag" content="NN">
 <meta name="twitter:card" content="summary">
@@ -175,7 +176,7 @@
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
             <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="nav-number">1.</span> <span class="nav-text">神经网络的概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E5%90%91%E4%BC%A0%E6%92%AD"><span class="nav-number">2.</span> <span class="nav-text">前向传播</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A5%9E%E7%BB%8F%E5%85%83%E5%92%8C%E6%BF%80%E6%B4%BB%E5%80%BC"><span class="nav-number">2.1.</span> <span class="nav-text">神经元和激活值</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9E%E6%8E%A5%E5%92%8C%E6%9D%83%E9%87%8D"><span class="nav-number">2.2.</span> <span class="nav-text">连接和权重</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%A1%E7%AE%97%E6%BF%80%E6%B4%BB%E5%80%BC"><span class="nav-number">2.3.</span> <span class="nav-text">计算激活值</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9F%A9%E9%98%B5%E8%BF%90%E7%AE%97"><span class="nav-number">2.4.</span> <span class="nav-text">矩阵运算</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E5%81%8F%E7%BD%AE%E5%92%8C%E5%B9%BF%E6%92%AD-a-deeper-look-at-bias-and-broadcasting"><span class="nav-number">2.4.1.</span> <span class="nav-text">深入理解偏置和广播
-(A Deeper Look at Bias and Broadcasting)</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%AD%E7%BB%83%E8%BF%87%E7%A8%8B"><span class="nav-number">3.</span> <span class="nav-text">训练过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0"><span class="nav-number">3.1.</span> <span class="nav-text">损失函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D"><span class="nav-number">3.2.</span> <span class="nav-text">梯度下降</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD"><span class="nav-number">3.3.</span> <span class="nav-text">反向传播</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93%E8%AE%AD%E7%BB%83%E5%BE%AA%E7%8E%AF"><span class="nav-number">3.4.</span> <span class="nav-text">总结训练循环</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84-python-%E5%AE%9E%E7%8E%B0"><span class="nav-number">4.</span> <span class="nav-text">一个简单的 Python 实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">5.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+(A Deeper Look at Bias and Broadcasting)</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%AD%E7%BB%83%E8%BF%87%E7%A8%8B"><span class="nav-number">3.</span> <span class="nav-text">训练过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0"><span class="nav-number">3.1.</span> <span class="nav-text">损失函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D"><span class="nav-number">3.2.</span> <span class="nav-text">梯度下降</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD"><span class="nav-number">3.3.</span> <span class="nav-text">反向传播</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8D%95%E4%B8%AA%E6%9D%83%E9%87%8D%E7%9A%84%E7%9A%84%E9%93%BE%E5%BC%8F%E6%B3%95%E5%88%99%E8%B4%A3%E4%BB%BB%E6%8E%A8%E5%AF%BC"><span class="nav-number">3.3.1.</span> <span class="nav-text">单个权重的的链式法则责任推导</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A4%9A%E5%B1%82%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E7%9A%84%E9%93%BE%E5%BC%8F%E6%B3%95%E5%88%99%E8%B4%A3%E4%BB%BB%E4%BC%A0%E9%80%92"><span class="nav-number">3.3.2.</span> <span class="nav-text">多层神经网络的链式法则责任传递</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93%E8%AE%AD%E7%BB%83%E5%BE%AA%E7%8E%AF"><span class="nav-number">3.4.</span> <span class="nav-text">总结训练循环</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84-python-%E5%AE%9E%E7%8E%B0"><span class="nav-number">4.</span> <span class="nav-text">一个简单的 Python 实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">5.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -275,7 +276,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2025-06-25 14:03:18" itemprop="dateModified" datetime="2025-06-25T14:03:18+08:00">2025-06-25</time>
+      <time title="修改时间：2025-06-25 14:54:58" itemprop="dateModified" datetime="2025-06-25T14:54:58+08:00">2025-06-25</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -315,14 +316,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>11k</span>
+      <span>12k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>16 分钟</span>
+      <span>18 分钟</span>
     </span>
 </div>
 
@@ -496,6 +497,7 @@ w_{old} - \eta \frac{\partial C}{\partial w} $$</span> 其中
 <p><strong>反向传播
 (Backpropagation)</strong> 就是解决这个问题的算法。它的核心思想是 “分配责任”。</p>
 <p>在一次预测后，我们得到了总的误差。反向传播会从输出层开始，反向地通过网络，计算出每个权重和偏置对这个总误差 “贡献” 了多少责任。</p>
+<h4 id="单个权重的的链式法则责任推导">单个权重的的链式法则责任推导</h4>
 <p>这个过程依赖于微积分中的<strong>链式法则</strong>。我们想知道改变一个权重
 <code>w</code> 会如何影响最终的损失 <code>C</code> (即梯度
 <code>∂C/∂w</code>)。这个梯度可以被分解为几个部分的乘积：</p>
@@ -539,10 +541,106 @@ w_{old} - \eta \frac{\partial C}{\partial w} $$</span> 其中
 <p>综上，为了计算一个权重的梯度（<code>∂C/∂w</code>），我们把这三份 “责任” 相乘：(来自前一层的输入
 <code>a_prev</code>) × (激活函数的导数) ×
 (从后一层传回来的误差)。这就是反向传播的核心计算。</p>
-<p><strong>Tips</strong></p>
+<h4 id="多层神经网络的链式法则责任传递">多层神经网络的链式法则责任传递</h4>
 <p>上述推导是针对单个权重的梯度，便于理解本质。而在实际代码实现中，一般用矩阵运算一次性计算整层的所有权重和偏置的梯度，这样程序的运算效率更高。代码中的
 <code>dC_da</code>、<code>da_dz</code>、<code>dC_dz</code>、<code>dC_dw</code>、<code>dC_db</code>、<code>dC_da_prev</code>
 等变量，都是批量（矩阵 / 向量）形式的 “责任” 传递，和理论推导一一对应，只是用矩阵方式高效实现。</p>
+<p>在多层神经网络中，反向传播的 “责任” 会一层层传递。我们以第 <span class="math inline"><em>l</em></span> 层为例，假设：</p>
+<ul>
+<li><span class="math inline"><em>a</em><sup>[<em>l</em>]</sup></span>：第 <span class="math inline"><em>l</em></span> 层的输出（激活值）</li>
+<li><span class="math inline"><em>z</em><sup>[<em>l</em>]</sup></span>：第 <span class="math inline"><em>l</em></span> 层的加权和</li>
+<li><span class="math inline"><em> W</em><sup>[<em>l</em>]</sup></span>、<span class="math inline"><em>b</em><sup>[<em>l</em>]</sup></span>：第 <span class="math inline"><em>l</em></span> 层的权重和偏置</li>
+</ul>
+<p>前向传播： <span class="math display">$$
+z^{[l]} = W^{[l]} a^{[l-1]} + b^{[l]} \\
+a^{[l]} = f(z^{[l]})
+$$</span></p>
+<p>反向传播：</p>
+<p>第一个 “误差信号” <span class="math inline">$\frac{\partial
+C}{\partial
+a^{[L]}}$</span>（损失对输出层激活的梯度）是直接由损失函数和真实标签计算得到。例如对于均方误差（MSE）损失
+<span class="math inline">$C = \frac{1}{2}(a^{[L]} - y)^2$</span>，有
+<span class="math inline">$\frac{\partial C}{\partial a^{[L]}} = a^{[L]}
+- y$</span>。</p>
+<p>“真实标签” 指的是训练数据中每个样本的正确答案，也叫 “目标值” 或 “ground
+truth”。比如：</p>
+<ul>
+<li>图像分类任务中，真实标签就是图片实际对应的类别（如 “猫” 或 “狗”）。</li>
+<li>回归任务中，真实标签就是希望模型预测出来的那个数值。</li>
+</ul>
+<p>在反向传播时，假设我们已经得到了 <span class="math inline">$\frac{\partial C}{\partial
+a^{[l]}}$</span>，则：</p>
+<ol type="1">
+<li><p>计算 <span class="math inline">$\frac{\partial C}{\partial
+z^{[l]}}$</span>。其中，符号 <span class="math inline">⊙</span>
+表示逐元素乘法： <span class="math display">$$
+\delta^{[l]} = \frac{\partial C}{\partial z^{[l]}} = \frac{\partial
+C}{\partial a^{[l]}} \odot f'(z^{[l]})
+$$</span></p></li>
+<li><p> 计算本层参数的梯度，这里的 <span class="math inline"><em>m</em></span> 是 batch size： <span class="math display">$$
+\begin{align}
+\frac{\partial C}{\partial W^{[l]}} &amp;= \delta^{[l]} (a^{[l-1]})^T \\
+\frac{\partial C}{\partial b^{[l]}} &amp;= \sum_{i=1}^m \delta^{[l]}_i
+\end{align}
+$$</span></p></li>
+<li><p> 计算传递给前一层的 “责任”： <span class="math display">$$
+\frac{\partial C}{\partial a^{[l-1]}} = (W^{[l]})^T \delta^{[l]}
+$$</span></p></li>
+</ol>
+<p>这样，误差信号 <span class="math inline"><em>δ</em></span>
+就一层层地传递回去。</p>
+<img src="/Machine-learning/36604/10-backpropagation.png" class="" title="backpropagation">
+<p><strong>变量对应关系</strong>：</p>
+<table>
+<colgroup>
+<col style="width: 39%">
+<col style="width: 19%">
+<col style="width: 41%">
+</colgroup>
+<thead>
+<tr>
+<th style="text-align: left;">公式符号</th>
+<th style="text-align: left;">代码变量名</th>
+<th style="text-align: left;">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><span class="math inline"> $\frac{\partial
+C}{\partial a^{[l]}}$</span></td>
+<td style="text-align: left;"><code>dC_da</code></td>
+<td style="text-align: left;">损失对本层激活的梯度 (来自 <span class="math inline"><em>l</em> + 1</span> 层)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="math inline"><em>f</em><sup>′</sup>(<em>z</em><sup>[<em>l</em>]</sup>)</span></td>
+<td style="text-align: left;"><code>da_dz</code></td>
+<td style="text-align: left;">激活函数对加权和的导数</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="math inline"><em> δ</em><sup>[<em>l</em>]</sup></span></td>
+<td style="text-align: left;"><code>dC_dz</code></td>
+<td style="text-align: left;">损失对本层加权和的梯度</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="math inline"> $\frac{\partial
+C}{\partial W^{[l]}}$</span></td>
+<td style="text-align: left;"><code>dC_dw</code></td>
+<td style="text-align: left;">损失对本层权重的梯度</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="math inline"> $\frac{\partial
+C}{\partial b^{[l]}}$</span></td>
+<td style="text-align: left;"><code>dC_db</code></td>
+<td style="text-align: left;">损失对本层偏置的梯度</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="math inline"> $\frac{\partial
+C}{\partial a^{[l-1]}}$</span></td>
+<td style="text-align: left;"><code>dC_da_prev</code></td>
+<td style="text-align: left;">损失对前一层激活的梯度 (传递回 <span class="math inline"><em>l</em> − 1</span> 层)</td>
+</tr>
+</tbody>
+</table>
 <p>下面的代码段详细解释了每个变量的含义和它与理论公式的对应关系。</p>
 <figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">backward</span>(<span class="params">self, dC_da, learning_rate</span>):</span><br><span class="line">    <span class="string">"""</span></span><br><span class="line"><span class="string">    执行反向传播，计算并应用梯度。</span></span><br><span class="line"><span class="string">    dC_da: 损失函数对本神经元输出 a 的梯度 (从下一层传来)</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line">    <span class="comment"># 1. 计算 da/dz (激活函数对z的梯度)</span></span><br><span class="line">    <span class="comment"># 对应链式法则中的 ∂a/∂z，形状与 z 相同</span></span><br><span class="line">    da_dz = <span class="variable language_">self</span>.relu_derivative(<span class="variable language_">self</span>.last_z)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 2. 计算 dC/dz (损失对z的梯度) = dC/da * da/dz</span></span><br><span class="line">    <span class="comment"># 对应链式法则中的 ∂C/∂a × ∂a/∂z，形状与 z 相同</span></span><br><span class="line">    dC_dz = dC_da * da_dz</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 3. 计算 dC/dw (损失对权重的梯度) = dC/dz * dz/dw</span></span><br><span class="line">    <span class="comment"># dz/dw = a_prev，dC/dw = a_prev.T @ dC/dz</span></span><br><span class="line">    <span class="comment"># 这里 a_prev 是输入，dC/dz 是“误差信号”，矩阵乘法一次性算出所有权重的梯度</span></span><br><span class="line">    <span class="comment"># @ 是矩阵乘法符号</span></span><br><span class="line">    dC_dw = np.dot(<span class="variable language_">self</span>.last_input.T, dC_dz)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 4. 计算 dC/db (损失对偏置的梯度) = dC/dz * dz/db</span></span><br><span class="line">    <span class="comment"># dz/db = 1，dC/db = sum(dC/dz)</span></span><br><span class="line">    dC_db = np.<span class="built_in">sum</span>(dC_dz, axis=<span class="number">0</span>, keepdims=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 5. 计算 dC/da_prev (损失对前一层激活值的梯度)，用于传给前一层</span></span><br><span class="line">    <span class="comment"># dC/da_prev = dC/dz * dz/da_prev，dz/da_prev = weights</span></span><br><span class="line">    <span class="comment"># 这一步是“误差信号”向前一层传播</span></span><br><span class="line">    dC_da_prev = np.dot(dC_dz, <span class="variable language_">self</span>.weights.T)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 6. 根据梯度更新权重和偏置</span></span><br><span class="line">    <span class="variable language_">self</span>.weights -= learning_rate * dC_dw</span><br><span class="line">    <span class="variable language_">self</span>.bias -= learning_rate * dC_db</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 返回 dC/da_prev，传递给前一层继续反向传播</span></span><br><span class="line">    <span class="keyword">return</span> dC_da_prev</span><br></pre></td></tr></tbody></table></figure>
 <h3 id="总结训练循环">总结训练循环</h3>
