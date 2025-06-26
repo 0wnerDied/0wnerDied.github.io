@@ -502,11 +502,11 @@ exturl_icon: true
 
 # Google Webmaster tools verification.
 # See: https://developers.google.com/search
-google_site_verification:
+google_site_verification: hcYDp6Fp83zSq_ebw4L0fyy9A85xh7nJVXRc0YIrplg
 
 # Bing Webmaster tools verification.
 # See: https://www.bing.com/webmasters
-bing_site_verification:
+bing_site_verification: 6607AE0DF3E7D531126AB256C9D013F2
 
 # Yandex Webmaster tools verification.
 # See: https://webmaster.yandex.ru
