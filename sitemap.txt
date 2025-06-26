@@ -1,3 +1,4 @@
+https://0b1t.tech/issue-resolve/49265.html
 https://0b1t.tech/kernel/50584.html
 https://0b1t.tech/Machine-learning/38196.html
 https://0b1t.tech/Machine-learning/36604.html
@@ -5,6 +6,8 @@ https://0b1t.tech/tags/index.html
 https://0b1t.tech/categories/index.html
 https://0b1t.tech/
 https://0b1t.tech/tags/ebpf/
+https://0b1t.tech/tags/domain-configure/
 https://0b1t.tech/tags/NN/
 https://0b1t.tech/categories/kernel/
+https://0b1t.tech/categories/issue-resolve/
 https://0b1t.tech/categories/Machine-learning/
