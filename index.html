@@ -306,14 +306,6 @@
     
     <div class="post-body" itemprop="articleBody">
           <h2 id="问题描述">问题描述</h2>
-<p>今天听同学说腾讯云的域名很便宜，十年才 230 CNY，非常心动，遂入手域名
-<a href="https://0b1t.tech">0b1t.tech</a>，买完想把原本托管在 github
-上的博客重定向到新的域名上的，没想到迁移出了问题。</p>
-<p>一开始都很顺利，但是发现腾讯云自带的 dnspod 服务只能添加两条 DNS
-记录，怎么能受这气？直接登上我的 cloudflare，把 DNS 服务改成
-cloudflare。没想到就是 cloudflare DNS
-默认打开的代理让我折腾了一个晚上。一开始没有发现这个问题，试了 A 记录和
-CNAME 记录，结果一直不行，提示</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/issue-resolve/49265.html#more" rel="contents">
@@ -429,15 +421,6 @@ CNAME 记录，结果一直不行，提示</p>
     
     <div class="post-body" itemprop="articleBody">
           <p>在<a target="_blank" rel="noopener" href="https://0wnerdied.github.io/Machine-learning/36604.html">上一篇文章</a>中，我们从零开始构建了一个简单的神经网络，并理解了前向传播、反向传播和梯度下降等核心概念。然而，要让神经网络在现实世界的问题中高效工作，我们还需要掌握更多的工具和技巧。</p>
-<p>这篇文章将作为第二部分，专注于第一部分中未能详尽涵盖的几个关键领域：</p>
-<ul>
-<li>我将用上一篇文章中的代码来训练一个网络，解决一个经典问题，并观察损失函数的变化。</li>
-<li>除了 ReLU，我还将介绍 Sigmoid 和 Tanh
-等其他常用激活函数，并讨论如何为输出层选择合适的激活函数。</li>
-<li>探讨权重初始化的重要性，并介绍批量归一化 (Batch Normalization) 和
-Dropout 等强大的技术。</li>
-<li>最后，分享一些关于调试神经网络和选择超参数的实用技巧。</li>
-</ul>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/Machine-learning/38196.html#more" rel="contents">
@@ -559,8 +542,6 @@ Dropout 等强大的技术。</li>
     
     <div class="post-body" itemprop="articleBody">
           <h2 id="神经网络的概念">神经网络的概念</h2>
-<p>想象一下，我们想教计算机识别图片中的猫，但是我们不能为它编写一套硬性的规则（“如果它有尖耳朵、胡须和毛茸茸的尾巴，那它就是一只猫”），因为现实世界中的猫品种各异，<del>而且猫娘也符合上面的规则</del>。</p>
-<p>神经网络采用了一种不同的方法：<strong>从样本中学习</strong>。就像我们通过看到真实的各种猫之后才知道这种动物叫 “猫” 一样，神经网络也会处理成千上万张标记好的图片（“这是猫”，“这不是猫”），并通过这种方法逐渐 “学会” 识别猫的视觉模式。</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/Machine-learning/36604.html#more" rel="contents">
@@ -682,15 +663,6 @@ Dropout 等强大的技术。</li>
     
     <div class="post-body" itemprop="articleBody">
           <h2 id="ebpf-工作原理总览">eBPF 工作原理总览</h2>
-<p>eBPF，一个源于 Linux
-内核的革命性技术，允许我们在内核这个特权环境中安全地运行沙盒程序。值得一提的是，BPF
-最初是 “伯克利数据包过滤器” 的缩写，但如今它的能力已远超网络领域，因此
-“BPF” 已成为一个独立术语，而其前身则被称为 <strong>cBPF (classic
-BPF)</strong>。</p>
-<p>eBPF 程序并非直接在 CPU
-上运行，而是在一个位于内核中的、高度安全和高效的 <strong>BPF
-虚拟机</strong> 上执行。我们可以将该虚拟机理解为一个沙盒，确保 eBPF
-代码不会导致 kernel panic。</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/kernel/50584.html#more" rel="contents">
