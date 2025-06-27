@@ -117,7 +117,7 @@ symbols_count_time:
   total_time: false        # 站点总阅读时长
   exclude_codeblock: false # 排除代码字数统计
   awl: 3                   # 平均词长度
-  wpm: 225                 # 每分钟阅读词数
+  wpm: 100                 # 每分钟阅读词数
   suffix: "mins."          # 如果阅读时间少于 60 分钟，则添加后缀作为字符串参数    
 
 # 摘要 hexo-excerpt
