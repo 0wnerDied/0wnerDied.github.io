@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="hcYDp6Fp83zSq_ebw4L0fyy9A85xh7nJVXRc0YIrplg">
+  <meta name="msvalidate.01" content="6607AE0DF3E7D531126AB256C9D013F2">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comic+Sans+MS:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancyapps-ui/5.0.36/fancybox/fancybox.css" integrity="sha256-zM8WXtG4eUn7dKKNMTuoWZub++VnSfaOpA/8PJfvTBo=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"0b1t.tech","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="本章任务 获取任务信息 ch3 中，我们的系统已经能够支持多个任务分时轮流运行，我们希望引入一个新的系统调用 sys_trace （syscall ID: 410）用来追踪当前任务系统调用的历史信息、并进行任务内存的读写。定义如下：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="uCore ch3 实验报告">
+<meta property="og:url" content="https://0b1t.tech/uCore/28113.html">
+<meta property="og:site_name" content="0wnerD1ed&#39;s blog">
+<meta property="og:description" content="本章任务 获取任务信息 ch3 中，我们的系统已经能够支持多个任务分时轮流运行，我们希望引入一个新的系统调用 sys_trace （syscall ID: 410）用来追踪当前任务系统调用的历史信息、并进行任务内存的读写。定义如下：">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-07-23T16:51:32.000Z">
+<meta property="article:modified_time" content="2025-07-23T19:55:04.434Z">
+<meta property="article:author" content="0wnerD1ed">
+<meta property="article:tag" content="OS">
+<meta property="article:tag" content="riscv">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://0b1t.tech/uCore/28113.html">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://0b1t.tech/uCore/28113.html","path":"uCore/28113.html","title":"uCore ch3 实验报告"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>uCore ch3 实验报告 | 0wnerD1ed's blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fancyapps-ui/5.0.36/fancybox/fancybox.umd.js" integrity="sha256-hiUEBwFEpLF6DlB8sGXlKo4kPZ46Ui4qGpd0vrVkOm4=" crossorigin="anonymous" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pangu/4.0.7/pangu.min.js" integrity="sha256-j+yj56cdEY2CwkVtGyz18fNybFGpMGJ8JxG3GSyO2+I=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+  <script src="/js/third-party/fancybox.js" defer></script>
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js" defer></script>
+
+
+<link rel="dns-prefetch" href="blog-waline-mauve.vercel.app">
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<style>.darkmode--activated{--body-bg-color:#282828;--content-bg-color:#333;--card-bg-color:#555;--text-color:#ccc;--blockquote-color:#bbb;--link-color:#ccc;--link-hover-color:#eee;--brand-color:#ddd;--brand-hover-color:#ddd;--table-row-odd-bg-color:#282828;--table-row-hover-bg-color:#363636;--menu-item-bg-color:#555;--btn-default-bg:#222;--btn-default-color:#ccc;--btn-default-border-color:#555;--btn-default-hover-bg:#666;--btn-default-hover-color:#ccc;--btn-default-hover-border-color:#666;--highlight-background:#282b2e;--highlight-foreground:#a9b7c6;--highlight-gutter-background:#34393d;--highlight-gutter-foreground:#9ca9b6}.darkmode--activated img{opacity:.75}.darkmode--activated img:hover{opacity:.9}.darkmode--activated code{color:#69dbdc;background:0 0}button.darkmode-toggle{z-index:9999}.darkmode-ignore,img{display:flex!important}.beian img{display:inline-block!important}</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">0wnerD1ed's blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E7%AB%A0%E4%BB%BB%E5%8A%A1"><span class="nav-number">1.</span> <span class="nav-text">本章任务</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96%E4%BB%BB%E5%8A%A1%E4%BF%A1%E6%81%AF"><span class="nav-number">1.1.</span> <span class="nav-text">获取任务信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%8C%E6%88%90%E4%BB%BB%E5%8A%A1"><span class="nav-number">1.2.</span> <span class="nav-text">完成任务</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E7%AD%94%E4%BD%9C%E4%B8%9A"><span class="nav-number">2.</span> <span class="nav-text">问答作业</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E7%AD%94%E4%BD%9C%E4%B8%9A%E8%A7%A3%E7%AD%94"><span class="nav-number">3.</span> <span class="nav-text">问答作业解答</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="0wnerD1ed"
+      src="https://avatars.githubusercontent.com/u/59904423?s=400&u=e2d918cc9959b82599bb4dbfcebb8b912880b9dc&v=4">
+  <p class="site-author-name" itemprop="name">0wnerD1ed</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">5</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/0wnerDied" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;0wnerDied" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:atndko@outlook.sg" title="E-Mail → mailto:atndko@outlook.sg" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://t.me/OwnerDiedddd" title="Telegram → https:&#x2F;&#x2F;t.me&#x2F;OwnerDiedddd" rel="noopener me" target="_blank"><i class="fab fa-telegram fa-fw"></i></a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://0b1t.tech/uCore/28113.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars.githubusercontent.com/u/59904423?s=400&u=e2d918cc9959b82599bb4dbfcebb8b912880b9dc&v=4">
+      <meta itemprop="name" content="0wnerD1ed">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="0wnerD1ed's blog">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="uCore ch3 实验报告 | 0wnerD1ed's blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          uCore ch3 实验报告
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2025-07-24 00:51:32 / 修改时间：03:55:04" itemprop="dateCreated datePublished" datetime="2025-07-24T00:51:32+08:00">2025-07-24</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/uCore/" itemprop="url" rel="index"><span itemprop="name">uCore</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+    <span class="post-meta-item-icon">
+      <i class="far fa-comment"></i>
+    </span>
+    <span class="post-meta-item-text">Waline：</span>
+  
+    <a title="waline" href="/uCore/28113.html#waline" itemprop="discussionUrl">
+      <span class="post-comments-count waline-comment-count" data-path="/uCore/28113.html" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>9.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>33 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h2 id="本章任务">本章任务</h2>
+<h3 id="获取任务信息">获取任务信息</h3>
+<p>ch3
+中，我们的系统已经能够支持多个任务分时轮流运行，我们希望引入一个新的系统调用
+<code>sys_trace</code> （syscall ID:
+410）用来追踪当前任务系统调用的历史信息、并进行任务内存的读写。定义如下：</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">sys_trace</span><span class="params">(<span class="type">int</span> trace_request, <span class="type">unsigned</span> <span class="type">long</span> id, <span class="type">uint8_t</span> data)</span>;</span><br></pre></td></tr></tbody></table></figure>
+<ul>
+<li><p>syscall ID: 410</p></li>
+<li><p> 调用规范：</p>
+<ul>
+<li>这个系统调用有三种功能，根据 trace_request
+的值不同，执行不同的操作：</li>
+<li>如果 trace_request 为 0，则 id 应被视作 uint8_t * ，表示读取当前任务
+id 地址处一个字节的无符号整数值。此时应忽略 data 参数。返回值为 id
+地址处的值。</li>
+<li>如果 trace_request 为 1，则 id 应被视作 uint8_t * ，表示写入 data
+（作为 uint8_t，即只考虑最低位的一个字节）到该用户程序 id
+地址处。返回值应为 0。</li>
+<li>如果 trace_request 为 2，表示查询当前任务调用编号为 id
+的系统调用的次数，返回值为这个调用次数。本次调用也计入统计 。</li>
+<li>否则，忽略其他参数，返回值为 -1。</li>
+</ul></li>
+<li><p>说明：</p>
+<ul>
+<li>uint8_t
+是 C 语言中的标准类型，表示一个无符号的 8 位整数。在代码中你可能需要使用
+uint8 替代。</li>
+<li>你可能会注意到，这个调用的读写并不安全，使用不当可能导致崩溃。这是因为在下一章节实现地址空间之前，系统中缺乏隔离机制。所以我们
+不要求你实现安全检查机制，只需通过测试用例即可。</li>
+<li>你还可能注意到，这个系统调用读写本任务内存的功能并不是很有用。这是因为作业的灵感来源
+syscall 主要依靠 trace
+功能追踪其他任务的信息，但在本章节我们还没有进程、线程等概念，所以简化了操作，只要求追踪自身的信息。</li>
+</ul></li>
+</ul>
+<h3 id="完成任务">完成任务</h3>
+<p>下面是我对代码的修改，导出提交：</p>
+<figure class="highlight patch"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br></pre></td><td class="code"><pre><span class="line">From b1836f667109436153481ae6f338a6a50a19e232 Mon Sep 17 00:00:00 2001</span><br><span class="line">From: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line">Date: Wed, 23 Jul 2025 22:57:41 +0800</span><br><span class="line">Subject: [PATCH] chapter3 practice</span><br><span class="line"></span><br><span class="line">Signed-off-by: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line"><span class="comment">---</span></span><br><span class="line"> os/loader.c      |  1 +</span><br><span class="line"> os/proc.c        |  1 +</span><br><span class="line"> os/proc.h        |  1 +</span><br><span class="line"> os/syscall.c     | 22 ++++++++++++++++++++++</span><br><span class="line"> os/syscall_ids.h |  1 +</span><br><span class="line"> 5 files changed, 26 insertions(+)</span><br><span class="line"></span><br><span class="line"><span class="comment">diff --git a/os/loader.c b/os/loader.c</span></span><br><span class="line"><span class="comment">index be9f10a..72b49ed 100644</span></span><br><span class="line"><span class="comment">--- a/os/loader.c</span></span><br><span class="line"><span class="comment">+++ b/os/loader.c</span></span><br><span class="line"><span class="meta">@@ -51,6 +51,7 @@</span> int run_all_app()</span><br><span class="line"> 		/*</span><br><span class="line"> 		* LAB1: you may need to initialize your new fields of proc here</span><br><span class="line"> 		*/</span><br><span class="line"><span class="addition">+		memset(p-&gt;syscall_cnt, 0, sizeof(p-&gt;syscall_cnt));</span></span><br><span class="line"> 	}</span><br><span class="line"> 	return 0;</span><br><span class="line"> }</span><br><span class="line">\ No newline at end of file</span><br><span class="line"><span class="comment">diff --git a/os/proc.c b/os/proc.c</span></span><br><span class="line"><span class="comment">index 84240a8..c98b49e 100644</span></span><br><span class="line"><span class="comment">--- a/os/proc.c</span></span><br><span class="line"><span class="comment">+++ b/os/proc.c</span></span><br><span class="line"><span class="meta">@@ -34,6 +34,7 @@</span> void proc_init(void)</span><br><span class="line"> 		/*</span><br><span class="line"> 		* LAB1: you may need to initialize your new fields of proc here</span><br><span class="line"> 		*/</span><br><span class="line"><span class="addition">+		memset(p-&gt;syscall_cnt, 0, sizeof(p-&gt;syscall_cnt));</span></span><br><span class="line"> 	}</span><br><span class="line"> 	idle.kstack = (uint64)boot_stack_top;</span><br><span class="line"> 	idle.pid = 0;</span><br><span class="line"><span class="comment">diff --git a/os/proc.h b/os/proc.h</span></span><br><span class="line"><span class="comment">index f27369a..74cfe1c 100644</span></span><br><span class="line"><span class="comment">--- a/os/proc.h</span></span><br><span class="line"><span class="comment">+++ b/os/proc.h</span></span><br><span class="line"><span class="meta">@@ -38,6 +38,7 @@</span> struct proc {</span><br><span class="line"> 	/*</span><br><span class="line"> 	* LAB1: you may need to add some new fields here</span><br><span class="line"> 	*/</span><br><span class="line"><span class="addition">+	int syscall_cnt[512];</span></span><br><span class="line"> };</span><br><span class="line"> </span><br><span class="line"> struct proc *curr_proc();</span><br><span class="line"><span class="comment">diff --git a/os/syscall.c b/os/syscall.c</span></span><br><span class="line"><span class="comment">index 3225031..50b0035 100644</span></span><br><span class="line"><span class="comment">--- a/os/syscall.c</span></span><br><span class="line"><span class="comment">+++ b/os/syscall.c</span></span><br><span class="line"><span class="meta">@@ -39,6 +39,22 @@</span> uint64 sys_gettimeofday(TimeVal *val, int _tz)</span><br><span class="line"> /*</span><br><span class="line"> * LAB1: you may need to define sys_trace here</span><br><span class="line"> */</span><br><span class="line"><span class="addition">+int sys_trace(int trace_request, unsigned long id, uint8 data)</span></span><br><span class="line"><span class="addition">+{</span></span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	switch (trace_request) {</span></span><br><span class="line"><span class="addition">+	case 0:</span></span><br><span class="line"><span class="addition">+		return *(uint8 *)id;</span></span><br><span class="line"><span class="addition">+	case 1:</span></span><br><span class="line"><span class="addition">+		*(uint8 *)id = data;</span></span><br><span class="line"><span class="addition">+		return 0;</span></span><br><span class="line"><span class="addition">+	case 2:</span></span><br><span class="line"><span class="addition">+		return (id &lt; 512) ? p-&gt;syscall_cnt[id] : -1;</span></span><br><span class="line"><span class="addition">+	default:</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+}</span></span><br><span class="line"> </span><br><span class="line"> extern char trap_page[];</span><br><span class="line"> </span><br><span class="line"><span class="meta">@@ -53,6 +69,9 @@</span> void syscall()</span><br><span class="line"> 	/*</span><br><span class="line"> 	* LAB1: you may need to update syscall counter here</span><br><span class="line"> 	*/</span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+	(id &lt; 512) ? p-&gt;syscall_cnt[id]++ : 0;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"> 	switch (id) {</span><br><span class="line"> 	case SYS_write:</span><br><span class="line"> 		ret = sys_write(args[0], (char *)args[1], args[2]);</span><br><span class="line"><span class="meta">@@ -69,6 +88,9 @@</span> void syscall()</span><br><span class="line"> 	/*</span><br><span class="line"> 	* LAB1: you may need to add SYS_trace case here</span><br><span class="line"> 	*/</span><br><span class="line"><span class="addition">+	case SYS_trace:</span></span><br><span class="line"><span class="addition">+		ret = sys_trace(args[0], args[1], args[2]);</span></span><br><span class="line"><span class="addition">+		break;</span></span><br><span class="line"> 	default:</span><br><span class="line"> 		ret = -1;</span><br><span class="line"> 		errorf("unknown syscall %d", id);</span><br><span class="line"><span class="comment">diff --git a/os/syscall_ids.h b/os/syscall_ids.h</span></span><br><span class="line"><span class="comment">index e6fac51..06d8c00 100644</span></span><br><span class="line"><span class="comment">--- a/os/syscall_ids.h</span></span><br><span class="line"><span class="comment">+++ b/os/syscall_ids.h</span></span><br><span class="line"><span class="meta">@@ -280,6 +280,7 @@</span></span><br><span class="line"> /*</span><br><span class="line"> * LAB1: you may need to define SYS_trace here</span><br><span class="line"> */</span><br><span class="line"><span class="addition">+#define SYS_trace 410</span></span><br><span class="line"> #define SYS_pidfd_send_signal 424</span><br><span class="line"> #define SYS_io_uring_setup 425</span><br><span class="line"> #define SYS_io_uring_enter 426</span><br><span class="line"><span class="deletion">-- </span></span><br><span class="line">2.25.1</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>然后 <code>make test</code> 检查即可</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line">[rustsbi] RustSBI version 0.3.0-alpha.2, adapting to RISC-V SBI v1.0.0</span><br><span class="line">.______       __    __      _______.___________.  _______..______   __</span><br><span class="line">|   _  \     |  |  |  |    /       |           | /       ||   _  \ |  |</span><br><span class="line">|  |_)  |    |  |  |  |   |   (----`---|  |----`|   (----`|  |_)  ||  |</span><br><span class="line">|      /     |  |  |  |    \   \       |  |      \   \    |   _  &lt; |  |</span><br><span class="line">|  |\  \----.|  `--'  |.----)   |      |  |  .----)   |   |  |_)  ||  |</span><br><span class="line">| _| `._____| \______/ |_______/       |__|  |_______/    |______/ |__|</span><br><span class="line">[rustsbi] Implementation     : RustSBI-QEMU Version 0.2.0-alpha.2</span><br><span class="line">[rustsbi] Platform Name      : riscv-virtio,qemu</span><br><span class="line">[rustsbi] Platform SMP       : 1</span><br><span class="line">[rustsbi] Platform Memory    : 0x80000000..0x88000000</span><br><span class="line">[rustsbi] Boot HART          : 0</span><br><span class="line">[rustsbi] Device Tree Region : 0x87000000..0x87000ef2</span><br><span class="line">[rustsbi] Firmware Address   : 0x80000000</span><br><span class="line">[rustsbi] Supervisor Address : 0x80200000</span><br><span class="line">[rustsbi] pmp01: 0x00000000..0x80000000 (-wr)</span><br><span class="line">[rustsbi] pmp02: 0x80000000..0x80200000 (---)</span><br><span class="line">[rustsbi] pmp03: 0x80200000..0x88000000 (xwr)</span><br><span class="line">[rustsbi] pmp04: 0x88000000..0x00000000 (-wr)</span><br><span class="line">Hello world from user mode program!</span><br><span class="line">Test hello_world OK!</span><br><span class="line">3^10000=5079</span><br><span class="line">3^20000=8202</span><br><span class="line">3^30000=8824</span><br><span class="line">3^40000=5750</span><br><span class="line">3^50000=3824</span><br><span class="line">3^60000=8516</span><br><span class="line">3^70000=2510</span><br><span class="line">3^80000=9379</span><br><span class="line">3^90000=2621</span><br><span class="line">3^100000=2749</span><br><span class="line">Test power OK!</span><br><span class="line">get_time OK! 11</span><br><span class="line">current time_msec = 11</span><br><span class="line">AAAAAAAAAA [1/5]</span><br><span class="line">CCCCCCCCCC [1/5]</span><br><span class="line">BBBBBBBBBB [1/5]</span><br><span class="line">AAAAAAAAAA [2/5]</span><br><span class="line">CCCCCCCCCC [2/5]</span><br><span class="line">BBBBBBBBBB [2/5]</span><br><span class="line">AAAAAAAAAA [3/5]</span><br><span class="line">CCCCCCCCCC [3/5]</span><br><span class="line">BBBBBBBBBB [3/5]</span><br><span class="line">AAAAAAAAAA [4/5]</span><br><span class="line">CCCCCCCCCC [4/5]</span><br><span class="line">BBBBBBBBBB [4/5]</span><br><span class="line">AAAAAAAAAA [5/5]</span><br><span class="line">CCCCCCCCCC [5/5]</span><br><span class="line">BBBBBBBBBB [5/5]</span><br><span class="line">Test write A OK!</span><br><span class="line">Test write C OK!</span><br><span class="line">Test write B OK!</span><br><span class="line">time_msec = 112 after sleeping 100 ticks, delta = 101ms!</span><br><span class="line">Test sleep1 passed!</span><br><span class="line">string from task trace test</span><br><span class="line">Test trace OK!</span><br><span class="line">Test sleep OK!</span><br><span class="line">[PANIC 5] os/loader.c:14: all apps over</span><br></pre></td></tr></tbody></table></figure>
+<p>可以看到 <code>Test trace OK!</code>，修改成功通过了测试。</p>
+<h2 id="问答作业">问答作业</h2>
+<ol type="1">
+<li><p>正确进入 U 态后，程序的特征还应有：使用 S 态特权指令，访问 S
+态寄存器后会报错。请同学们可以自行测试这些内容（参考
+前三个测例，描述程序出错行为，同时注意注明你使用的 sbi
+及其版本。</p></li>
+<li><p>请结合用例理解 trampoline.S 中两个函数 <code>userret</code> 和
+<code>uservec</code> 的作用，并回答如下几个问题:</p>
+<ol type="1">
+<li><p>L79: 刚进入 <code>userret</code>
+时，<code>a0</code>、<code>a1</code> 分别代表了什么值。</p></li>
+<li><p>L87-L88: <code>sfence</code>
+指令有何作用？为什么要执行该指令，当前章节中，删掉该指令会导致错误吗？</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">csrw satp, a1</span><br><span class="line">sfence.vma zero, zero</span><br></pre></td></tr></tbody></table></figure><p></p></li>
+<li><p>L96-L125: 为何注释中说要除去 a0？哪一个地址代表 a0？现在 a0
+的值存在何处？</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># restore all but a0 from TRAPFRAME</span><br><span class="line">ld ra, 40(a0)</span><br><span class="line">ld sp, 48(a0)</span><br><span class="line">ld t5, 272(a0)</span><br><span class="line">ld t6, 280(a0)</span><br></pre></td></tr></tbody></table></figure><p></p></li>
+<li><p><code>userret</code>：中发生状态切换在哪一条指令？为何执行之后会进入用户态？</p></li>
+<li><p>L29： 执行之后，<code>a0</code> 和 <code>sscratch</code>
+中各是什么值，为什么？</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">csrrw a0, sscratch, a0</span><br></pre></td></tr></tbody></table></figure><p></p></li>
+<li><p>L32-L61: 从 trapframe
+第几项开始保存？为什么？是否从该项开始保存了所有的值，如果不是，为什么？</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sd ra, 40(a0)</span><br><span class="line">sd sp, 48(a0)</span><br><span class="line">...</span><br><span class="line">sd t5, 272(a0)</span><br><span class="line">sd t6, 280(a0)</span><br></pre></td></tr></tbody></table></figure><p></p></li>
+<li><p>进入 S 态是哪一条指令发生的？</p></li>
+<li><p>L75-L76: <code>ld t0, 16(a0)</code>
+执行之后，<code>t0</code> 中的值是什么，解释该值的由来？</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ld t0, 16(a0)</span><br><span class="line">jr t0</span><br></pre></td></tr></tbody></table></figure><p></p></li>
+</ol></li>
+</ol>
+<h2 id="问答作业解答">问答作业解答</h2>
+<ol type="1">
+<li><p>正确进入 U 态后，程序的特征还应有：使用 S 态特权指令，访问 S
+态寄存器后会报错。请同学们可以自行测试这些内容（参考前三个测例
+，描述程序出错行为，同时注意注明你使用的 sbi 及其版本。</p>
+<p>执行 <code>make test CHAPTER=2_bad</code> 后如下：</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">[rustsbi] RustSBI version 0.3.0-alpha.2, adapting to RISC-V SBI v1.0.0</span><br><span class="line">.______       __    __      _______.___________.  _______..______   __</span><br><span class="line">|   _  \     |  |  |  |    /       |           | /       ||   _  \ |  |</span><br><span class="line">|  |_)  |    |  |  |  |   |   (----`---|  |----`|   (----`|  |_)  ||  |</span><br><span class="line">|      /     |  |  |  |    \   \       |  |      \   \    |   _  &lt; |  |</span><br><span class="line">|  |\  \----.|  `--'  |.----)   |      |  |  .----)   |   |  |_)  ||  |</span><br><span class="line">| _| `._____| \______/ |_______/       |__|  |_______/    |______/ |__|</span><br><span class="line">[rustsbi] Implementation     : RustSBI-QEMU Version 0.2.0-alpha.2</span><br><span class="line">[rustsbi] Platform Name      : riscv-virtio,qemu</span><br><span class="line">[rustsbi] Platform SMP       : 1</span><br><span class="line">[rustsbi] Platform Memory    : 0x80000000..0x88000000</span><br><span class="line">[rustsbi] Boot HART          : 0</span><br><span class="line">[rustsbi] Device Tree Region : 0x87000000..0x87000ef2</span><br><span class="line">[rustsbi] Firmware Address   : 0x80000000</span><br><span class="line">[rustsbi] Supervisor Address : 0x80200000</span><br><span class="line">[rustsbi] pmp01: 0x00000000..0x80000000 (-wr)</span><br><span class="line">[rustsbi] pmp02: 0x80000000..0x80200000 (---)</span><br><span class="line">[rustsbi] pmp03: 0x80200000..0x88000000 (xwr)</span><br><span class="line">[rustsbi] pmp04: 0x88000000..0x00000000 (-wr)</span><br><span class="line">hello wrold!</span><br><span class="line">[ERROR 0]unknown trap: 0x0000000000000007, stval = 0x0000000000000000 sepc = 0x0000000080400004</span><br><span class="line">[ERROR 0]IllegalInstruction in application, epc = 0x0000000080400004, core dumped.</span><br><span class="line">[ERROR 0]IllegalInstruction in application, epc = 0x0000000080400004, core dumped.</span><br><span class="line">ALL DONE</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p>可以看到项目使用 RustSBI，版本为 0.3.0-alpha.2。</p>
+<p>别忘记 <code>trap</code> 类异常：</p>
+<p></p><figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">Exception</span> {</span></span><br><span class="line">  InstructionMisaligned = <span class="number">0</span>,</span><br><span class="line">  InstructionAccessFault = <span class="number">1</span>,</span><br><span class="line">  IllegalInstruction = <span class="number">2</span>,</span><br><span class="line">  Breakpoint = <span class="number">3</span>,</span><br><span class="line">  LoadMisaligned = <span class="number">4</span>,</span><br><span class="line">  LoadAccessFault = <span class="number">5</span>,</span><br><span class="line">  StoreMisaligned = <span class="number">6</span>,</span><br><span class="line">  StoreAccessFault = <span class="number">7</span>,</span><br><span class="line">  UserEnvCall = <span class="number">8</span>,</span><br><span class="line">  SupervisorEnvCall = <span class="number">9</span>,</span><br><span class="line">  MachineEnvCall = <span class="number">11</span>,</span><br><span class="line">  InstructionPageFault = <span class="number">12</span>,</span><br><span class="line">  LoadPageFault = <span class="number">13</span>,</span><br><span class="line">  StorePageFault = <span class="number">15</span>,</span><br><span class="line">};</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p>三个测例如下：</p>
+<p></p><figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// __ch2_bad_address.c</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">{</span><br><span class="line">  <span class="type">int</span> *p = (<span class="type">int</span> *)<span class="number">0</span>;</span><br><span class="line">  *p = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p>这是一个空指针解引用的测例，U 态程序尝试访问 S 态，显然运行会触发
+<code>Store/AMO access fault</code> 异常，所以我们可以看到
+<code>unknown trap: 0x0000000000000007</code>。</p>
+<p></p><figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// __ch2_bad_instruction.c</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">{</span><br><span class="line">  <span class="keyword">asm</span> <span class="title function_">volatile</span><span class="params">(<span class="string">"sret"</span>)</span>;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p>这是一个使用 S 态特权指令的测例，因为 U 态不能执行 S
+态特权指令，所以会触发 <code>Illegal instruction</code> 异常。</p>
+<p></p><figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// __ch2_bad_register.c</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">{</span><br><span class="line">  uint64 x;</span><br><span class="line">  <span class="keyword">asm</span> <span class="title function_">volatile</span><span class="params">(<span class="string">"csrr %0, sstatus"</span> : <span class="string">"=r"</span>(x))</span>;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p>这是一个访问 S 态寄存器的测例，同样地，U 态不能访问 S 态 CSR
+寄存器，所以会触发 <code>Illegal instruction</code> 异常。</p>
+<p>通过上面的测试可以看到，成功输出了
+<code>hello wrold!</code>，即用户态程序可以正常运行，且 RustSBI
+正常工作，但存在对 U 态的特权级别限制，所以这几个测例会报错。</p></li>
+<li><p>请结合用例理解 trampoline.S 中两个函数 <code>userret</code> 和
+<code>uservec</code> 的作用，并回答如下几个问题:</p>
+<ol type="1">
+<li><p>L79: 刚进入 <code>userret</code>
+时，<code>a0</code>、<code>a1</code> 分别代表了什么值。</p>
+<p>从注释中可以看到 </p><figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">userret:</span><br><span class="line">    # userret(TRAPFRAME, pagetable)</span><br><span class="line">    # switch from kernel to user.</span><br><span class="line">    # usertrapret() calls here.</span><br><span class="line">    # a0: TRAPFRAME, in user page table.</span><br><span class="line">    # a1: user page table, for satp.</span><br></pre></td></tr></tbody></table></figure> 所以 <code>a0</code> 指向 TRAPFRAME
+的地址；<code>a1</code> 是用户页表的物理地址，将被设置为寄存器
+<code>satp</code> 的值。<p></p></li>
+<li><p>L87-L88: <code>sfence</code>
+指令有何作用？为什么要执行该指令，当前章节中，删掉该指令会导致错误吗？</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">csrw satp, a1</span><br><span class="line">sfence.vma zero, zero</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p>刷新 TLB。当修改 <code>satp</code> 寄存器切换页表时，TLB
+中可能还缓存着旧页表的地址转换，必须刷新 TLB
+确保后续的地址转换使用新页表。当前章节中删去不会出错，这里还不涉及用户页表切换。</p></li>
+<li><p>L96-L125: 为何注释中说要除去 <code>a0</code>？哪一个地址代表
+<code>a0</code>？现在 <code>a0</code> 的值存在何处？</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># restore all but a0 from TRAPFRAME</span><br><span class="line">ld ra, 40(a0)</span><br><span class="line">ld sp, 48(a0)</span><br><span class="line">...</span><br><span class="line">ld t5, 272(a0)</span><br><span class="line">ld t6, 280(a0)</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p>当前 <code>a0</code> 存储的是 TRAPFRAME
+的地址，需要用它访问保存的寄存器值，如果现在恢复
+<code>a0</code>，就无法继续访问 TRAPFRAME 了。<code>a0</code>
+的原始值保存在 <code>112(a0)</code> 位置，也就是 TRAPFRAME 中的
+<code>a0</code> 字段。在恢复过程中会先被加载到 <code>sscratch</code>
+寄存器，最后通过 L128：<code>csrrw a0, sscratch, a0</code> 指令完成
+<code>a0</code> 的恢复。</p></li>
+<li><p><code>userret</code>：中发生状态切换在哪一条指令？为何执行之后会进入用户态？</p>
+<p><code>sret</code>。<code>sret</code> 指令会根据 <code>sstatus</code>
+寄存器的 <code>SPP</code> 位决定返回的特权级，在
+<code>usertrapret()</code> 中，<code>x &amp;= ~SSTATUS_SPP;</code>
+已经设置了 <code>sstatus.SPP = 0</code>，表示返回用户态。</p></li>
+<li><p>L29： 执行之后，<code>a0</code> 和 <code>sscratch</code>
+中各是什么值，为什么？</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">csrrw a0, sscratch, a0</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p><code>csrrw</code> 是原子交换指令，同时读取和写入 <code>CSR</code>
+寄存器，所以 <code>a0</code> 是 TRAPFRAME 的地址，<code>sscratch</code>
+中是用户程序的原始 <code>a0</code> 值。</p></li>
+<li><p>L32-L61: 从 trapframe
+第几项开始保存？为什么？是否从该项开始保存了所有的值，如果不是，为什么？</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sd ra, 40(a0)</span><br><span class="line">sd sp, 48(a0)</span><br><span class="line">...</span><br><span class="line">sd t5, 272(a0)</span><br><span class="line">sd t6, 280(a0)</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p>从 <code>ra</code> 开始保存，<code>ra</code> 的偏移量为 40，<span class="math inline">40 ÷ 8 = 5</span>，所以从 <code>trapframe</code>
+第六项开始保存。并没有保存所有的值，<code>a0</code> 没有保存，因为此时
+<code>a0</code> 指向 <code>trapframe</code>，其原始值通过
+<code>csrrw a0, sscratch, a0</code> 保存在 <code>sscratch</code>
+中，后续在 <code>trapframe</code> 偏移量 112 处，也就是
+<code>trapframe</code> 中的 <code>a0</code> 字段保存。</p></li>
+<li><p>进入 S 态是哪一条指令发生的？</p>
+<p>用户程序中的 <code>ecall</code>。</p></li>
+<li><p>L75-L76: <code>ld t0, 16(a0)</code>
+执行之后，<code>t0</code> 中的值是什么，解释该值的由来？</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ld t0, 16(a0)</span><br><span class="line">jr t0</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p></p><figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// os/trap.c</span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">usertrapret</span><span class="params">(<span class="keyword">struct</span> trapframe *trapframe, uint64 kstack)</span></span><br><span class="line">{</span><br><span class="line">  trapframe-&gt;kernel_satp = r_satp(); <span class="comment">// kernel page table</span></span><br><span class="line">  trapframe-&gt;kernel_sp = kstack + PGSIZE; <span class="comment">// process's kernel stack</span></span><br><span class="line">  trapframe-&gt;kernel_trap = (uint64)usertrap;</span><br><span class="line">  trapframe-&gt;kernel_hartid = r_tp(); <span class="comment">// hartid for cpuid()</span></span><br><span class="line"></span><br><span class="line">  w_sepc(trapframe-&gt;epc);</span><br><span class="line">  <span class="comment">// set up the registers that trampoline.S's sret will use</span></span><br><span class="line">  <span class="comment">// to get to user space.</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// set S Previous Privilege mode to User.</span></span><br><span class="line">  uint64 x = r_sstatus();</span><br><span class="line">  x &amp;= ~SSTATUS_SPP; <span class="comment">// clear SPP to 0 for user mode</span></span><br><span class="line">  x |= SSTATUS_SPIE; <span class="comment">// enable interrupts in user mode</span></span><br><span class="line">  w_sstatus(x);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// tell trampoline.S the user page table to switch to.</span></span><br><span class="line">  <span class="comment">// uint64 satp = MAKE_SATP(p-&gt;pagetable);</span></span><br><span class="line">  userret((uint64)trapframe);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p>可以看到
+<code>trapframe-&gt;kernel_trap = (uint64)usertrap;</code>，所以
+<code>t0</code> 中的值是 <code>usertrap</code>
+函数的地址。当系统调用完成准备返回用户态时，<code>usertrapret()</code>
+函数会被调用，<code>trapframe-&gt;kernel_trap = (uint64)usertrap;</code>
+将 <code>usertrap</code> 函数地址存储在 <code>trapframe</code> 的偏移量
+16 处，于是下次用户态发生 <code>trap</code> 时，<code>uservec</code>
+就能正确跳转到 <code>usertrap</code> 函数。</p></li>
+</ol></li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>0wnerD1ed
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://0b1t.tech/uCore/28113.html" title="uCore ch3 实验报告">https://0b1t.tech/uCore/28113.html</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-CN" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/OS/" rel="tag"><i class="fa fa-tag"></i> OS</a>
+              <a href="/tags/riscv/" rel="tag"><i class="fa fa-tag"></i> riscv</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/issue-resolve/49265.html" rel="prev" title="github pages + cloudflare DNS 托管避坑">
+                  <i class="fa fa-angle-left"></i> github pages + cloudflare DNS 托管避坑
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="waline"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">0wnerD1ed</span>
+  </div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/0wnerDied" class="github-corner" title="在 GitHub 上关注我" aria-label="在 GitHub 上关注我" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+<script class="next-config" data-name="waline" type="application/json">{"lang":"zh-CN","enable":true,"serverURL":"blog-waline-mauve.vercel.app","cssUrl":"https://unpkg.com/@waline/client@v2/dist/waline.css","commentCount":true,"pageview":false,"locale":{"placeholder":"善语结善缘，恶语伤人心"},"pageSize":30,"comment_count":true,"dark":"html[data-darkmode]","meta":[],"el":"#waline","comment":true,"libUrl":"//unpkg.com/@waline/client@v2/dist/waline.js","path":"/uCore/28113.html"}</script>
+<link rel="stylesheet" href="https://unpkg.com/@waline/client@v2/dist/waline.css">
+<script>
+document.addEventListener('page:loaded', () => {
+  NexT.utils.loadComments(CONFIG.waline.el).then(() =>
+    NexT.utils.getScript(CONFIG.waline.libUrl, { condition: window.Waline })
+  ).then(() => 
+    Waline.init(Object.assign({}, CONFIG.waline,{ el: document.querySelector(CONFIG.waline.el) }))
+  );
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/darkmode-js@1.5.7/lib/darkmode-js.min.js"></script>
+
+<script>
+var options = {
+  bottom: '64px',
+  right: '32px',
+  left: 'unset',
+  time: '0.5s',
+  mixColor: 'transparent',
+  backgroundColor: 'transparent',
+  buttonColorDark: '#100f2c',
+  buttonColorLight: '#fff',
+  saveInCookies: true,
+  label: '🌓',
+  autoMatchOsTheme: true
+}
+const darkmode = new Darkmode(options);
+window.darkmode = darkmode;
+darkmode.showWidget();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // 等待Waline元素加载完成
+  const checkWaline = setInterval(function() {
+    const walineEl = document.querySelector('.wl-panel');
+    if (walineEl) {
+      clearInterval(checkWaline);
+      
+      // 监听暗黑模式变化，强制更新评论区样式
+      if (typeof window.darkmode !== 'undefined') {
+        window.darkmode.addEventListener('change', function(event) {
+          setTimeout(function() {
+            const isDark = document.body.classList.contains('darkmode--activated');
+            
+            if (isDark) {
+              // 直接修改DOM元素样式
+              document.querySelectorAll('.wl-panel, .wl-card').forEach(el => {
+                el.style.setProperty('background-color', '#222', 'important');
+                el.style.setProperty('border-color', '#444', 'important');
+              });
+              
+              document.querySelectorAll('.wl-editor, .wl-input, .wl-textarea').forEach(el => {
+                el.style.setProperty('background-color', '#333', 'important');
+                el.style.setProperty('color', '#ddd', 'important');
+                el.style.setProperty('border-color', '#555', 'important');
+              });
+              
+              document.querySelectorAll('.wl-content, .wl-meta, .wl-meta span, .wl-meta a').forEach(el => {
+                el.style.setProperty('color', '#ccc', 'important');
+              });
+            }
+          }, 100);
+        });
+      }
+    }
+  }, 100);
+});
+</script>
+
+</body>
+</html>
