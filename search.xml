@@ -1,233 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>uCore ch3 实验报告</title>
-    <url>/uCore/28113.html</url>
-    <content><![CDATA[<h2 id="本章任务">本章任务</h2>
-<h3 id="获取任务信息">获取任务信息</h3>
-<p>ch3
-中，我们的系统已经能够支持多个任务分时轮流运行，我们希望引入一个新的系统调用
-<code>sys_trace</code> （syscall ID:
-410）用来追踪当前任务系统调用的历史信息、并进行任务内存的读写。定义如下：</p>
-<figure class="highlight c"><table><tbody><tr><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">sys_trace</span><span class="params">(<span class="type">int</span> trace_request, <span class="type">unsigned</span> <span class="type">long</span> id, <span class="type">uint8_t</span> data)</span>;</span><br></pre></td></tr></tbody></table></figure>
-<ul>
-<li><p>syscall ID: 410</p></li>
-<li><p> 调用规范：</p>
-<ul>
-<li>这个系统调用有三种功能，根据 trace_request
-的值不同，执行不同的操作：</li>
-<li>如果 trace_request 为 0，则 id 应被视作 uint8_t * ，表示读取当前任务
-id 地址处一个字节的无符号整数值。此时应忽略 data 参数。返回值为 id
-地址处的值。</li>
-<li>如果 trace_request 为 1，则 id 应被视作 uint8_t * ，表示写入 data
-（作为 uint8_t，即只考虑最低位的一个字节）到该用户程序 id
-地址处。返回值应为 0。</li>
-<li>如果 trace_request 为 2，表示查询当前任务调用编号为 id
-的系统调用的次数，返回值为这个调用次数。本次调用也计入统计 。</li>
-<li>否则，忽略其他参数，返回值为 -1。</li>
-</ul></li>
-<li><p>说明：</p>
-<ul>
-<li>uint8_t
-是 C 语言中的标准类型，表示一个无符号的 8 位整数。在代码中你可能需要使用
-uint8 替代。</li>
-<li>你可能会注意到，这个调用的读写并不安全，使用不当可能导致崩溃。这是因为在下一章节实现地址空间之前，系统中缺乏隔离机制。所以我们
-不要求你实现安全检查机制，只需通过测试用例即可。</li>
-<li>你还可能注意到，这个系统调用读写本任务内存的功能并不是很有用。这是因为作业的灵感来源
-syscall 主要依靠 trace
-功能追踪其他任务的信息，但在本章节我们还没有进程、线程等概念，所以简化了操作，只要求追踪自身的信息。</li>
-</ul></li>
-</ul>
-<h3 id="完成任务">完成任务</h3>
-<p>下面是我对代码的修改，导出提交：</p>
-<figure class="highlight patch"><table><tbody><tr><td class="code"><pre><span class="line">From b1836f667109436153481ae6f338a6a50a19e232 Mon Sep 17 00:00:00 2001</span><br><span class="line">From: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line">Date: Wed, 23 Jul 2025 22:57:41 +0800</span><br><span class="line">Subject: [PATCH] chapter3 practice</span><br><span class="line"></span><br><span class="line">Signed-off-by: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line"><span class="comment">---</span></span><br><span class="line"> os/loader.c      |  1 +</span><br><span class="line"> os/proc.c        |  1 +</span><br><span class="line"> os/proc.h        |  1 +</span><br><span class="line"> os/syscall.c     | 22 ++++++++++++++++++++++</span><br><span class="line"> os/syscall_ids.h |  1 +</span><br><span class="line"> 5 files changed, 26 insertions(+)</span><br><span class="line"></span><br><span class="line"><span class="comment">diff --git a/os/loader.c b/os/loader.c</span></span><br><span class="line"><span class="comment">index be9f10a..72b49ed 100644</span></span><br><span class="line"><span class="comment">--- a/os/loader.c</span></span><br><span class="line"><span class="comment">+++ b/os/loader.c</span></span><br><span class="line"><span class="meta">@@ -51,6 +51,7 @@</span> int run_all_app()</span><br><span class="line"> 		/*</span><br><span class="line"> 		* LAB1: you may need to initialize your new fields of proc here</span><br><span class="line"> 		*/</span><br><span class="line"><span class="addition">+		memset(p-&gt;syscall_cnt, 0, sizeof(p-&gt;syscall_cnt));</span></span><br><span class="line"> 	}</span><br><span class="line"> 	return 0;</span><br><span class="line"> }</span><br><span class="line">\ No newline at end of file</span><br><span class="line"><span class="comment">diff --git a/os/proc.c b/os/proc.c</span></span><br><span class="line"><span class="comment">index 84240a8..c98b49e 100644</span></span><br><span class="line"><span class="comment">--- a/os/proc.c</span></span><br><span class="line"><span class="comment">+++ b/os/proc.c</span></span><br><span class="line"><span class="meta">@@ -34,6 +34,7 @@</span> void proc_init(void)</span><br><span class="line"> 		/*</span><br><span class="line"> 		* LAB1: you may need to initialize your new fields of proc here</span><br><span class="line"> 		*/</span><br><span class="line"><span class="addition">+		memset(p-&gt;syscall_cnt, 0, sizeof(p-&gt;syscall_cnt));</span></span><br><span class="line"> 	}</span><br><span class="line"> 	idle.kstack = (uint64)boot_stack_top;</span><br><span class="line"> 	idle.pid = 0;</span><br><span class="line"><span class="comment">diff --git a/os/proc.h b/os/proc.h</span></span><br><span class="line"><span class="comment">index f27369a..74cfe1c 100644</span></span><br><span class="line"><span class="comment">--- a/os/proc.h</span></span><br><span class="line"><span class="comment">+++ b/os/proc.h</span></span><br><span class="line"><span class="meta">@@ -38,6 +38,7 @@</span> struct proc {</span><br><span class="line"> 	/*</span><br><span class="line"> 	* LAB1: you may need to add some new fields here</span><br><span class="line"> 	*/</span><br><span class="line"><span class="addition">+	int syscall_cnt[512];</span></span><br><span class="line"> };</span><br><span class="line"> </span><br><span class="line"> struct proc *curr_proc();</span><br><span class="line"><span class="comment">diff --git a/os/syscall.c b/os/syscall.c</span></span><br><span class="line"><span class="comment">index 3225031..50b0035 100644</span></span><br><span class="line"><span class="comment">--- a/os/syscall.c</span></span><br><span class="line"><span class="comment">+++ b/os/syscall.c</span></span><br><span class="line"><span class="meta">@@ -39,6 +39,22 @@</span> uint64 sys_gettimeofday(TimeVal *val, int _tz)</span><br><span class="line"> /*</span><br><span class="line"> * LAB1: you may need to define sys_trace here</span><br><span class="line"> */</span><br><span class="line"><span class="addition">+int sys_trace(int trace_request, unsigned long id, uint8 data)</span></span><br><span class="line"><span class="addition">+{</span></span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	switch (trace_request) {</span></span><br><span class="line"><span class="addition">+	case 0:</span></span><br><span class="line"><span class="addition">+		return *(uint8 *)id;</span></span><br><span class="line"><span class="addition">+	case 1:</span></span><br><span class="line"><span class="addition">+		*(uint8 *)id = data;</span></span><br><span class="line"><span class="addition">+		return 0;</span></span><br><span class="line"><span class="addition">+	case 2:</span></span><br><span class="line"><span class="addition">+		return (id &lt; 512) ? p-&gt;syscall_cnt[id] : -1;</span></span><br><span class="line"><span class="addition">+	default:</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+}</span></span><br><span class="line"> </span><br><span class="line"> extern char trap_page[];</span><br><span class="line"> </span><br><span class="line"><span class="meta">@@ -53,6 +69,9 @@</span> void syscall()</span><br><span class="line"> 	/*</span><br><span class="line"> 	* LAB1: you may need to update syscall counter here</span><br><span class="line"> 	*/</span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+	(id &lt; 512) ? p-&gt;syscall_cnt[id]++ : 0;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"> 	switch (id) {</span><br><span class="line"> 	case SYS_write:</span><br><span class="line"> 		ret = sys_write(args[0], (char *)args[1], args[2]);</span><br><span class="line"><span class="meta">@@ -69,6 +88,9 @@</span> void syscall()</span><br><span class="line"> 	/*</span><br><span class="line"> 	* LAB1: you may need to add SYS_trace case here</span><br><span class="line"> 	*/</span><br><span class="line"><span class="addition">+	case SYS_trace:</span></span><br><span class="line"><span class="addition">+		ret = sys_trace(args[0], args[1], args[2]);</span></span><br><span class="line"><span class="addition">+		break;</span></span><br><span class="line"> 	default:</span><br><span class="line"> 		ret = -1;</span><br><span class="line"> 		errorf("unknown syscall %d", id);</span><br><span class="line"><span class="comment">diff --git a/os/syscall_ids.h b/os/syscall_ids.h</span></span><br><span class="line"><span class="comment">index e6fac51..06d8c00 100644</span></span><br><span class="line"><span class="comment">--- a/os/syscall_ids.h</span></span><br><span class="line"><span class="comment">+++ b/os/syscall_ids.h</span></span><br><span class="line"><span class="meta">@@ -280,6 +280,7 @@</span></span><br><span class="line"> /*</span><br><span class="line"> * LAB1: you may need to define SYS_trace here</span><br><span class="line"> */</span><br><span class="line"><span class="addition">+#define SYS_trace 410</span></span><br><span class="line"> #define SYS_pidfd_send_signal 424</span><br><span class="line"> #define SYS_io_uring_setup 425</span><br><span class="line"> #define SYS_io_uring_enter 426</span><br><span class="line"><span class="deletion">-- </span></span><br><span class="line">2.25.1</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
-<p>然后 <code>make test</code> 检查即可</p>
-<figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">[rustsbi] RustSBI version 0.3.0-alpha.2, adapting to RISC-V SBI v1.0.0</span><br><span class="line">.______       __    __      _______.___________.  _______..______   __</span><br><span class="line">|   _  \     |  |  |  |    /       |           | /       ||   _  \ |  |</span><br><span class="line">|  |_)  |    |  |  |  |   |   (----`---|  |----`|   (----`|  |_)  ||  |</span><br><span class="line">|      /     |  |  |  |    \   \       |  |      \   \    |   _  &lt; |  |</span><br><span class="line">|  |\  \----.|  `--'  |.----)   |      |  |  .----)   |   |  |_)  ||  |</span><br><span class="line">| _| `._____| \______/ |_______/       |__|  |_______/    |______/ |__|</span><br><span class="line">[rustsbi] Implementation     : RustSBI-QEMU Version 0.2.0-alpha.2</span><br><span class="line">[rustsbi] Platform Name      : riscv-virtio,qemu</span><br><span class="line">[rustsbi] Platform SMP       : 1</span><br><span class="line">[rustsbi] Platform Memory    : 0x80000000..0x88000000</span><br><span class="line">[rustsbi] Boot HART          : 0</span><br><span class="line">[rustsbi] Device Tree Region : 0x87000000..0x87000ef2</span><br><span class="line">[rustsbi] Firmware Address   : 0x80000000</span><br><span class="line">[rustsbi] Supervisor Address : 0x80200000</span><br><span class="line">[rustsbi] pmp01: 0x00000000..0x80000000 (-wr)</span><br><span class="line">[rustsbi] pmp02: 0x80000000..0x80200000 (---)</span><br><span class="line">[rustsbi] pmp03: 0x80200000..0x88000000 (xwr)</span><br><span class="line">[rustsbi] pmp04: 0x88000000..0x00000000 (-wr)</span><br><span class="line">Hello world from user mode program!</span><br><span class="line">Test hello_world OK!</span><br><span class="line">3^10000=5079</span><br><span class="line">3^20000=8202</span><br><span class="line">3^30000=8824</span><br><span class="line">3^40000=5750</span><br><span class="line">3^50000=3824</span><br><span class="line">3^60000=8516</span><br><span class="line">3^70000=2510</span><br><span class="line">3^80000=9379</span><br><span class="line">3^90000=2621</span><br><span class="line">3^100000=2749</span><br><span class="line">Test power OK!</span><br><span class="line">get_time OK! 11</span><br><span class="line">current time_msec = 11</span><br><span class="line">AAAAAAAAAA [1/5]</span><br><span class="line">CCCCCCCCCC [1/5]</span><br><span class="line">BBBBBBBBBB [1/5]</span><br><span class="line">AAAAAAAAAA [2/5]</span><br><span class="line">CCCCCCCCCC [2/5]</span><br><span class="line">BBBBBBBBBB [2/5]</span><br><span class="line">AAAAAAAAAA [3/5]</span><br><span class="line">CCCCCCCCCC [3/5]</span><br><span class="line">BBBBBBBBBB [3/5]</span><br><span class="line">AAAAAAAAAA [4/5]</span><br><span class="line">CCCCCCCCCC [4/5]</span><br><span class="line">BBBBBBBBBB [4/5]</span><br><span class="line">AAAAAAAAAA [5/5]</span><br><span class="line">CCCCCCCCCC [5/5]</span><br><span class="line">BBBBBBBBBB [5/5]</span><br><span class="line">Test write A OK!</span><br><span class="line">Test write C OK!</span><br><span class="line">Test write B OK!</span><br><span class="line">time_msec = 112 after sleeping 100 ticks, delta = 101ms!</span><br><span class="line">Test sleep1 passed!</span><br><span class="line">string from task trace test</span><br><span class="line">Test trace OK!</span><br><span class="line">Test sleep OK!</span><br><span class="line">[PANIC 5] os/loader.c:14: all apps over</span><br></pre></td></tr></tbody></table></figure>
-<p>可以看到 <code>Test trace OK!</code>，修改成功通过了测试。</p>
-<h2 id="问答作业">问答作业</h2>
-<ol type="1">
-<li><p>正确进入 U 态后，程序的特征还应有：使用 S 态特权指令，访问 S
-态寄存器后会报错。请同学们可以自行测试这些内容（参考
-前三个测例，描述程序出错行为，同时注意注明你使用的 sbi
-及其版本。</p></li>
-<li><p>请结合用例理解 trampoline.S 中两个函数 <code>userret</code> 和
-<code>uservec</code> 的作用，并回答如下几个问题:</p>
-<ol type="1">
-<li><p>L79: 刚进入 <code>userret</code>
-时，<code>a0</code>、<code>a1</code> 分别代表了什么值。</p></li>
-<li><p>L87-L88: <code>sfence</code>
-指令有何作用？为什么要执行该指令，当前章节中，删掉该指令会导致错误吗？</p>
-<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">csrw satp, a1</span><br><span class="line">sfence.vma zero, zero</span><br></pre></td></tr></tbody></table></figure><p></p></li>
-<li><p>L96-L125: 为何注释中说要除去 a0？哪一个地址代表 a0？现在 a0
-的值存在何处？</p>
-<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line"># restore all but a0 from TRAPFRAME</span><br><span class="line">ld ra, 40(a0)</span><br><span class="line">ld sp, 48(a0)</span><br><span class="line">ld t5, 272(a0)</span><br><span class="line">ld t6, 280(a0)</span><br></pre></td></tr></tbody></table></figure><p></p></li>
-<li><p><code>userret</code>：中发生状态切换在哪一条指令？为何执行之后会进入用户态？</p></li>
-<li><p>L29： 执行之后，<code>a0</code> 和 <code>sscratch</code>
-中各是什么值，为什么？</p>
-<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">csrrw a0, sscratch, a0</span><br></pre></td></tr></tbody></table></figure><p></p></li>
-<li><p>L32-L61: 从 trapframe
-第几项开始保存？为什么？是否从该项开始保存了所有的值，如果不是，为什么？</p>
-<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">sd ra, 40(a0)</span><br><span class="line">sd sp, 48(a0)</span><br><span class="line">...</span><br><span class="line">sd t5, 272(a0)</span><br><span class="line">sd t6, 280(a0)</span><br></pre></td></tr></tbody></table></figure><p></p></li>
-<li><p>进入 S 态是哪一条指令发生的？</p></li>
-<li><p>L75-L76: <code>ld t0, 16(a0)</code>
-执行之后，<code>t0</code> 中的值是什么，解释该值的由来？</p>
-<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">ld t0, 16(a0)</span><br><span class="line">jr t0</span><br></pre></td></tr></tbody></table></figure><p></p></li>
-</ol></li>
-</ol>
-<h2 id="问答作业解答">问答作业解答</h2>
-<ol type="1">
-<li><p>正确进入 U 态后，程序的特征还应有：使用 S 态特权指令，访问 S
-态寄存器后会报错。请同学们可以自行测试这些内容（参考前三个测例
-，描述程序出错行为，同时注意注明你使用的 sbi 及其版本。</p>
-<p>执行 <code>make test CHAPTER=2_bad</code> 后如下：</p>
-<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">[rustsbi] RustSBI version 0.3.0-alpha.2, adapting to RISC-V SBI v1.0.0</span><br><span class="line">.______       __    __      _______.___________.  _______..______   __</span><br><span class="line">|   _  \     |  |  |  |    /       |           | /       ||   _  \ |  |</span><br><span class="line">|  |_)  |    |  |  |  |   |   (----`---|  |----`|   (----`|  |_)  ||  |</span><br><span class="line">|      /     |  |  |  |    \   \       |  |      \   \    |   _  &lt; |  |</span><br><span class="line">|  |\  \----.|  `--'  |.----)   |      |  |  .----)   |   |  |_)  ||  |</span><br><span class="line">| _| `._____| \______/ |_______/       |__|  |_______/    |______/ |__|</span><br><span class="line">[rustsbi] Implementation     : RustSBI-QEMU Version 0.2.0-alpha.2</span><br><span class="line">[rustsbi] Platform Name      : riscv-virtio,qemu</span><br><span class="line">[rustsbi] Platform SMP       : 1</span><br><span class="line">[rustsbi] Platform Memory    : 0x80000000..0x88000000</span><br><span class="line">[rustsbi] Boot HART          : 0</span><br><span class="line">[rustsbi] Device Tree Region : 0x87000000..0x87000ef2</span><br><span class="line">[rustsbi] Firmware Address   : 0x80000000</span><br><span class="line">[rustsbi] Supervisor Address : 0x80200000</span><br><span class="line">[rustsbi] pmp01: 0x00000000..0x80000000 (-wr)</span><br><span class="line">[rustsbi] pmp02: 0x80000000..0x80200000 (---)</span><br><span class="line">[rustsbi] pmp03: 0x80200000..0x88000000 (xwr)</span><br><span class="line">[rustsbi] pmp04: 0x88000000..0x00000000 (-wr)</span><br><span class="line">hello wrold!</span><br><span class="line">[ERROR 0]unknown trap: 0x0000000000000007, stval = 0x0000000000000000 sepc = 0x0000000080400004</span><br><span class="line">[ERROR 0]IllegalInstruction in application, epc = 0x0000000080400004, core dumped.</span><br><span class="line">[ERROR 0]IllegalInstruction in application, epc = 0x0000000080400004, core dumped.</span><br><span class="line">ALL DONE</span><br></pre></td></tr></tbody></table></figure><p></p>
-<p>可以看到项目使用 RustSBI，版本为 0.3.0-alpha.2。</p>
-<p>别忘记 <code>trap</code> 类异常：</p>
-<p></p><figure class="highlight c"><table><tbody><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">Exception</span> {</span></span><br><span class="line">  InstructionMisaligned = <span class="number">0</span>,</span><br><span class="line">  InstructionAccessFault = <span class="number">1</span>,</span><br><span class="line">  IllegalInstruction = <span class="number">2</span>,</span><br><span class="line">  Breakpoint = <span class="number">3</span>,</span><br><span class="line">  LoadMisaligned = <span class="number">4</span>,</span><br><span class="line">  LoadAccessFault = <span class="number">5</span>,</span><br><span class="line">  StoreMisaligned = <span class="number">6</span>,</span><br><span class="line">  StoreAccessFault = <span class="number">7</span>,</span><br><span class="line">  UserEnvCall = <span class="number">8</span>,</span><br><span class="line">  SupervisorEnvCall = <span class="number">9</span>,</span><br><span class="line">  MachineEnvCall = <span class="number">11</span>,</span><br><span class="line">  InstructionPageFault = <span class="number">12</span>,</span><br><span class="line">  LoadPageFault = <span class="number">13</span>,</span><br><span class="line">  StorePageFault = <span class="number">15</span>,</span><br><span class="line">};</span><br></pre></td></tr></tbody></table></figure><p></p>
-<p>三个测例如下：</p>
-<p></p><figure class="highlight c"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment">// __ch2_bad_address.c</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">{</span><br><span class="line">  <span class="type">int</span> *p = (<span class="type">int</span> *)<span class="number">0</span>;</span><br><span class="line">  *p = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure><p></p>
-<p>这是一个空指针解引用的测例，U 态程序尝试访问 S 态，显然运行会触发
-<code>Store/AMO access fault</code> 异常，所以我们可以看到
-<code>unknown trap: 0x0000000000000007</code>。</p>
-<p></p><figure class="highlight c"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment">// __ch2_bad_instruction.c</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">{</span><br><span class="line">  <span class="keyword">asm</span> <span class="title function_">volatile</span><span class="params">(<span class="string">"sret"</span>)</span>;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure><p></p>
-<p>这是一个使用 S 态特权指令的测例，因为 U 态不能执行 S
-态特权指令，所以会触发 <code>Illegal instruction</code> 异常。</p>
-<p></p><figure class="highlight c"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment">// __ch2_bad_register.c</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">{</span><br><span class="line">  uint64 x;</span><br><span class="line">  <span class="keyword">asm</span> <span class="title function_">volatile</span><span class="params">(<span class="string">"csrr %0, sstatus"</span> : <span class="string">"=r"</span>(x))</span>;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure><p></p>
-<p>这是一个访问 S 态寄存器的测例，同样地，U 态不能访问 S 态 CSR
-寄存器，所以会触发 <code>Illegal instruction</code> 异常。</p>
-<p>通过上面的测试可以看到，成功输出了
-<code>hello wrold!</code>，即用户态程序可以正常运行，且 RustSBI
-正常工作，但存在对 U 态的特权级别限制，所以这几个测例会报错。</p></li>
-<li><p>请结合用例理解 trampoline.S 中两个函数 <code>userret</code> 和
-<code>uservec</code> 的作用，并回答如下几个问题:</p>
-<ol type="1">
-<li><p>L79: 刚进入 <code>userret</code>
-时，<code>a0</code>、<code>a1</code> 分别代表了什么值。</p>
-<p>从注释中可以看到 </p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">userret:</span><br><span class="line">    # userret(TRAPFRAME, pagetable)</span><br><span class="line">    # switch from kernel to user.</span><br><span class="line">    # usertrapret() calls here.</span><br><span class="line">    # a0: TRAPFRAME, in user page table.</span><br><span class="line">    # a1: user page table, for satp.</span><br></pre></td></tr></tbody></table></figure> 所以 <code>a0</code> 指向 TRAPFRAME
-的地址；<code>a1</code> 是用户页表的物理地址，将被设置为寄存器
-<code>satp</code> 的值。<p></p></li>
-<li><p>L87-L88: <code>sfence</code>
-指令有何作用？为什么要执行该指令，当前章节中，删掉该指令会导致错误吗？</p>
-<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">csrw satp, a1</span><br><span class="line">sfence.vma zero, zero</span><br></pre></td></tr></tbody></table></figure><p></p>
-<p>刷新 TLB。当修改 <code>satp</code> 寄存器切换页表时，TLB
-中可能还缓存着旧页表的地址转换，必须刷新 TLB
-确保后续的地址转换使用新页表。当前章节中删去不会出错，这里还不涉及用户页表切换。</p></li>
-<li><p>L96-L125: 为何注释中说要除去 <code>a0</code>？哪一个地址代表
-<code>a0</code>？现在 <code>a0</code> 的值存在何处？</p>
-<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line"># restore all but a0 from TRAPFRAME</span><br><span class="line">ld ra, 40(a0)</span><br><span class="line">ld sp, 48(a0)</span><br><span class="line">...</span><br><span class="line">ld t5, 272(a0)</span><br><span class="line">ld t6, 280(a0)</span><br></pre></td></tr></tbody></table></figure><p></p>
-<p>当前 <code>a0</code> 存储的是 TRAPFRAME
-的地址，需要用它访问保存的寄存器值，如果现在恢复
-<code>a0</code>，就无法继续访问 TRAPFRAME 了。<code>a0</code>
-的原始值保存在 <code>112(a0)</code> 位置，也就是 TRAPFRAME 中的
-<code>a0</code> 字段。在恢复过程中会先被加载到 <code>sscratch</code>
-寄存器，最后通过 L128：<code>csrrw a0, sscratch, a0</code> 指令完成
-<code>a0</code> 的恢复。</p></li>
-<li><p><code>userret</code>：中发生状态切换在哪一条指令？为何执行之后会进入用户态？</p>
-<p><code>sret</code>。<code>sret</code> 指令会根据 <code>sstatus</code>
-寄存器的 <code>SPP</code> 位决定返回的特权级，在
-<code>usertrapret()</code> 中，<code>x &amp;= ~SSTATUS_SPP;</code>
-已经设置了 <code>sstatus.SPP = 0</code>，表示返回用户态。</p></li>
-<li><p>L29： 执行之后，<code>a0</code> 和 <code>sscratch</code>
-中各是什么值，为什么？</p>
-<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">csrrw a0, sscratch, a0</span><br></pre></td></tr></tbody></table></figure><p></p>
-<p><code>csrrw</code> 是原子交换指令，同时读取和写入 <code>CSR</code>
-寄存器，所以 <code>a0</code> 是 TRAPFRAME 的地址，<code>sscratch</code>
-中是用户程序的原始 <code>a0</code> 值。</p></li>
-<li><p>L32-L61: 从 trapframe
-第几项开始保存？为什么？是否从该项开始保存了所有的值，如果不是，为什么？</p>
-<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">sd ra, 40(a0)</span><br><span class="line">sd sp, 48(a0)</span><br><span class="line">...</span><br><span class="line">sd t5, 272(a0)</span><br><span class="line">sd t6, 280(a0)</span><br></pre></td></tr></tbody></table></figure><p></p>
-<p>从 <code>ra</code> 开始保存，<code>ra</code> 的偏移量为 40，<span class="math inline">40 ÷ 8 = 5</span>，所以从 <code>trapframe</code>
-第六项开始保存。并没有保存所有的值，<code>a0</code> 没有保存，因为此时
-<code>a0</code> 指向 <code>trapframe</code>，其原始值通过
-<code>csrrw a0, sscratch, a0</code> 保存在 <code>sscratch</code>
-中，后续在 <code>trapframe</code> 偏移量 112 处，也就是
-<code>trapframe</code> 中的 <code>a0</code> 字段保存。</p></li>
-<li><p>进入 S 态是哪一条指令发生的？</p>
-<p>用户程序中的 <code>ecall</code>。</p></li>
-<li><p>L75-L76: <code>ld t0, 16(a0)</code>
-执行之后，<code>t0</code> 中的值是什么，解释该值的由来？</p>
-<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">ld t0, 16(a0)</span><br><span class="line">jr t0</span><br></pre></td></tr></tbody></table></figure><p></p>
-<p></p><figure class="highlight c"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment">// os/trap.c</span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">usertrapret</span><span class="params">(<span class="keyword">struct</span> trapframe *trapframe, uint64 kstack)</span></span><br><span class="line">{</span><br><span class="line">  trapframe-&gt;kernel_satp = r_satp(); <span class="comment">// kernel page table</span></span><br><span class="line">  trapframe-&gt;kernel_sp = kstack + PGSIZE; <span class="comment">// process's kernel stack</span></span><br><span class="line">  trapframe-&gt;kernel_trap = (uint64)usertrap;</span><br><span class="line">  trapframe-&gt;kernel_hartid = r_tp(); <span class="comment">// hartid for cpuid()</span></span><br><span class="line"></span><br><span class="line">  w_sepc(trapframe-&gt;epc);</span><br><span class="line">  <span class="comment">// set up the registers that trampoline.S's sret will use</span></span><br><span class="line">  <span class="comment">// to get to user space.</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// set S Previous Privilege mode to User.</span></span><br><span class="line">  uint64 x = r_sstatus();</span><br><span class="line">  x &amp;= ~SSTATUS_SPP; <span class="comment">// clear SPP to 0 for user mode</span></span><br><span class="line">  x |= SSTATUS_SPIE; <span class="comment">// enable interrupts in user mode</span></span><br><span class="line">  w_sstatus(x);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// tell trampoline.S the user page table to switch to.</span></span><br><span class="line">  <span class="comment">// uint64 satp = MAKE_SATP(p-&gt;pagetable);</span></span><br><span class="line">  userret((uint64)trapframe);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure><p></p>
-<p>可以看到
-<code>trapframe-&gt;kernel_trap = (uint64)usertrap;</code>，所以
-<code>t0</code> 中的值是 <code>usertrap</code>
-函数的地址。当系统调用完成准备返回用户态时，<code>usertrapret()</code>
-函数会被调用，<code>trapframe-&gt;kernel_trap = (uint64)usertrap;</code>
-将 <code>usertrap</code> 函数地址存储在 <code>trapframe</code> 的偏移量
-16 处，于是下次用户态发生 <code>trap</code> 时，<code>uservec</code>
-就能正确跳转到 <code>usertrap</code> 函数。</p></li>
-</ol></li>
-</ol>
-]]></content>
-      <categories>
-        <category>uCore</category>
-      </categories>
-      <tags>
-        <tag>OS</tag>
-        <tag>riscv</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>github pages + cloudflare DNS 托管避坑</title>
-    <url>/issue-resolve/49265.html</url>
-    <content><![CDATA[<h2 id="问题描述">问题描述</h2>
-<p>今天听同学说腾讯云的域名很便宜，十年才 230 CNY，非常心动，遂入手域名
-<a href="https://0b1t.tech">0b1t.tech</a>，买完想把原本托管在 github
-上的博客重定向到新的域名上的，没想到迁移出了问题。</p>
-<p>一开始都很顺利，但是发现腾讯云自带的 dnspod 服务只能添加两条 DNS
-记录，怎么能受这气？直接登上我的 cloudflare，把 DNS 服务改成
-cloudflare。没想到就是 cloudflare DNS
-默认打开的代理让我折腾了一个晚上。一开始没有发现这个问题，试了 A 记录和
-CNAME 记录，结果一直不行，提示</p>
-<blockquote>
-<p>unavailable for your site because your domain is not properly
-configured to support https</p>
-</blockquote>
-<p>这不是恶心人吗？https
-打勾的框一直都是灰色的，无法勾选，受不了了，到网上去找相似的
-issue，还真给我找到了解决方法。</p>
-<h2 id="解决方案">解决方案</h2>
-<p>社区很多讨论中都说要检查下面的几步：</p>
-<blockquote>
-<p>Check SSL Certificate Installation: Make sure that your SSL
-certificate is properly installed for the domain. If you’re using a
-certificate provider, ensure that the certificate is correctly
-configured for your domain and is not expired.</p>
-<p>Verify DNS Settings: Confirm that your domain’s DNS settings point to
-the correct server where your site is hosted, and make sure the CNAME or
-A records are set up correctly. You should also make sure that any DNS
-propagation has fully completed. DNS changes can take some time (up to
-48 hours), so double-check that your records are pointing to the right
-place.</p>
-<p>Check Server Configuration: Ensure that your server is configured to
-accept HTTPS requests on port 443. Sometimes web servers require
-specific configuration changes to allow HTTPS traffic. For example, in
-Apache or Nginx, make sure the SSL configuration in your site’s server
-block or virtual host is correctly set.</p>
-<p>Redirect HTTP to HTTPS: Add HTTP to HTTPS redirects in your server
-configuration. This ensures that users who try to visit your site using
-HTTP will automatically be redirected to the secure HTTPS version of the
-site.</p>
-</blockquote>
-<p>但是经过我实测，如果你跟着一般教程走的话上面这些问题都不会碰到的，直到我看到下面这个讨论贴：<a href="https://github.com/orgs/community/discussions/23049">How to enable
-https support on custom domains
-#23049</a>，可以看到有很多回复，我一个个翻下去，还真有人提到了
-cloudflare proxy 的问题 <a href="https://github.com/orgs/community/discussions/23049#discussioncomment-3573123">“If
-you’re using Cloudflare you need to disable their proxy feature”</a></p>
-<p>确实啊，我还没试过关掉 cloudflare 的代理！直接切换到 cloudflare
-控制台，把代理关掉，配置如下图 <img src="/issue-resolve/49265/1-DNS.png" class="" title="DNS"> 然后我使用<a href="https://www.nslookup.io/">在线 DNS 检查网站</a>来查看我域名的
-DNS， <img src="/issue-resolve/49265/2-check.png" class="" title="check"> 这不就对味了吗！ 再把 github page
-在设置页静置一下，没想到过一会儿它自己就跑完了，也能勾选 https
-了，好耶！ <img src="/issue-resolve/49265/3-HTTPS.png" class="" title="https"></p>
-]]></content>
-      <categories>
-        <category>issue resolve</category>
-      </categories>
-      <tags>
-        <tag>domain configure</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>浅析 eBPF</title>
     <url>/kernel/50584.html</url>
     <content><![CDATA[<h2 id="ebpf-工作原理总览">eBPF 工作原理总览</h2>
@@ -237,13 +10,13 @@ DNS， <img src="/issue-resolve/49265/2-check.png" class="" title="check"> 这�
 “BPF” 已成为一个独立术语，而其前身则被称为 <strong>cBPF (classic
 BPF)</strong>。</p>
 <p>eBPF 程序并非直接在 CPU
-上运行，而是在一个位于内核中的、高度安全和高效的 <strong>BPF
+上运行，而是在一个位于内核中的、高度安全和高效的<strong> BPF
 虚拟机</strong> 上执行。我们可以将该虚拟机理解为一个沙盒，确保 eBPF
 代码不会导致 kernel panic。</p>
 <img src="/kernel/50584/kernel_panic.jpg" class="" title="panic">
 <p>为了让这个虚拟机正常运行，我们需要给它一套指令，这就是 <strong>BPF
 指令集</strong>。我们用 C 语言等高级语言写好的逻辑，通过编译器（如
-LLVM/Clang）翻译成 BPF 指令集字节码，然后才能交给虚拟机执行。</p>
+LLVM / Clang）翻译成 BPF 指令集字节码，然后才能交给虚拟机执行。</p>
 <p>但光有代码执行是不够的，eBPF
 程序经常需要和用户空间程序或者内核的其他部分交换数据，这时就需要用到
 <strong>BPF Maps</strong>。这是一种高效的键值对存储，是 eBPF
@@ -289,7 +62,7 @@ bit)，在大端序和小端序主机上，这两个 4-bit 字段的顺序是相
 <li><code>offset</code>: 16 bit (偏移量)</li>
 <li><code>imm</code>: 32 bit (立即数)</li>
 </ul></li>
-<li><strong> 宽指令 (128-bit)</strong>: 专用于加载一个 64
+<li><strong>宽指令 (128-bit)</strong>: 专用于加载一个 64
 位的立即数（ld_imm64）。它由两个连续的 64 位指令构成。
 <ul>
 <li>第一个 64 位指令：正常的基本指令格式，其中 imm 字段存放 64
@@ -308,56 +81,56 @@ bit)，在大端序和小端序主机上，这两个 4-bit 字段的顺序是相
 <col style="width: 33%">
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;">value</th>
 <th style="text-align: left;">class</th>
-<th style="text-align: left;"> 描述</th>
+<th style="text-align: left;">描述</th>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td style="text-align: left;"> 0x00</td>
+<tr class="odd">
+<td style="text-align: left;">0x00</td>
 <td style="text-align: left;">LD</td>
-<td style="text-align: left;"><strong> 加载
+<td style="text-align: left;"><strong>加载
 (Load)</strong>，非标准加载操作，主要用于 <code>ld_imm64</code>
 宽指令。</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">0x01</td>
 <td style="text-align: left;">LDX</td>
-<td style="text-align: left;"><strong> 加载
+<td style="text-align: left;"><strong>加载
 (Load)</strong>，从内存读取数据到寄存器。</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">0x02</td>
 <td style="text-align: left;">ST</td>
-<td style="text-align: left;"><strong> 存储
+<td style="text-align: left;"><strong>存储
 (Store)</strong>，将立即数写入内存。</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">0x03</td>
 <td style="text-align: left;">STX</td>
-<td style="text-align: left;"><strong> 存储
+<td style="text-align: left;"><strong>存储
 (Store)</strong>，将寄存器的值写入内存。</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">0x04</td>
 <td style="text-align: left;">ALU</td>
 <td style="text-align: left;">32 位算术与逻辑运算。</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">0x05</td>
 <td style="text-align: left;">JMP</td>
-<td style="text-align: left;"><strong> 跳转
+<td style="text-align: left;"><strong>跳转
 (Jump)</strong>，64 位操作数的条件或无条件跳转。</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">0x06</td>
 <td style="text-align: left;">JMP32</td>
-<td style="text-align: left;"><strong> 跳转
+<td style="text-align: left;"><strong>跳转
 (Jump)</strong>，32 位操作数的条件或无条件跳转。</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">0x07</td>
 <td style="text-align: left;">ALU64</td>
 <td style="text-align: left;">64 位算术与逻辑运算。</td>
@@ -376,47 +149,47 @@ bit)，在大端序和小端序主机上，这两个 4-bit 字段的顺序是相
 <col style="width: 33%">
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;">value</th>
 <th style="text-align: left;">mode modifier</th>
-<th style="text-align: left;"> 描述</th>
+<th style="text-align: left;">描述</th>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td style="text-align: left;"> 0</td>
+<tr class="odd">
+<td style="text-align: left;">0</td>
 <td style="text-align: left;">IMM</td>
-<td style="text-align: left;"><strong> 立即数 (Immediate)</strong>，用于
+<td style="text-align: left;"><strong>立即数 (Immediate)</strong>，用于
 <code>ld_imm64</code> 指令加载 64 位立即数。</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">1</td>
 <td style="text-align: left;">ABS</td>
-<td style="text-align: left;"><strong> 绝对寻址
+<td style="text-align: left;"><strong>绝对寻址
 (Absolute)</strong>，用于传统 cBPF，已废弃。</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">2</td>
 <td style="text-align: left;">IND</td>
-<td style="text-align: left;"><strong> 间接寻址
+<td style="text-align: left;"><strong>间接寻址
 (Indirect)</strong>，用于传统 cBPF，已废弃。</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">3</td>
 <td style="text-align: left;">MEM</td>
-<td style="text-align: left;"><strong> 常规内存操作
+<td style="text-align: left;"><strong>常规内存操作
 (Memory)</strong>，最常见的加载和存储模式。</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">4</td>
 <td style="text-align: left;">MEMSX</td>
-<td style="text-align: left;"><strong> 符号扩展加载 (Sign-extending
+<td style="text-align: left;"><strong>符号扩展加载 (Sign-extending
 load)</strong>，加载时将有符号小整数正确扩展到 64 位。</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">6</td>
 <td style="text-align: left;">ATOMIC</td>
-<td style="text-align: left;"><strong> 原子操作
+<td style="text-align: left;"><strong>原子操作
 (Atomic)</strong>，用于实现安全的并发数据修改。</td>
 </tr>
 </tbody>
@@ -424,33 +197,33 @@ load)</strong>，加载时将有符号小整数正确扩展到 64 位。</td>
 <p><strong>数据大小 (Size)</strong></p>
 <table>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;">value</th>
 <th style="text-align: left;">size</th>
-<th style="text-align: left;"> 描述</th>
+<th style="text-align: left;">描述</th>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td style="text-align: left;"> 0</td>
+<tr class="odd">
+<td style="text-align: left;">0</td>
 <td style="text-align: left;">W</td>
-<td style="text-align: left;"><strong> 字 (Word)</strong>, 4 字节</td>
+<td style="text-align: left;"><strong>字 (Word)</strong>, 4 字节</td>
 </tr>
-<tr>
-<td style="text-align: left;"> 1</td>
+<tr class="even">
+<td style="text-align: left;">1</td>
 <td style="text-align: left;">H</td>
-<td style="text-align: left;"><strong> 半字 (Half-word)</strong>, 2
+<td style="text-align: left;"><strong>半字 (Half-word)</strong>, 2
 字节</td>
 </tr>
-<tr>
-<td style="text-align: left;"> 2</td>
+<tr class="odd">
+<td style="text-align: left;">2</td>
 <td style="text-align: left;">B</td>
-<td style="text-align: left;"><strong> 字节 (Byte)</strong>, 1 字节</td>
+<td style="text-align: left;"><strong>字节 (Byte)</strong>, 1 字节</td>
 </tr>
-<tr>
-<td style="text-align: left;"> 3</td>
+<tr class="even">
+<td style="text-align: left;">3</td>
 <td style="text-align: left;">DW</td>
-<td style="text-align: left;"><strong> 双字 (Double-word)</strong>, 8
+<td style="text-align: left;"><strong>双字 (Double-word)</strong>, 8
 字节</td>
 </tr>
 </tbody>
@@ -469,7 +242,7 @@ BPF 程序和外部资源的关键。</p>
 <col style="width: 25%">
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;"><code>src_reg</code></th>
 <th style="text-align: left;">伪代码</th>
 <th style="text-align: left;"><code>imm</code> 类型</th>
@@ -477,35 +250,35 @@ BPF 程序和外部资源的关键。</p>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td style="text-align: left;"> 0x0</td>
+<tr class="odd">
+<td style="text-align: left;">0x0</td>
 <td style="text-align: left;"><code>dst = (next_imm &lt;&lt; 32) \| imm</code></td>
 <td style="text-align: left;">整数</td>
 <td style="text-align: left;">整数</td>
 </tr>
-<tr>
-<td style="text-align: left;"> 0x1</td>
+<tr class="even">
+<td style="text-align: left;">0x1</td>
 <td style="text-align: left;"><code>dst = map_by_fd(imm)</code></td>
 <td style="text-align: left;">Map 文件描述符</td>
-<td style="text-align: left;"> Map 地址</td>
+<td style="text-align: left;">Map 地址</td>
 </tr>
-<tr>
-<td style="text-align: left;"> 0x2</td>
+<tr class="odd">
+<td style="text-align: left;">0x2</td>
 <td style="text-align: left;"><code>dst = map_val(map_by_fd(imm)) + next_imm</code></td>
 <td style="text-align: left;">Map 文件描述符</td>
-<td style="text-align: left;"> Map 值地址</td>
+<td style="text-align: left;">Map 值地址</td>
 </tr>
-<tr>
-<td style="text-align: left;"> 0x5</td>
+<tr class="even">
+<td style="text-align: left;">0x5</td>
 <td style="text-align: left;"><code>dst = map_by_idx(imm)</code></td>
 <td style="text-align: left;">Map 程序内索引</td>
-<td style="text-align: left;"> Map 地址</td>
+<td style="text-align: left;">Map 地址</td>
 </tr>
-<tr>
-<td style="text-align: left;"> 0x6</td>
+<tr class="odd">
+<td style="text-align: left;">0x6</td>
 <td style="text-align: left;"><code>dst = map_val(map_by_idx(imm)) + next_imm</code></td>
 <td style="text-align: left;">Map 程序内索引</td>
-<td style="text-align: left;"> Map 值地址</td>
+<td style="text-align: left;">Map 值地址</td>
 </tr>
 </tbody>
 </table>
@@ -521,11 +294,11 @@ BPF 程序和外部资源的关键。</p>
 <li><code>dst_reg = *(unsigned size *) (src_reg + offset)</code>
 (LDX)</li>
 </ul></li>
-<li><strong> 符号扩展加载 (<code>MEMSX</code>)</strong>:
+<li><strong>符号扩展加载 (<code>MEMSX</code>)</strong>:
 <ul>
 <li><code>dst_reg = *(signed size *) (src_reg + offset)</code>
 (LDX)</li>
-<li> 用于从内存加载一个有符号的小整数（如 <code>s8</code>,
+<li>用于从内存加载一个有符号的小整数（如 <code>s8</code>,
 <code>s16</code>）到 64
 位寄存器时，能正确地将符号位扩展到高位，保持数值不变。</li>
 </ul></li>
@@ -558,34 +331,34 @@ BPF 程序和外部资源的关键。</p>
 <code>src_reg</code>。<code>XCHG</code> 和 <code>CMPXCHG</code>
 总是隐式包含 <code>FETCH</code>。</li>
 </ul>
-<h3 id="算术与跳转指令-alujmp">算术与跳转指令 (ALU/JMP)</h3>
+<h3 id="算术与跳转指令-alujmp">算术与跳转指令 (ALU / JMP)</h3>
 <p>这类指令的 <code>opcode</code> 除了类别，还包含<strong>操作码
 (Code)</strong> 和<strong>源 (Source)</strong>。</p>
 <p><strong>操作数来源 (Source)</strong></p>
 <table>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;">value</th>
 <th style="text-align: left;">source</th>
-<th style="text-align: left;"> 描述</th>
+<th style="text-align: left;">描述</th>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td style="text-align: left;"> 0</td>
+<tr class="odd">
+<td style="text-align: left;">0</td>
 <td style="text-align: left;">K</td>
-<td style="text-align: left;"> 操作数是一个 32 位立即数
+<td style="text-align: left;">操作数是一个 32 位立即数
 <code>imm</code>。</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">1</td>
 <td style="text-align: left;">X</td>
-<td style="text-align: left;"> 操作数是另一个寄存器
+<td style="text-align: left;">操作数是另一个寄存器
 <code>src_reg</code>。</td>
 </tr>
 </tbody>
 </table>
-<h4 id="算术指令-alualu64">算术指令 (ALU/ALU64)</h4>
+<h4 id="算术指令-alualu64">算术指令 (ALU / ALU64)</h4>
 <table>
 <colgroup>
 <col style="width: 33%">
@@ -593,76 +366,76 @@ BPF 程序和外部资源的关键。</p>
 <col style="width: 33%">
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;">name</th>
 <th style="text-align: left;">code</th>
-<th style="text-align: left;"> 描述与边界情况</th>
+<th style="text-align: left;">描述与边界情况</th>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td style="text-align: left;"> ADD/SUB</td>
+<tr class="odd">
+<td style="text-align: left;">ADD/SUB</td>
 <td style="text-align: left;">0x0/0x1</td>
-<td style="text-align: left;"> 加 / 减法，允许溢出回绕。</td>
+<td style="text-align: left;">加 / 减法，允许溢出回绕。</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">MUL/DIV</td>
 <td style="text-align: left;">0x2/0x3</td>
-<td style="text-align: left;"> 乘 / 除法。<strong>除以零时，结果为
+<td style="text-align: left;">乘 / 除法。<strong>除以零时，结果为
 0</strong>。有符号除法 <code>SDIV</code> 中，<code>LLONG_MIN / -1</code>
 结果仍为 <code>LLONG_MIN</code>。</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">MOD</td>
 <td style="text-align: left;">0x9</td>
-<td style="text-align: left;"> 取模。<strong>对零取模时，ALU64 下 dst
+<td style="text-align: left;">取模。<strong>对零取模时，ALU64 下 dst
 不变，ALU32 下 dst 高 32 位清零</strong>。有符号取模 <code>SMOD</code>
 中，<code>LLONG_MIN % -1</code> 结果为 0。</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">OR/AND/XOR</td>
 <td style="text-align: left;">0x4/0x5/0xa</td>
-<td style="text-align: left;"> 按位或 / 与 / 异或。</td>
+<td style="text-align: left;">按位或/与/异或。</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">LSH/RSH</td>
 <td style="text-align: left;">0x6/0x7</td>
-<td style="text-align: left;"> 逻辑左 / 右移。移动位数会被
+<td style="text-align: left;">逻辑左 / 右移。移动位数会被
 <code>&amp; 63</code> (64 位) 或 <code>&amp; 31</code> (32 位) 屏蔽。</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">ARSH</td>
 <td style="text-align: left;">0xc</td>
-<td style="text-align: left;"> 算术右移（带符号扩展）。</td>
+<td style="text-align: left;">算术右移（带符号扩展）。</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">NEG</td>
 <td style="text-align: left;">0x8</td>
-<td style="text-align: left;"> 取负。</td>
+<td style="text-align: left;">取负。</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">MOV</td>
 <td style="text-align: left;">0xb</td>
-<td style="text-align: left;"> 移动。</td>
+<td style="text-align: left;">移动。</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">MOVSX</td>
 <td style="text-align: left;">0xb</td>
-<td style="text-align: left;"><strong> 符号扩展移动</strong>。从
+<td style="text-align: left;"><strong>符号扩展移动</strong>。从
 <code>src</code> 移动 <code>s8</code>, <code>s16</code> 或
 <code>s32</code> 到 <code>dst</code> 并进行符号扩展。</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">END</td>
 <td style="text-align: left;">0xd</td>
-<td style="text-align: left;"><strong> 字节序转换</strong>。<code>ALU</code>
+<td style="text-align: left;"><strong>字节序转换</strong>。<code>ALU</code>
 模式下，<code>source</code> 位决定是转为小端 (<code>LE</code>) 还是大端
 (<code>BE</code>)。<code>ALU64</code> 模式下，进行无条件的大小端翻转
 (<code>bswap</code>)。<code>imm</code> 决定宽度 (16/32/64)。</td>
 </tr>
 </tbody>
 </table>
-<h4 id="跳转指令-jmpjmp32">跳转指令 (JMP/JMP32)</h4>
+<h4 id="跳转指令-jmpjmp32">跳转指令 (JMP / JMP32)</h4>
 <table>
 <colgroup>
 <col style="width: 33%">
@@ -670,60 +443,60 @@ BPF 程序和外部资源的关键。</p>
 <col style="width: 33%">
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;">code</th>
 <th style="text-align: left;">value</th>
-<th style="text-align: left;"> 描述</th>
+<th style="text-align: left;">描述</th>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td style="text-align: left;"> JA</td>
+<tr class="odd">
+<td style="text-align: left;">JA</td>
 <td style="text-align: left;">0x0</td>
-<td style="text-align: left;"> 无条件跳转。<code>JMP</code> 版用
+<td style="text-align: left;">无条件跳转。<code>JMP</code> 版用
 <code>offset</code> (16 位)，<code>JMP32</code> 版用 <code>imm</code>
 (32 位)。</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">JEQ/JNE</td>
 <td style="text-align: left;">0x1/0x5</td>
-<td style="text-align: left;"> 等于 / 不等于则跳转。</td>
+<td style="text-align: left;">等于 / 不等于则跳转。</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">JGT/JGE</td>
 <td style="text-align: left;">0x2/0x3</td>
-<td style="text-align: left;"><strong> 无符号</strong>大于 / 大于等于则跳转。</td>
+<td style="text-align: left;"><strong>无符号</strong>大于 / 大于等于则跳转。</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">JLT/JLE</td>
 <td style="text-align: left;">0xa/0xb</td>
-<td style="text-align: left;"><strong> 无符号</strong>小于 / 小于等于则跳转。</td>
+<td style="text-align: left;"><strong>无符号</strong>小于 / 小于等于则跳转。</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">JSGT/JSGE</td>
 <td style="text-align: left;">0x6/0x7</td>
-<td style="text-align: left;"><strong> 有符号</strong>大于 / 大于等于则跳转。</td>
+<td style="text-align: left;"><strong>有符号</strong>大于 / 大于等于则跳转。</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">JSLT/JSLE</td>
 <td style="text-align: left;">0xc/0xd</td>
-<td style="text-align: left;"><strong> 有符号</strong>小于 / 小于等于则跳转。</td>
+<td style="text-align: left;"><strong>有符号</strong>小于 / 小于等于则跳转。</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">JSET</td>
 <td style="text-align: left;">0x4</td>
-<td style="text-align: left;"> 按位与结果非零则跳转。</td>
+<td style="text-align: left;">按位与结果非零则跳转。</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;">CALL</td>
 <td style="text-align: left;">0x8</td>
-<td style="text-align: left;"><strong> 函数调用</strong>。这是 eBPF
+<td style="text-align: left;"><strong>函数调用</strong>。这是 eBPF
 能力扩展的核心。</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;">EXIT</td>
 <td style="text-align: left;">0x9</td>
-<td style="text-align: left;"><strong> 程序返回</strong>，终止执行。在子函数中调用则返回到调用点。</td>
+<td style="text-align: left;"><strong>程序返回</strong>，终止执行。在子函数中调用则返回到调用点。</td>
 </tr>
 </tbody>
 </table>
@@ -831,23 +604,23 @@ Verifier 常见拒绝示例
 </summary>
 <table>
 <thead>
-<tr>
+<tr class="header">
 <th>报错片段</th>
 <th>触发原因</th>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td> invalid indirect read from stack</td>
-<td> 读到未初始化栈空间</td>
+<tr class="odd">
+<td>invalid indirect read from stack</td>
+<td>读到未初始化栈空间</td>
 </tr>
-<tr>
-<td> possible pointer arithmetic on ctx</td>
-<td> 对只读 ctx 指针做算术</td>
+<tr class="even">
+<td>possible pointer arithmetic on ctx</td>
+<td>对只读 ctx 指针做算术</td>
 </tr>
-<tr>
-<td> jump out of range</td>
-<td> 分支过深 /offset 溢出</td>
+<tr class="odd">
+<td>jump out of range</td>
+<td>分支过深 / offset 溢出</td>
 </tr>
 </tbody>
 </table>
@@ -855,9 +628,9 @@ Verifier 常见拒绝示例
 <h3 id="co-recompile-once-run-everywhere">CO-RE（Compile Once – Run
 Everywhere）</h3>
 <p>如果目标机器内核启用了 <a href="https://www.kernel.org/doc/html/latest/bpf/btf.html">BTF</a>，建议在编译时打开
-CO-RE：</p>
+CO - RE：</p>
 <figure class="highlight bash"><table><tbody><tr><td class="code"><pre><span class="line">clang -g -O2 -target bpf -D__TARGET_ARCH_$(<span class="built_in">uname</span> -m) \</span><br><span class="line">      -c prog.c -o prog.o</span><br></pre></td></tr></tbody></table></figure>
-<p>同一个 <code>.o</code> 文件可跨 5.x/6.x
+<p>同一个 <code>.o</code> 文件可跨 5.x / 6.x
 内核直接重定位字段，无需重编译。</p>
 <h2 id="执行解释器与-jit-编译器">执行：解释器与 JIT 编译器</h2>
 <p>通过校验后，BPF 字节码终于可以执行了。内核提供了两种执行方式：</p>
@@ -888,12 +661,72 @@ Helper + Verifier + JIT</p>
       </tags>
   </entry>
   <entry>
+    <title>github pages + cloudflare DNS 托管避坑</title>
+    <url>/issue-resolve/49265.html</url>
+    <content><![CDATA[<h2 id="问题描述">问题描述</h2>
+<p>今天听同学说腾讯云的域名很便宜，十年才 230 CNY，非常心动，遂入手域名
+<a href="https://0b1t.tech">0b1t.tech</a>，买完想把原本托管在 github
+上的博客重定向到新的域名上的，没想到迁移出了问题。</p>
+<p>一开始都很顺利，但是发现腾讯云自带的 dnspod 服务只能添加两条 DNS
+记录，怎么能受这气？直接登上我的 cloudflare，把 DNS 服务改成
+cloudflare。没想到就是 cloudflare DNS
+默认打开的代理让我折腾了一个晚上。一开始没有发现这个问题，试了 A 记录和
+CNAME 记录，结果一直不行，提示</p>
+<blockquote>
+<p>unavailable for your site because your domain is not properly
+configured to support https</p>
+</blockquote>
+<p>这不是恶心人吗？https
+打勾的框一直都是灰色的，无法勾选，受不了了，到网上去找相似的
+issue，还真给我找到了解决方法。</p>
+<h2 id="解决方案">解决方案</h2>
+<p>社区很多讨论中都说要检查下面的几步：</p>
+<blockquote>
+<p>Check SSL Certificate Installation: Make sure that your SSL
+certificate is properly installed for the domain. If you’re using a
+certificate provider, ensure that the certificate is correctly
+configured for your domain and is not expired.</p>
+<p>Verify DNS Settings: Confirm that your domain’s DNS settings point to
+the correct server where your site is hosted, and make sure the CNAME or
+A records are set up correctly. You should also make sure that any DNS
+propagation has fully completed. DNS changes can take some time (up to
+48 hours), so double-check that your records are pointing to the right
+place.</p>
+<p>Check Server Configuration: Ensure that your server is configured to
+accept HTTPS requests on port 443. Sometimes web servers require
+specific configuration changes to allow HTTPS traffic. For example, in
+Apache or Nginx, make sure the SSL configuration in your site’s server
+block or virtual host is correctly set.</p>
+<p>Redirect HTTP to HTTPS: Add HTTP to HTTPS redirects in your server
+configuration. This ensures that users who try to visit your site using
+HTTP will automatically be redirected to the secure HTTPS version of the
+site.</p>
+</blockquote>
+<p>但是经过我实测，如果你跟着一般教程走的话上面这些问题都不会碰到的，直到我看到下面这个讨论贴：<a href="https://github.com/orgs/community/discussions/23049">How to enable
+https support on custom domains
+#23049</a>，可以看到有很多回复，我一个个翻下去，还真有人提到了
+cloudflare proxy 的问题 <a href="https://github.com/orgs/community/discussions/23049#discussioncomment-3573123">“If
+you’re using Cloudflare you need to disable their proxy feature”</a></p>
+<p>确实啊，我还没试过关掉 cloudflare 的代理！直接切换到 cloudflare
+控制台，把代理关掉，配置如下图 <img src="/issue-resolve/49265/1-DNS.png" class="" title="DNS"> 然后我使用<a href="https://www.nslookup.io/">在线 DNS 检查网站</a>来查看我域名的
+DNS， <img src="/issue-resolve/49265/2-check.png" class="" title="check"> 这不就对味了吗！ 再把 github page
+在设置页静置一下，没想到过一会儿它自己就跑完了，也能勾选 https
+了，好耶！ <img src="/issue-resolve/49265/3-HTTPS.png" class="" title="https"></p>
+]]></content>
+      <categories>
+        <category>issue resolve</category>
+      </categories>
+      <tags>
+        <tag>domain configure</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>从零开始的神经网络学习 (一)：浅析神经网络</title>
     <url>/Machine-learning/36604.html</url>
     <content><![CDATA[<h2 id="神经网络的概念">神经网络的概念</h2>
 <p>想象一下，我们想教计算机识别图片中的猫，但是我们不能为它编写一套硬性的规则（“如果它有尖耳朵、胡须和毛茸茸的尾巴，那它就是一只猫”），因为现实世界中的猫品种各异，<del>而且猫娘也符合上面的规则</del>。</p>
 <p>神经网络采用了一种不同的方法：<strong>从样本中学习</strong>。就像我们通过看到真实的各种猫之后才知道这种动物叫 “猫” 一样，神经网络也会处理成千上万张标记好的图片（“这是猫”，“这不是猫”），并通过这种方法逐渐 “学会” 识别猫的视觉模式。</p>
-<p>从技术上讲，神经网络是一种受人脑结构启发的计算模型。它由许多简单的处理单元 —— <strong>神经元
+<p>从技术上讲，神经网络是一种受人脑结构启发的计算模型。它由许多简单的处理单元 ——<strong> 神经元
 (Neuron)</strong> 组成，这些神经元组织在不同的<strong>层
 (Layer)</strong> 中。</p>
 <p>一个经典的神经网络有三层：</p>
@@ -1117,7 +950,7 @@ w_{old} - \eta \frac{\partial C}{\partial w} $$</span> 其中
 <ul>
 <li><span class="math inline"><em>a</em><sup>[<em>l</em>]</sup></span>：第 <span class="math inline"><em>l</em></span> 层的输出（激活值）</li>
 <li><span class="math inline"><em>z</em><sup>[<em>l</em>]</sup></span>：第 <span class="math inline"><em>l</em></span> 层的加权和</li>
-<li><span class="math inline"><em> W</em><sup>[<em>l</em>]</sup></span>、<span class="math inline"><em>b</em><sup>[<em>l</em>]</sup></span>：第 <span class="math inline"><em>l</em></span> 层的权重和偏置</li>
+<li><span class="math inline"><em>W</em><sup>[<em>l</em>]</sup></span>、<span class="math inline"><em>b</em><sup>[<em>l</em>]</sup></span>：第 <span class="math inline"><em>l</em></span> 层的权重和偏置</li>
 </ul>
 <p>前向传播： <span class="math display">$$
 \begin{align}
@@ -1147,13 +980,13 @@ z^{[l]}}$</span>。其中，符号 <span class="math inline">⊙</span>
 \delta^{[l]} = \frac{\partial C}{\partial z^{[l]}} = \frac{\partial
 C}{\partial a^{[l]}} \odot f'(z^{[l]})
 $$</span></p></li>
-<li><p> 计算本层参数的梯度，这里的 <span class="math inline"><em>m</em></span> 是 batch size： <span class="math display">$$
+<li><p>计算本层参数的梯度，这里的 <span class="math inline"><em>m</em></span> 是 batch size： <span class="math display">$$
 \begin{align}
 \frac{\partial C}{\partial W^{[l]}} &amp;= \delta^{[l]} (a^{[l-1]})^T \\
 \frac{\partial C}{\partial b^{[l]}} &amp;= \sum_{i=1}^m \delta^{[l]}_i
 \end{align}
 $$</span></p></li>
-<li><p> 计算传递给前一层的 “责任”： <span class="math display">$$
+<li><p>计算传递给前一层的 “责任”： <span class="math display">$$
 \frac{\partial C}{\partial a^{[l-1]}} = (W^{[l]})^T \delta^{[l]}
 $$</span></p></li>
 </ol>
@@ -1168,43 +1001,43 @@ $$</span></p></li>
 <col style="width: 41%">
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;">公式符号</th>
 <th style="text-align: left;">代码变量名</th>
 <th style="text-align: left;">含义</th>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td style="text-align: left;"><span class="math inline"> $\frac{\partial
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">$\frac{\partial
 C}{\partial a^{[l]}}$</span></td>
 <td style="text-align: left;"><code>dC_da</code></td>
 <td style="text-align: left;">损失对本层激活的梯度 (来自 <span class="math inline"><em>l</em> + 1</span> 层)</td>
 </tr>
-<tr>
-<td style="text-align: left;"><span class="math inline"><em>f</em><sup>′</sup>(<em>z</em><sup>[<em>l</em>]</sup>)</span></td>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline"><em>f</em>′(<em>z</em><sup>[<em>l</em>]</sup>)</span></td>
 <td style="text-align: left;"><code>da_dz</code></td>
 <td style="text-align: left;">激活函数对加权和的导数</td>
 </tr>
-<tr>
-<td style="text-align: left;"><span class="math inline"><em> δ</em><sup>[<em>l</em>]</sup></span></td>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline"><em>δ</em><sup>[<em>l</em>]</sup></span></td>
 <td style="text-align: left;"><code>dC_dz</code></td>
 <td style="text-align: left;">损失对本层加权和的梯度</td>
 </tr>
-<tr>
-<td style="text-align: left;"><span class="math inline"> $\frac{\partial
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">$\frac{\partial
 C}{\partial W^{[l]}}$</span></td>
 <td style="text-align: left;"><code>dC_dw</code></td>
 <td style="text-align: left;">损失对本层权重的梯度</td>
 </tr>
-<tr>
-<td style="text-align: left;"><span class="math inline"> $\frac{\partial
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">$\frac{\partial
 C}{\partial b^{[l]}}$</span></td>
 <td style="text-align: left;"><code>dC_db</code></td>
 <td style="text-align: left;">损失对本层偏置的梯度</td>
 </tr>
-<tr>
-<td style="text-align: left;"><span class="math inline"> $\frac{\partial
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">$\frac{\partial
 C}{\partial a^{[l-1]}}$</span></td>
 <td style="text-align: left;"><code>dC_da_prev</code></td>
 <td style="text-align: left;">损失对前一层激活的梯度 (传递回 <span class="math inline"><em>l</em> − 1</span> 层)</td>
@@ -1241,6 +1074,173 @@ learning - DorsaRoh</a></li>
       </tags>
   </entry>
   <entry>
+    <title>uCore lab1 实验报告</title>
+    <url>/uCore/28113.html</url>
+    <content><![CDATA[<h2 id="本章任务">本章任务</h2>
+<h3 id="获取任务信息">获取任务信息</h3>
+<p>ch3
+中，我们的系统已经能够支持多个任务分时轮流运行，我们希望引入一个新的系统调用
+<code>sys_trace</code> （syscall ID:
+410）用来追踪当前任务系统调用的历史信息、并进行任务内存的读写。定义如下：</p>
+<figure class="highlight c"><table><tbody><tr><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">sys_trace</span><span class="params">(<span class="type">int</span> trace_request, <span class="type">unsigned</span> <span class="type">long</span> id, <span class="type">uint8_t</span> data)</span>;</span><br></pre></td></tr></tbody></table></figure>
+<ul>
+<li><p>syscall ID: 410</p></li>
+<li><p>调用规范：</p>
+<ul>
+<li>这个系统调用有三种功能，根据 trace_request
+的值不同，执行不同的操作：</li>
+<li>如果 trace_request 为 0，则 id 应被视作 uint8_t * ，表示读取当前任务
+id 地址处一个字节的无符号整数值。此时应忽略 data 参数。返回值为 id
+地址处的值。</li>
+<li>如果 trace_request 为 1，则 id 应被视作 uint8_t * ，表示写入 data
+（作为 uint8_t，即只考虑最低位的一个字节）到该用户程序 id
+地址处。返回值应为 0。</li>
+<li>如果 trace_request 为 2，表示查询当前任务调用编号为 id
+的系统调用的次数，返回值为这个调用次数。本次调用也计入统计 。</li>
+<li>否则，忽略其他参数，返回值为 -1。</li>
+</ul></li>
+<li><p>说明：</p>
+<ul>
+<li>uint8_t
+是 C 语言中的标准类型，表示一个无符号的 8 位整数。在代码中你可能需要使用
+uint8 替代。</li>
+<li>你可能会注意到，这个调用的读写并不安全，使用不当可能导致崩溃。这是因为在下一章节实现地址空间之前，系统中缺乏隔离机制。所以我们
+不要求你实现安全检查机制，只需通过测试用例即可。</li>
+<li>你还可能注意到，这个系统调用读写本任务内存的功能并不是很有用。这是因为作业的灵感来源
+syscall 主要依靠 trace
+功能追踪其他任务的信息，但在本章节我们还没有进程、线程等概念，所以简化了操作，只要求追踪自身的信息。</li>
+</ul></li>
+</ul>
+<h3 id="完成任务">完成任务</h3>
+<p>下面是我对代码的修改，导出提交：</p>
+<figure class="highlight patch"><table><tbody><tr><td class="code"><pre><span class="line">From b1836f667109436153481ae6f338a6a50a19e232 Mon Sep 17 00:00:00 2001</span><br><span class="line">From: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line">Date: Wed, 23 Jul 2025 22:57:41 +0800</span><br><span class="line">Subject: [PATCH] chapter3 practice</span><br><span class="line"></span><br><span class="line">Signed-off-by: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line"><span class="comment">---</span></span><br><span class="line"> os/loader.c      |  1 +</span><br><span class="line"> os/proc.c        |  1 +</span><br><span class="line"> os/proc.h        |  1 +</span><br><span class="line"> os/syscall.c     | 22 ++++++++++++++++++++++</span><br><span class="line"> os/syscall_ids.h |  1 +</span><br><span class="line"> 5 files changed, 26 insertions(+)</span><br><span class="line"></span><br><span class="line"><span class="comment">diff --git a/os/loader.c b/os/loader.c</span></span><br><span class="line"><span class="comment">index be9f10a..72b49ed 100644</span></span><br><span class="line"><span class="comment">--- a/os/loader.c</span></span><br><span class="line"><span class="comment">+++ b/os/loader.c</span></span><br><span class="line"><span class="meta">@@ -51,6 +51,7 @@</span> int run_all_app()</span><br><span class="line"> 		/*</span><br><span class="line"> 		* LAB1: you may need to initialize your new fields of proc here</span><br><span class="line"> 		*/</span><br><span class="line"><span class="addition">+		memset(p-&gt;syscall_cnt, 0, sizeof(p-&gt;syscall_cnt));</span></span><br><span class="line"> 	}</span><br><span class="line"> 	return 0;</span><br><span class="line"> }</span><br><span class="line">\ No newline at end of file</span><br><span class="line"><span class="comment">diff --git a/os/proc.c b/os/proc.c</span></span><br><span class="line"><span class="comment">index 84240a8..c98b49e 100644</span></span><br><span class="line"><span class="comment">--- a/os/proc.c</span></span><br><span class="line"><span class="comment">+++ b/os/proc.c</span></span><br><span class="line"><span class="meta">@@ -34,6 +34,7 @@</span> void proc_init(void)</span><br><span class="line"> 		/*</span><br><span class="line"> 		* LAB1: you may need to initialize your new fields of proc here</span><br><span class="line"> 		*/</span><br><span class="line"><span class="addition">+		memset(p-&gt;syscall_cnt, 0, sizeof(p-&gt;syscall_cnt));</span></span><br><span class="line"> 	}</span><br><span class="line"> 	idle.kstack = (uint64)boot_stack_top;</span><br><span class="line"> 	idle.pid = 0;</span><br><span class="line"><span class="comment">diff --git a/os/proc.h b/os/proc.h</span></span><br><span class="line"><span class="comment">index f27369a..74cfe1c 100644</span></span><br><span class="line"><span class="comment">--- a/os/proc.h</span></span><br><span class="line"><span class="comment">+++ b/os/proc.h</span></span><br><span class="line"><span class="meta">@@ -38,6 +38,7 @@</span> struct proc {</span><br><span class="line"> 	/*</span><br><span class="line"> 	* LAB1: you may need to add some new fields here</span><br><span class="line"> 	*/</span><br><span class="line"><span class="addition">+	int syscall_cnt[512];</span></span><br><span class="line"> };</span><br><span class="line"> </span><br><span class="line"> struct proc *curr_proc();</span><br><span class="line"><span class="comment">diff --git a/os/syscall.c b/os/syscall.c</span></span><br><span class="line"><span class="comment">index 3225031..50b0035 100644</span></span><br><span class="line"><span class="comment">--- a/os/syscall.c</span></span><br><span class="line"><span class="comment">+++ b/os/syscall.c</span></span><br><span class="line"><span class="meta">@@ -39,6 +39,22 @@</span> uint64 sys_gettimeofday(TimeVal *val, int _tz)</span><br><span class="line"> /*</span><br><span class="line"> * LAB1: you may need to define sys_trace here</span><br><span class="line"> */</span><br><span class="line"><span class="addition">+int sys_trace(int trace_request, unsigned long id, uint8 data)</span></span><br><span class="line"><span class="addition">+{</span></span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	switch (trace_request) {</span></span><br><span class="line"><span class="addition">+	case 0:</span></span><br><span class="line"><span class="addition">+		return *(uint8 *)id;</span></span><br><span class="line"><span class="addition">+	case 1:</span></span><br><span class="line"><span class="addition">+		*(uint8 *)id = data;</span></span><br><span class="line"><span class="addition">+		return 0;</span></span><br><span class="line"><span class="addition">+	case 2:</span></span><br><span class="line"><span class="addition">+		return (id &lt; 512) ? p-&gt;syscall_cnt[id] : -1;</span></span><br><span class="line"><span class="addition">+	default:</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+}</span></span><br><span class="line"> </span><br><span class="line"> extern char trap_page[];</span><br><span class="line"> </span><br><span class="line"><span class="meta">@@ -53,6 +69,9 @@</span> void syscall()</span><br><span class="line"> 	/*</span><br><span class="line"> 	* LAB1: you may need to update syscall counter here</span><br><span class="line"> 	*/</span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+	(id &lt; 512) ? p-&gt;syscall_cnt[id]++ : 0;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"> 	switch (id) {</span><br><span class="line"> 	case SYS_write:</span><br><span class="line"> 		ret = sys_write(args[0], (char *)args[1], args[2]);</span><br><span class="line"><span class="meta">@@ -69,6 +88,9 @@</span> void syscall()</span><br><span class="line"> 	/*</span><br><span class="line"> 	* LAB1: you may need to add SYS_trace case here</span><br><span class="line"> 	*/</span><br><span class="line"><span class="addition">+	case SYS_trace:</span></span><br><span class="line"><span class="addition">+		ret = sys_trace(args[0], args[1], args[2]);</span></span><br><span class="line"><span class="addition">+		break;</span></span><br><span class="line"> 	default:</span><br><span class="line"> 		ret = -1;</span><br><span class="line"> 		errorf("unknown syscall %d", id);</span><br><span class="line"><span class="comment">diff --git a/os/syscall_ids.h b/os/syscall_ids.h</span></span><br><span class="line"><span class="comment">index e6fac51..06d8c00 100644</span></span><br><span class="line"><span class="comment">--- a/os/syscall_ids.h</span></span><br><span class="line"><span class="comment">+++ b/os/syscall_ids.h</span></span><br><span class="line"><span class="meta">@@ -280,6 +280,7 @@</span></span><br><span class="line"> /*</span><br><span class="line"> * LAB1: you may need to define SYS_trace here</span><br><span class="line"> */</span><br><span class="line"><span class="addition">+#define SYS_trace 410</span></span><br><span class="line"> #define SYS_pidfd_send_signal 424</span><br><span class="line"> #define SYS_io_uring_setup 425</span><br><span class="line"> #define SYS_io_uring_enter 426</span><br><span class="line"><span class="deletion">-- </span></span><br><span class="line">2.25.1</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>然后 <code>make test</code> 检查即可</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">[rustsbi] RustSBI version 0.3.0-alpha.2, adapting to RISC-V SBI v1.0.0</span><br><span class="line">.______       __    __      _______.___________.  _______..______   __</span><br><span class="line">|   _  \     |  |  |  |    /       |           | /       ||   _  \ |  |</span><br><span class="line">|  |_)  |    |  |  |  |   |   (----`---|  |----`|   (----`|  |_)  ||  |</span><br><span class="line">|      /     |  |  |  |    \   \       |  |      \   \    |   _  &lt; |  |</span><br><span class="line">|  |\  \----.|  `--'  |.----)   |      |  |  .----)   |   |  |_)  ||  |</span><br><span class="line">| _| `._____| \______/ |_______/       |__|  |_______/    |______/ |__|</span><br><span class="line">[rustsbi] Implementation     : RustSBI-QEMU Version 0.2.0-alpha.2</span><br><span class="line">[rustsbi] Platform Name      : riscv-virtio,qemu</span><br><span class="line">[rustsbi] Platform SMP       : 1</span><br><span class="line">[rustsbi] Platform Memory    : 0x80000000..0x88000000</span><br><span class="line">[rustsbi] Boot HART          : 0</span><br><span class="line">[rustsbi] Device Tree Region : 0x87000000..0x87000ef2</span><br><span class="line">[rustsbi] Firmware Address   : 0x80000000</span><br><span class="line">[rustsbi] Supervisor Address : 0x80200000</span><br><span class="line">[rustsbi] pmp01: 0x00000000..0x80000000 (-wr)</span><br><span class="line">[rustsbi] pmp02: 0x80000000..0x80200000 (---)</span><br><span class="line">[rustsbi] pmp03: 0x80200000..0x88000000 (xwr)</span><br><span class="line">[rustsbi] pmp04: 0x88000000..0x00000000 (-wr)</span><br><span class="line">Hello world from user mode program!</span><br><span class="line">Test hello_world OK!</span><br><span class="line">3^10000=5079</span><br><span class="line">3^20000=8202</span><br><span class="line">3^30000=8824</span><br><span class="line">3^40000=5750</span><br><span class="line">3^50000=3824</span><br><span class="line">3^60000=8516</span><br><span class="line">3^70000=2510</span><br><span class="line">3^80000=9379</span><br><span class="line">3^90000=2621</span><br><span class="line">3^100000=2749</span><br><span class="line">Test power OK!</span><br><span class="line">get_time OK! 11</span><br><span class="line">current time_msec = 11</span><br><span class="line">AAAAAAAAAA [1/5]</span><br><span class="line">CCCCCCCCCC [1/5]</span><br><span class="line">BBBBBBBBBB [1/5]</span><br><span class="line">AAAAAAAAAA [2/5]</span><br><span class="line">CCCCCCCCCC [2/5]</span><br><span class="line">BBBBBBBBBB [2/5]</span><br><span class="line">AAAAAAAAAA [3/5]</span><br><span class="line">CCCCCCCCCC [3/5]</span><br><span class="line">BBBBBBBBBB [3/5]</span><br><span class="line">AAAAAAAAAA [4/5]</span><br><span class="line">CCCCCCCCCC [4/5]</span><br><span class="line">BBBBBBBBBB [4/5]</span><br><span class="line">AAAAAAAAAA [5/5]</span><br><span class="line">CCCCCCCCCC [5/5]</span><br><span class="line">BBBBBBBBBB [5/5]</span><br><span class="line">Test write A OK!</span><br><span class="line">Test write C OK!</span><br><span class="line">Test write B OK!</span><br><span class="line">time_msec = 112 after sleeping 100 ticks, delta = 101ms!</span><br><span class="line">Test sleep1 passed!</span><br><span class="line">string from task trace test</span><br><span class="line">Test trace OK!</span><br><span class="line">Test sleep OK!</span><br><span class="line">[PANIC 5] os/loader.c:14: all apps over</span><br></pre></td></tr></tbody></table></figure>
+<p>可以看到 <code>Test trace OK!</code>，修改成功通过了测试。</p>
+<h2 id="问答作业">问答作业</h2>
+<ol type="1">
+<li><p>正确进入 U 态后，程序的特征还应有：使用 S 态特权指令，访问 S
+态寄存器后会报错。请同学们可以自行测试这些内容（参考
+前三个测例，描述程序出错行为，同时注意注明你使用的 sbi
+及其版本。</p></li>
+<li><p>请结合用例理解 trampoline.S 中两个函数 <code>userret</code> 和
+<code>uservec</code> 的作用，并回答如下几个问题:</p>
+<ol type="1">
+<li><p>L79: 刚进入 <code>userret</code>
+时，<code>a0</code>、<code>a1</code> 分别代表了什么值。</p></li>
+<li><p>L87-L88: <code>sfence</code>
+指令有何作用？为什么要执行该指令，当前章节中，删掉该指令会导致错误吗？</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">csrw satp, a1</span><br><span class="line">sfence.vma zero, zero</span><br></pre></td></tr></tbody></table></figure><p></p></li>
+<li><p>L96-L125: 为何注释中说要除去 a0？哪一个地址代表 a0？现在 a0
+的值存在何处？</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line"># restore all but a0 from TRAPFRAME</span><br><span class="line">ld ra, 40(a0)</span><br><span class="line">ld sp, 48(a0)</span><br><span class="line">ld t5, 272(a0)</span><br><span class="line">ld t6, 280(a0)</span><br></pre></td></tr></tbody></table></figure><p></p></li>
+<li><p><code>userret</code>：中发生状态切换在哪一条指令？为何执行之后会进入用户态？</p></li>
+<li><p>L29： 执行之后，<code>a0</code> 和 <code>sscratch</code>
+中各是什么值，为什么？</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">csrrw a0, sscratch, a0</span><br></pre></td></tr></tbody></table></figure><p></p></li>
+<li><p>L32-L61: 从 trapframe
+第几项开始保存？为什么？是否从该项开始保存了所有的值，如果不是，为什么？</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">sd ra, 40(a0)</span><br><span class="line">sd sp, 48(a0)</span><br><span class="line">...</span><br><span class="line">sd t5, 272(a0)</span><br><span class="line">sd t6, 280(a0)</span><br></pre></td></tr></tbody></table></figure><p></p></li>
+<li><p>进入 S 态是哪一条指令发生的？</p></li>
+<li><p>L75-L76: <code>ld t0, 16(a0)</code>
+执行之后，<code>t0</code>中的值是什么，解释该值的由来？</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">ld t0, 16(a0)</span><br><span class="line">jr t0</span><br></pre></td></tr></tbody></table></figure><p></p></li>
+</ol></li>
+</ol>
+<h2 id="问答作业解答">问答作业解答</h2>
+<ol type="1">
+<li><p>正确进入 U 态后，程序的特征还应有：使用 S 态特权指令，访问 S
+态寄存器后会报错。请同学们可以自行测试这些内容（参考前三个测例
+，描述程序出错行为，同时注意注明你使用的 sbi 及其版本。</p>
+<p>执行 <code>make test CHAPTER=2_bad</code> 后如下：</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">[rustsbi] RustSBI version 0.3.0-alpha.2, adapting to RISC-V SBI v1.0.0</span><br><span class="line">.______       __    __      _______.___________.  _______..______   __</span><br><span class="line">|   _  \     |  |  |  |    /       |           | /       ||   _  \ |  |</span><br><span class="line">|  |_)  |    |  |  |  |   |   (----`---|  |----`|   (----`|  |_)  ||  |</span><br><span class="line">|      /     |  |  |  |    \   \       |  |      \   \    |   _  &lt; |  |</span><br><span class="line">|  |\  \----.|  `--'  |.----)   |      |  |  .----)   |   |  |_)  ||  |</span><br><span class="line">| _| `._____| \______/ |_______/       |__|  |_______/    |______/ |__|</span><br><span class="line">[rustsbi] Implementation     : RustSBI-QEMU Version 0.2.0-alpha.2</span><br><span class="line">[rustsbi] Platform Name      : riscv-virtio,qemu</span><br><span class="line">[rustsbi] Platform SMP       : 1</span><br><span class="line">[rustsbi] Platform Memory    : 0x80000000..0x88000000</span><br><span class="line">[rustsbi] Boot HART          : 0</span><br><span class="line">[rustsbi] Device Tree Region : 0x87000000..0x87000ef2</span><br><span class="line">[rustsbi] Firmware Address   : 0x80000000</span><br><span class="line">[rustsbi] Supervisor Address : 0x80200000</span><br><span class="line">[rustsbi] pmp01: 0x00000000..0x80000000 (-wr)</span><br><span class="line">[rustsbi] pmp02: 0x80000000..0x80200000 (---)</span><br><span class="line">[rustsbi] pmp03: 0x80200000..0x88000000 (xwr)</span><br><span class="line">[rustsbi] pmp04: 0x88000000..0x00000000 (-wr)</span><br><span class="line">hello wrold!</span><br><span class="line">[ERROR 0]unknown trap: 0x0000000000000007, stval = 0x0000000000000000 sepc = 0x0000000080400004</span><br><span class="line">[ERROR 0]IllegalInstruction in application, epc = 0x0000000080400004, core dumped.</span><br><span class="line">[ERROR 0]IllegalInstruction in application, epc = 0x0000000080400004, core dumped.</span><br><span class="line">ALL DONE</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p>可以看到项目使用 RustSBI，版本为 0.3.0-alpha.2。</p>
+<p>别忘记 <code>trap</code> 类异常：</p>
+<p></p><figure class="highlight c"><table><tbody><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">Exception</span> {</span></span><br><span class="line">  InstructionMisaligned = <span class="number">0</span>,</span><br><span class="line">  InstructionAccessFault = <span class="number">1</span>,</span><br><span class="line">  IllegalInstruction = <span class="number">2</span>,</span><br><span class="line">  Breakpoint = <span class="number">3</span>,</span><br><span class="line">  LoadMisaligned = <span class="number">4</span>,</span><br><span class="line">  LoadAccessFault = <span class="number">5</span>,</span><br><span class="line">  StoreMisaligned = <span class="number">6</span>,</span><br><span class="line">  StoreAccessFault = <span class="number">7</span>,</span><br><span class="line">  UserEnvCall = <span class="number">8</span>,</span><br><span class="line">  SupervisorEnvCall = <span class="number">9</span>,</span><br><span class="line">  MachineEnvCall = <span class="number">11</span>,</span><br><span class="line">  InstructionPageFault = <span class="number">12</span>,</span><br><span class="line">  LoadPageFault = <span class="number">13</span>,</span><br><span class="line">  StorePageFault = <span class="number">15</span>,</span><br><span class="line">};</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p>三个测例如下：</p>
+<p></p><figure class="highlight c"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment">// __ch2_bad_address.c</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">{</span><br><span class="line">  <span class="type">int</span> *p = (<span class="type">int</span> *)<span class="number">0</span>;</span><br><span class="line">  *p = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p>这是一个空指针解引用的测例，U 态程序尝试访问 S 态，显然运行会触发
+<code>Store/AMO access fault</code> 异常，所以我们可以看到
+<code>unknown trap: 0x0000000000000007</code>。</p>
+<p></p><figure class="highlight c"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment">// __ch2_bad_instruction.c</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">{</span><br><span class="line">  <span class="keyword">asm</span> <span class="title function_">volatile</span><span class="params">(<span class="string">"sret"</span>)</span>;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p>这是一个使用 S 态特权指令的测例，因为 U 态不能执行 S
+态特权指令，所以会触发 <code>Illegal instruction</code> 异常。</p>
+<p></p><figure class="highlight c"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment">// __ch2_bad_register.c</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">{</span><br><span class="line">  uint64 x;</span><br><span class="line">  <span class="keyword">asm</span> <span class="title function_">volatile</span><span class="params">(<span class="string">"csrr %0, sstatus"</span> : <span class="string">"=r"</span>(x))</span>;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p>这是一个访问 S 态寄存器的测例，同样地，U 态不能访问 S 态 CSR
+寄存器，所以会触发 <code>Illegal instruction</code> 异常。</p>
+<p>通过上面的测试可以看到，成功输出了
+<code>hello wrold!</code>，即用户态程序可以正常运行，且 RustSBI
+正常工作，但存在对 U 态的特权级别限制，所以这几个测例会报错。</p></li>
+<li><p>请结合用例理解 trampoline.S 中两个函数 <code>userret</code> 和
+<code>uservec</code> 的作用，并回答如下几个问题:</p>
+<ol type="1">
+<li><p>L79: 刚进入 <code>userret</code>
+时，<code>a0</code>、<code>a1</code> 分别代表了什么值。</p>
+<p>从注释中可以看到 </p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">userret:</span><br><span class="line">    # userret(TRAPFRAME, pagetable)</span><br><span class="line">    # switch from kernel to user.</span><br><span class="line">    # usertrapret() calls here.</span><br><span class="line">    # a0: TRAPFRAME, in user page table.</span><br><span class="line">    # a1: user page table, for satp.</span><br></pre></td></tr></tbody></table></figure> 所以 <code>a0</code> 指向 TRAPFRAME
+的地址；<code>a1</code> 是用户页表的物理地址，将被设置为寄存器
+<code>satp</code> 的值。<p></p></li>
+<li><p>L87-L88: <code>sfence</code>
+指令有何作用？为什么要执行该指令，当前章节中，删掉该指令会导致错误吗？</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">csrw satp, a1</span><br><span class="line">sfence.vma zero, zero</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p>刷新 TLB。当修改 <code>satp</code> 寄存器切换页表时，TLB
+中可能还缓存着旧页表的地址转换，必须刷新 TLB
+确保后续的地址转换使用新页表。当前章节中删去不会出错，这里还不涉及用户页表切换。</p></li>
+<li><p>L96-L125: 为何注释中说要除去 <code>a0</code>？哪一个地址代表
+<code>a0</code>？现在 <code>a0</code> 的值存在何处？</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line"># restore all but a0 from TRAPFRAME</span><br><span class="line">ld ra, 40(a0)</span><br><span class="line">ld sp, 48(a0)</span><br><span class="line">...</span><br><span class="line">ld t5, 272(a0)</span><br><span class="line">ld t6, 280(a0)</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p>当前 <code>a0</code> 存储的是 TRAPFRAME
+的地址，需要用它访问保存的寄存器值，如果现在恢复
+<code>a0</code>，就无法继续访问 TRAPFRAME 了。<code>a0</code>
+的原始值保存在 <code>112(a0)</code> 位置，也就是 TRAPFRAME 中的
+<code>a0</code> 字段。在恢复过程中会先被加载到 <code>sscratch</code>
+寄存器，最后通过 L128：<code>csrrw a0, sscratch, a0</code> 指令完成
+<code>a0</code> 的恢复。</p></li>
+<li><p><code>userret</code>：中发生状态切换在哪一条指令？为何执行之后会进入用户态？</p>
+<p><code>sret</code>。<code>sret</code> 指令会根据 <code>sstatus</code>
+寄存器的 <code>SPP</code> 位决定返回的特权级，在
+<code>usertrapret()</code> 中，<code>x &amp;= ~SSTATUS_SPP;</code>
+已经设置了 <code>sstatus.SPP = 0</code>，表示返回用户态。</p></li>
+<li><p>L29： 执行之后，<code>a0</code> 和 <code>sscratch</code>
+中各是什么值，为什么？</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">csrrw a0, sscratch, a0</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p><code>csrrw</code> 是原子交换指令，同时读取和写入 <code>CSR</code>
+寄存器，所以 <code>a0</code> 是 TRAPFRAME 的地址，<code>sscratch</code>
+中是用户程序的原始 <code>a0</code> 值。</p></li>
+<li><p>L32-L61: 从 trapframe
+第几项开始保存？为什么？是否从该项开始保存了所有的值，如果不是，为什么？</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">sd ra, 40(a0)</span><br><span class="line">sd sp, 48(a0)</span><br><span class="line">...</span><br><span class="line">sd t5, 272(a0)</span><br><span class="line">sd t6, 280(a0)</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p>从 <code>ra</code> 开始保存，<code>ra</code> 的偏移量为 40，<span class="math inline">40 ÷ 8 = 5</span>，所以从 <code>trapframe</code>
+第六项开始保存。并没有保存所有的值，<code>a0</code> 没有保存，因为此时
+<code>a0</code> 指向 <code>trapframe</code>，其原始值通过
+<code>csrrw a0, sscratch, a0</code> 保存在 <code>sscratch</code>
+中，后续在 <code>trapframe</code> 偏移量 112 处，也就是
+<code>trapframe</code> 中的 <code>a0</code> 字段保存。</p></li>
+<li><p>进入 S 态是哪一条指令发生的？</p>
+<p>用户程序中的 <code>ecall</code>。</p></li>
+<li><p>L75-L76: <code>ld t0, 16(a0)</code>
+执行之后，<code>t0</code>中的值是什么，解释该值的由来？</p>
+<p></p><figure class="highlight plaintext"><table><tbody><tr><td class="code"><pre><span class="line">ld t0, 16(a0)</span><br><span class="line">jr t0</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p></p><figure class="highlight c"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment">// os/trap.c</span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">usertrapret</span><span class="params">(<span class="keyword">struct</span> trapframe *trapframe, uint64 kstack)</span></span><br><span class="line">{</span><br><span class="line">  trapframe-&gt;kernel_satp = r_satp(); <span class="comment">// kernel page table</span></span><br><span class="line">  trapframe-&gt;kernel_sp = kstack + PGSIZE; <span class="comment">// process's kernel stack</span></span><br><span class="line">  trapframe-&gt;kernel_trap = (uint64)usertrap;</span><br><span class="line">  trapframe-&gt;kernel_hartid = r_tp(); <span class="comment">// hartid for cpuid()</span></span><br><span class="line"></span><br><span class="line">  w_sepc(trapframe-&gt;epc);</span><br><span class="line">  <span class="comment">// set up the registers that trampoline.S's sret will use</span></span><br><span class="line">  <span class="comment">// to get to user space.</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// set S Previous Privilege mode to User.</span></span><br><span class="line">  uint64 x = r_sstatus();</span><br><span class="line">  x &amp;= ~SSTATUS_SPP; <span class="comment">// clear SPP to 0 for user mode</span></span><br><span class="line">  x |= SSTATUS_SPIE; <span class="comment">// enable interrupts in user mode</span></span><br><span class="line">  w_sstatus(x);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// tell trampoline.S the user page table to switch to.</span></span><br><span class="line">  <span class="comment">// uint64 satp = MAKE_SATP(p-&gt;pagetable);</span></span><br><span class="line">  userret((uint64)trapframe);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p>可以看到
+<code>trapframe-&gt;kernel_trap = (uint64)usertrap;</code>，所以
+<code>t0</code> 中的值是 <code>usertrap</code>
+函数的地址。当系统调用完成准备返回用户态时，<code>usertrapret()</code>
+函数会被调用，<code>trapframe-&gt;kernel_trap = (uint64)usertrap;</code>
+将 <code>usertrap</code> 函数地址存储在 <code>trapframe</code> 的偏移量
+16 处，于是下次用户态发生 <code>trap</code> 时，<code>uservec</code>
+就能正确跳转到<code>usertrap</code> 函数。</p></li>
+</ol></li>
+</ol>
+]]></content>
+      <categories>
+        <category>uCore</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>riscv</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>从零开始的神经网络学习 (二)：实用技巧与进阶</title>
     <url>/Machine-learning/38196.html</url>
     <content><![CDATA[<p>在<a href="https://0wnerdied.github.io/Machine-learning/36604.html">上一篇文章</a>中，我们从零开始构建了一个简单的神经网络，并理解了前向传播、反向传播和梯度下降等核心概念。然而，要让神经网络在现实世界的问题中高效工作，我们还需要掌握更多的工具和技巧。</p>
@@ -1260,29 +1260,29 @@ Dropout 等强大的技术。</li>
 <p>XOR 的真值表如下：</p>
 <table>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: center;">输入 A</th>
-<th style="text-align: center;"> 输入 B</th>
-<th style="text-align: center;"> 输出</th>
+<th style="text-align: center;">输入 B</th>
+<th style="text-align: center;">输出</th>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td style="text-align: center;"> 0</td>
+<tr class="odd">
+<td style="text-align: center;">0</td>
 <td style="text-align: center;">0</td>
 <td style="text-align: center;">0</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: center;">0</td>
 <td style="text-align: center;">1</td>
 <td style="text-align: center;">1</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: center;">1</td>
 <td style="text-align: center;">0</td>
 <td style="text-align: center;">1</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: center;">1</td>
 <td style="text-align: center;">1</td>
 <td style="text-align: center;">0</td>
@@ -1363,7 +1363,7 @@ ReLU。虽然它非常流行且有效，但了解其他激活函数以及如何�
 激活函数配合使用。</p></li>
 <li><p><strong>He 初始化</strong>: 专为 ReLU
 及其变体设计，是现代深度网络中的首选。</p></li>
-<li><p><strong>Xavier/He 初始化示例</strong>: </p><figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"><span class="comment"># Xavier 初始化 (适合Sigmoid/Tanh)</span></span><br><span class="line">fan_in, fan_out = <span class="number">64</span>, <span class="number">32</span></span><br><span class="line">xavier = np.random.randn(fan_in, fan_out) * np.sqrt(<span class="number">1.0</span> / fan_in)</span><br><span class="line"><span class="comment"># He 初始化 (适合ReLU)</span></span><br><span class="line">he = np.random.randn(fan_in, fan_out) * np.sqrt(<span class="number">2.0</span> / fan_in)</span><br></pre></td></tr></tbody></table></figure><p></p></li>
+<li><p><strong>Xavier / He 初始化示例</strong>: </p><figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"><span class="comment"># Xavier 初始化 (适合Sigmoid/Tanh)</span></span><br><span class="line">fan_in, fan_out = <span class="number">64</span>, <span class="number">32</span></span><br><span class="line">xavier = np.random.randn(fan_in, fan_out) * np.sqrt(<span class="number">1.0</span> / fan_in)</span><br><span class="line"><span class="comment"># He 初始化 (适合ReLU)</span></span><br><span class="line">he = np.random.randn(fan_in, fan_out) * np.sqrt(<span class="number">2.0</span> / fan_in)</span><br></pre></td></tr></tbody></table></figure><p></p></li>
 </ul>
 <h3 id="批量归一化-batch-normalization">批量归一化 (Batch
 Normalization)</h3>
@@ -1395,7 +1395,7 @@ BCE）</strong>，而不是均方误差（MSE）。</p>
 <li><p><strong>BCE 导数</strong>： <span class="math display">$$
 \frac{\partial L}{\partial p} = -\frac{y}{p} + \frac{1-y}{1-p}
 $$</span></p></li>
-<li><p><strong> 区别</strong>：</p>
+<li><p><strong>区别</strong>：</p>
 <ul>
 <li>MSE 在 sigmoid 饱和区间梯度更容易消失，收敛慢。</li>
 <li>BCE 更适合概率输出，收敛快。</li>
@@ -1451,7 +1451,7 @@ Rate Decay)</strong>，即在训练过程中逐渐降低学习率。</li>
 <ul>
 <li>Neuron 支持 tanh、sigmoid、relu 三种激活函数。</li>
 <li>隐藏层用 tanh，输出层用 sigmoid。</li>
-<li>权重初始化方式根据激活函数自动选择（tanh/sigmoid 用 Xavier，relu 用
+<li>权重初始化方式根据激活函数自动选择（tanh / sigmoid 用 Xavier，relu 用
 He）。</li>
 <li>训练和预测流程自动适配。</li>
 </ul>
@@ -1459,7 +1459,7 @@ He）。</li>
 <figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Neuron</span>:</span><br><span class="line">    <span class="string">"""</span></span><br><span class="line"><span class="string">    单个神经元。支持多种激活函数。</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, num_inputs, activation=<span class="string">"relu"</span></span>):</span><br><span class="line">        <span class="variable language_">self</span>.activation_name = activation</span><br><span class="line">        <span class="comment"># 根据激活函数选择初始化方式</span></span><br><span class="line">        <span class="keyword">if</span> activation == <span class="string">"relu"</span>:</span><br><span class="line">            <span class="variable language_">self</span>.weights = np.random.randn(num_inputs, <span class="number">1</span>) * np.sqrt(<span class="number">2.0</span> / num_inputs)</span><br><span class="line">        <span class="keyword">elif</span> activation <span class="keyword">in</span> (<span class="string">"tanh"</span>, <span class="string">"sigmoid"</span>):</span><br><span class="line">            <span class="variable language_">self</span>.weights = np.random.randn(num_inputs, <span class="number">1</span>) * np.sqrt(<span class="number">1.0</span> / num_inputs)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">raise</span> ValueError(<span class="string">f"不支持的激活函数: <span class="subst">{activation}</span>"</span>)</span><br><span class="line">        <span class="variable language_">self</span>.bias = np.zeros((<span class="number">1</span>, <span class="number">1</span>))</span><br><span class="line">        <span class="variable language_">self</span>.last_input = <span class="literal">None</span></span><br><span class="line">        <span class="variable language_">self</span>.last_z = <span class="literal">None</span></span><br><span class="line">        <span class="variable language_">self</span>.last_a = <span class="literal">None</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">relu</span>(<span class="params">self, z</span>):</span><br><span class="line">        <span class="string">"""ReLU 激活函数"""</span></span><br><span class="line">        <span class="keyword">return</span> np.maximum(<span class="number">0</span>, z)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">relu_derivative</span>(<span class="params">self, z</span>):</span><br><span class="line">        <span class="string">"""ReLU 激活函数的导数"""</span></span><br><span class="line">        <span class="keyword">return</span> np.where(z &gt; <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">tanh</span>(<span class="params">self, z</span>):</span><br><span class="line">        <span class="string">"""Tanh 激活函数"""</span></span><br><span class="line">        <span class="keyword">return</span> np.tanh(z)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">tanh_derivative</span>(<span class="params">self, z</span>):</span><br><span class="line">        <span class="string">"""Tanh 激活函数的导数"""</span></span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span> - np.tanh(z) ** <span class="number">2</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">sigmoid</span>(<span class="params">self, z</span>):</span><br><span class="line">        <span class="string">"""Sigmoid 激活函数"""</span></span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span> / (<span class="number">1</span> + np.exp(-z))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">sigmoid_derivative</span>(<span class="params">self, z</span>):</span><br><span class="line">        <span class="string">"""Sigmoid 激活函数的导数"""</span></span><br><span class="line">        s = <span class="variable language_">self</span>.sigmoid(z)</span><br><span class="line">        <span class="keyword">return</span> s * (<span class="number">1</span> - s)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, activations</span>):</span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">        执行前向传播：z = a * w + b, a_out = 激活函数(z)</span></span><br><span class="line"><span class="string">        """</span></span><br><span class="line">        <span class="variable language_">self</span>.last_input = activations</span><br><span class="line">        <span class="comment"># 计算加权和 z</span></span><br><span class="line">        z = activations @ <span class="variable language_">self</span>.weights + <span class="variable language_">self</span>.bias</span><br><span class="line">        <span class="variable language_">self</span>.last_z = z</span><br><span class="line">        <span class="comment"># 应用激活函数</span></span><br><span class="line">        <span class="keyword">if</span> <span class="variable language_">self</span>.activation_name == <span class="string">"relu"</span>:</span><br><span class="line">            a = <span class="variable language_">self</span>.relu(z)</span><br><span class="line">        <span class="keyword">elif</span> <span class="variable language_">self</span>.activation_name == <span class="string">"tanh"</span>:</span><br><span class="line">            a = <span class="variable language_">self</span>.tanh(z)</span><br><span class="line">        <span class="keyword">elif</span> <span class="variable language_">self</span>.activation_name == <span class="string">"sigmoid"</span>:</span><br><span class="line">            a = <span class="variable language_">self</span>.sigmoid(z)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">raise</span> ValueError(<span class="string">f"不支持的激活函数: <span class="subst">{self.activation_name}</span>"</span>)</span><br><span class="line">        <span class="variable language_">self</span>.last_a = a</span><br><span class="line">        <span class="keyword">return</span> a</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">backward</span>(<span class="params">self, dC_da, learning_rate</span>):</span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">        执行反向传播，计算并应用梯度。</span></span><br><span class="line"><span class="string">        dC_da: 损失函数对本神经元输出 a 的梯度 (从下一层传来)</span></span><br><span class="line"><span class="string">        """</span></span><br><span class="line">        <span class="comment"># 1. 计算 da/dz (激活函数对z的梯度)</span></span><br><span class="line">        <span class="keyword">if</span> <span class="variable language_">self</span>.activation_name == <span class="string">"relu"</span>:</span><br><span class="line">            da_dz = <span class="variable language_">self</span>.relu_derivative(<span class="variable language_">self</span>.last_z)</span><br><span class="line">        <span class="keyword">elif</span> <span class="variable language_">self</span>.activation_name == <span class="string">"tanh"</span>:</span><br><span class="line">            da_dz = <span class="variable language_">self</span>.tanh_derivative(<span class="variable language_">self</span>.last_z)</span><br><span class="line">        <span class="keyword">elif</span> <span class="variable language_">self</span>.activation_name == <span class="string">"sigmoid"</span>:</span><br><span class="line">            da_dz = <span class="variable language_">self</span>.sigmoid_derivative(<span class="variable language_">self</span>.last_z)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">raise</span> ValueError(<span class="string">f"不支持的激活函数: <span class="subst">{self.activation_name}</span>"</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 2. 计算 dC/dz (损失对z的梯度) = dC/da * da/dz</span></span><br><span class="line">        dC_dz = dC_da * da_dz</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 3. 计算 dC/dw (损失对权重的梯度) = dC/dz * dz/dw</span></span><br><span class="line">        <span class="comment">#    dz/dw = last_input, 所以 dC/dw = last_input.T * dC/dz</span></span><br><span class="line">        dC_dw = <span class="variable language_">self</span>.last_input.T @ dC_dz</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 4. 计算 dC/db (损失对偏置的梯度) = dC/dz * dz/db</span></span><br><span class="line">        <span class="comment">#    dz/db = 1, 所以 dC/db = dC/dz</span></span><br><span class="line">        dC_db = np.<span class="built_in">sum</span>(dC_dz, axis=<span class="number">0</span>, keepdims=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 5. 计算 dC/da_prev (损失对前一层激活值的梯度)，用于传给前一层</span></span><br><span class="line">        <span class="comment">#    dC/da_prev = dC/dz * dz/da_prev</span></span><br><span class="line">        <span class="comment">#    dz/da_prev = weights, 所以 dC/da_prev = dC/dz * weights.T</span></span><br><span class="line">        dC_da_prev = dC_dz @ <span class="variable language_">self</span>.weights.T</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 6. 根据梯度更新权重和偏置</span></span><br><span class="line">        <span class="variable language_">self</span>.weights -= learning_rate * dC_dw</span><br><span class="line">        <span class="variable language_">self</span>.bias -= learning_rate * dC_db</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 返回 dC/da_prev，传递给前一层继续反向传播</span></span><br><span class="line">        <span class="keyword">return</span> dC_da_prev</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Layer</span>:</span><br><span class="line">    <span class="string">"""</span></span><br><span class="line"><span class="string">    一层神经元。支持指定激活函数。</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, num_neurons, num_inputs_per_neuron, activation=<span class="string">"relu"</span></span>):</span><br><span class="line">        <span class="variable language_">self</span>.neurons = [</span><br><span class="line">            Neuron(num_inputs_per_neuron, activation) <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(num_neurons)</span><br><span class="line">        ]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, activations</span>):</span><br><span class="line">        <span class="string">"""对层中所有神经元执行前向传播"""</span></span><br><span class="line">        <span class="comment"># hstack 用于水平堆叠输出，形成一个 (batch_size, num_neurons) 的矩阵</span></span><br><span class="line">        <span class="keyword">return</span> np.hstack([neuron.forward(activations) <span class="keyword">for</span> neuron <span class="keyword">in</span> <span class="variable language_">self</span>.neurons])</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">backward</span>(<span class="params">self, dC_da, learning_rate</span>):</span><br><span class="line">        <span class="string">"""对层中所有神经元执行反向传播"""</span></span><br><span class="line">        <span class="comment"># dC_da 的形状是 (batch_size, num_neurons)</span></span><br><span class="line">        <span class="comment"># 我们需要为每个神经元传入对应的梯度 dC_da[:, [i]]</span></span><br><span class="line">        <span class="comment"># 然后将所有神经元返回的 dC/da_prev 相加，得到传给前一层的总梯度</span></span><br><span class="line">        <span class="keyword">return</span> np.<span class="built_in">sum</span>(</span><br><span class="line">            [</span><br><span class="line">                neuron.backward(dC_da[:, [i]], learning_rate)</span><br><span class="line">                <span class="keyword">for</span> i, neuron <span class="keyword">in</span> <span class="built_in">enumerate</span>(<span class="variable language_">self</span>.neurons)</span><br><span class="line">            ],</span><br><span class="line">            axis=<span class="number">0</span>,</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">NeuralNetwork</span>:</span><br><span class="line">    <span class="string">"""</span></span><br><span class="line"><span class="string">    完整的神经网络模型。</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, layer_sizes, activations=<span class="literal">None</span></span>):</span><br><span class="line">        <span class="comment"># activations: 每层的激活函数（不含输入层），如 ["tanh", "sigmoid"]</span></span><br><span class="line">        <span class="keyword">if</span> activations <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">            <span class="comment"># 默认隐藏层tanh，输出层sigmoid</span></span><br><span class="line">            activations = [<span class="string">"tanh"</span>] * (<span class="built_in">len</span>(layer_sizes) - <span class="number">2</span>) + [<span class="string">"sigmoid"</span>]</span><br><span class="line">        <span class="keyword">assert</span> <span class="built_in">len</span>(activations) == <span class="built_in">len</span>(layer_sizes) - <span class="number">1</span></span><br><span class="line">        <span class="variable language_">self</span>.layers = []</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(layer_sizes) - <span class="number">1</span>):</span><br><span class="line">            <span class="variable language_">self</span>.layers.append(</span><br><span class="line">                Layer(layer_sizes[i + <span class="number">1</span>], layer_sizes[i], activations[i])</span><br><span class="line">            )</span><br><span class="line">        <span class="variable language_">self</span>.output_activation = activations[-<span class="number">1</span>]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, activations</span>):</span><br><span class="line">        <span class="string">"""对所有层执行前向传播"""</span></span><br><span class="line">        <span class="keyword">for</span> layer <span class="keyword">in</span> <span class="variable language_">self</span>.layers:</span><br><span class="line">            activations = layer.forward(activations)</span><br><span class="line">        <span class="keyword">return</span> activations</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">mse_loss</span>(<span class="params">self, y_true, y_pred</span>):</span><br><span class="line">        <span class="string">"""均方误差损失函数"""</span></span><br><span class="line">        <span class="keyword">return</span> np.mean((y_pred - y_true) ** <span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">derivative_mse_loss</span>(<span class="params">self, y_true, y_pred</span>):</span><br><span class="line">        <span class="string">"""均方误差损失函数的导数"""</span></span><br><span class="line">        <span class="keyword">return</span> <span class="number">2</span> * (y_pred - y_true) / y_true.shape[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">bce_loss</span>(<span class="params">self, y_true, y_pred, eps=<span class="number">1e-8</span></span>):</span><br><span class="line">        <span class="string">"""二元交叉熵损失函数"""</span></span><br><span class="line">        y_pred = np.clip(y_pred, eps, <span class="number">1</span> - eps)</span><br><span class="line">        <span class="keyword">return</span> -np.mean(y_true * np.log(y_pred) + (<span class="number">1</span> - y_true) * np.log(<span class="number">1</span> - y_pred))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">derivative_bce_loss</span>(<span class="params">self, y_true, y_pred, eps=<span class="number">1e-8</span></span>):</span><br><span class="line">        <span class="string">"""二元交叉熵损失函数的导数"""</span></span><br><span class="line">        y_pred = np.clip(y_pred, eps, <span class="number">1</span> - eps)</span><br><span class="line">        <span class="keyword">return</span> (y_pred - y_true) / (y_pred * (<span class="number">1</span> - y_pred) * y_true.shape[<span class="number">0</span>])</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">train</span>(<span class="params">self, X, y, epochs, learning_rate, batch_size=<span class="number">32</span></span>):</span><br><span class="line">        <span class="string">"""训练神经网络"""</span></span><br><span class="line">        <span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="built_in">range</span>(epochs):</span><br><span class="line">            total_loss = <span class="number">0</span></span><br><span class="line">            <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>, <span class="built_in">len</span>(X), batch_size):</span><br><span class="line">                X_batch = X[i : i + batch_size]</span><br><span class="line">                y_batch = y[i : i + batch_size]</span><br><span class="line"></span><br><span class="line">                outputs = <span class="variable language_">self</span>.forward(X_batch)</span><br><span class="line"></span><br><span class="line">                <span class="comment"># 自动选择损失函数</span></span><br><span class="line">                <span class="keyword">if</span> <span class="variable language_">self</span>.output_activation == <span class="string">"sigmoid"</span>:</span><br><span class="line">                    loss = <span class="variable language_">self</span>.bce_loss(y_batch, outputs)</span><br><span class="line">                    output_gradient = <span class="variable language_">self</span>.derivative_bce_loss(y_batch, outputs)</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    loss = <span class="variable language_">self</span>.mse_loss(y_batch, outputs)</span><br><span class="line">                    output_gradient = <span class="variable language_">self</span>.derivative_mse_loss(y_batch, outputs)</span><br><span class="line"></span><br><span class="line">                total_loss += loss * <span class="built_in">len</span>(X_batch)</span><br><span class="line"></span><br><span class="line">                <span class="keyword">for</span> layer <span class="keyword">in</span> <span class="built_in">reversed</span>(<span class="variable language_">self</span>.layers):</span><br><span class="line">                    output_gradient = layer.backward(output_gradient, learning_rate)</span><br><span class="line"></span><br><span class="line">            avg_loss = total_loss / <span class="built_in">len</span>(X)</span><br><span class="line">            <span class="keyword">if</span> (</span><br><span class="line">                (epoch + <span class="number">1</span>) % <span class="built_in">max</span>(<span class="number">1</span>, epochs // <span class="number">10</span>) == <span class="number">0</span></span><br><span class="line">                <span class="keyword">or</span> epoch == <span class="number">0</span></span><br><span class="line">                <span class="keyword">or</span> epoch == epochs - <span class="number">1</span></span><br><span class="line">            ):</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">f"Epoch <span class="subst">{epoch+<span class="number">1</span>}</span>/<span class="subst">{epochs}</span>, Loss: <span class="subst">{avg_loss:<span class="number">.6</span>f}</span>"</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">predict</span>(<span class="params">self, X</span>):</span><br><span class="line">        out = <span class="variable language_">self</span>.forward(X)</span><br><span class="line">        <span class="keyword">if</span> <span class="variable language_">self</span>.output_activation == <span class="string">"sigmoid"</span>:</span><br><span class="line">            <span class="keyword">return</span> out</span><br><span class="line">        <span class="keyword">return</span> out</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 1. 定义 XOR 数据集</span></span><br><span class="line">X_train = np.array([[<span class="number">0</span>, <span class="number">0</span>], [<span class="number">0</span>, <span class="number">1</span>], [<span class="number">1</span>, <span class="number">0</span>], [<span class="number">1</span>, <span class="number">1</span>]])</span><br><span class="line">y_train = np.array([[<span class="number">0</span>], [<span class="number">1</span>], [<span class="number">1</span>], [<span class="number">0</span>]])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 创建神经网络实例</span></span><br><span class="line"><span class="comment"># 2个输入节点，一个有2个节点的隐藏层，1个输出节点，激活函数分别为tanh和sigmoid</span></span><br><span class="line">nn = NeuralNetwork([<span class="number">2</span>, <span class="number">2</span>, <span class="number">1</span>], activations=[<span class="string">"tanh"</span>, <span class="string">"sigmoid"</span>])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 训练网络</span></span><br><span class="line"><span class="comment"># XOR 是一个非线性问题，需要足够的迭代次数和合适的学习率</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"开始训练XOR网络..."</span>)</span><br><span class="line">nn.train(X_train, y_train, epochs=<span class="number">200000</span>, learning_rate=<span class="number">0.1</span>, batch_size=<span class="number">4</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">"训练完成。"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 进行预测并展示结果</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">"\n对输入进行预测:"</span>)</span><br><span class="line"><span class="keyword">for</span> x_input <span class="keyword">in</span> X_train:</span><br><span class="line">    prediction = nn.predict(x_input.reshape(<span class="number">1</span>, -<span class="number">1</span>))</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f"输入: <span class="subst">{x_input}</span>, 预测输出: <span class="subst">{prediction[<span class="number">0</span>][<span class="number">0</span>]:<span class="number">.4</span>f}</span>"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 开始训练XOR网络...</span></span><br><span class="line"><span class="comment"># Epoch 1/200000, Loss: 0.710580</span></span><br><span class="line"><span class="comment"># Epoch 20000/200000, Loss: 0.001633</span></span><br><span class="line"><span class="comment"># Epoch 40000/200000, Loss: 0.000789</span></span><br><span class="line"><span class="comment"># Epoch 60000/200000, Loss: 0.000520</span></span><br><span class="line"><span class="comment"># Epoch 80000/200000, Loss: 0.000387</span></span><br><span class="line"><span class="comment"># Epoch 100000/200000, Loss: 0.000308</span></span><br><span class="line"><span class="comment"># Epoch 120000/200000, Loss: 0.000256</span></span><br><span class="line"><span class="comment"># Epoch 140000/200000, Loss: 0.000219</span></span><br><span class="line"><span class="comment"># Epoch 160000/200000, Loss: 0.000191</span></span><br><span class="line"><span class="comment"># Epoch 180000/200000, Loss: 0.000170</span></span><br><span class="line"><span class="comment"># Epoch 200000/200000, Loss: 0.000153</span></span><br><span class="line"><span class="comment"># 训练完成。</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 对输入进行预测:</span></span><br><span class="line"><span class="comment"># 输入: [0 0], 预测输出: 0.0002</span></span><br><span class="line"><span class="comment"># 输入: [0 1], 预测输出: 0.9999</span></span><br><span class="line"><span class="comment"># 输入: [1 0], 预测输出: 0.9999</span></span><br><span class="line"><span class="comment"># 输入: [1 1], 预测输出: 0.0002</span></span><br></pre></td></tr></tbody></table></figure>
 <p>可以明显看到 XOR
 网络的预测更加精准了，并且我在本地连续训练了很多次，几乎不再有训练失败的情况发生。显然，我们的神经网络实现可以说成功了。</p>
-<p>本篇中的 Layer/Neuron 结构采用 for-loop +
+<p>本篇中的 Layer / Neuron 结构采用 for-loop +
 np.hstack，便于理解原理。实际程序中建议采用全矩阵化实现以提升效率。</p>
 ]]></content>
       <categories>

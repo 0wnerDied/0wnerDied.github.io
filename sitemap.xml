@@ -4,6 +4,42 @@
   <url>
     <loc>https://0b1t.tech/uCore/28113.html</loc>
     
+    <lastmod>2025-07-24</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://0b1t.tech/Machine-learning/38196.html</loc>
+    
+    <lastmod>2025-07-23</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://0b1t.tech/categories/index.html</loc>
+    
+    <lastmod>2025-07-23</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://0b1t.tech/tags/index.html</loc>
+    
+    <lastmod>2025-07-23</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://0b1t.tech/kernel/50584.html</loc>
+    
     <lastmod>2025-07-23</lastmod>
     
     <changefreq>monthly</changefreq>
@@ -13,25 +49,7 @@
   <url>
     <loc>https://0b1t.tech/issue-resolve/49265.html</loc>
     
-    <lastmod>2025-06-26</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://0b1t.tech/kernel/50584.html</loc>
-    
-    <lastmod>2025-06-25</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://0b1t.tech/Machine-learning/38196.html</loc>
-    
-    <lastmod>2025-06-25</lastmod>
+    <lastmod>2025-07-23</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -40,25 +58,7 @@
   <url>
     <loc>https://0b1t.tech/Machine-learning/36604.html</loc>
     
-    <lastmod>2025-06-25</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://0b1t.tech/tags/index.html</loc>
-    
-    <lastmod>2025-06-23</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://0b1t.tech/categories/index.html</loc>
-    
-    <lastmod>2025-06-23</lastmod>
+    <lastmod>2025-07-23</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -67,43 +67,43 @@
 
   <url>
     <loc>https://0b1t.tech/</loc>
-    <lastmod>2025-07-23</lastmod>
+    <lastmod>2025-07-24</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
   
   <url>
-    <loc>https://0b1t.tech/tags/OS/</loc>
-    <lastmod>2025-07-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://0b1t.tech/tags/riscv/</loc>
-    <lastmod>2025-07-23</lastmod>
+    <loc>https://0b1t.tech/tags/ebpf/</loc>
+    <lastmod>2025-07-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://0b1t.tech/tags/domain-configure/</loc>
-    <lastmod>2025-07-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://0b1t.tech/tags/ebpf/</loc>
-    <lastmod>2025-07-23</lastmod>
+    <lastmod>2025-07-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://0b1t.tech/tags/NN/</loc>
-    <lastmod>2025-07-23</lastmod>
+    <lastmod>2025-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://0b1t.tech/tags/OS/</loc>
+    <lastmod>2025-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://0b1t.tech/tags/riscv/</loc>
+    <lastmod>2025-07-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
@@ -111,29 +111,29 @@
 
   
   <url>
-    <loc>https://0b1t.tech/categories/uCore/</loc>
-    <lastmod>2025-07-23</lastmod>
+    <loc>https://0b1t.tech/categories/kernel/</loc>
+    <lastmod>2025-07-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://0b1t.tech/categories/issue-resolve/</loc>
-    <lastmod>2025-07-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://0b1t.tech/categories/kernel/</loc>
-    <lastmod>2025-07-23</lastmod>
+    <lastmod>2025-07-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://0b1t.tech/categories/Machine-learning/</loc>
-    <lastmod>2025-07-23</lastmod>
+    <lastmod>2025-07-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://0b1t.tech/categories/uCore/</loc>
+    <lastmod>2025-07-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
