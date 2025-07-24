@@ -1,5 +1,5 @@
 ---
-title: uCore ch3 实验报告
+title: uCore lab1 实验报告
 categories:
   - uCore
 tags:
