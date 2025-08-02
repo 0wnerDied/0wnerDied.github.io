@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="hcYDp6Fp83zSq_ebw4L0fyy9A85xh7nJVXRc0YIrplg">
+  <meta name="msvalidate.01" content="6607AE0DF3E7D531126AB256C9D013F2">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comic+Sans+MS:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancyapps-ui/6.0.5/fancybox/fancybox.css" integrity="sha256-uTcjoMD6rPt4OyV3Rs02Slxl0BJGMNVKAm/1eYPt2go=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"0b1t.tech","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.23.2","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="本章任务  make test BASE&#x3D;1 执行 usershell，然后输入 ch5b_usertest 运行。 merge ch4 的修改（如有需要，可以 make test BASE&#x3D;2 然后输入 ch5_mergetest 运行，以此检查 merge 是否正确，但这不是实验必需要求）。 结合文档和代码理解 fork, exec, wait 的逻辑。结合课堂内容回答本章问答问题（注意第二问">
+<meta property="og:type" content="article">
+<meta property="og:title" content="uCore lab3 实验报告">
+<meta property="og:url" content="https://0b1t.tech/uCore/10007.html">
+<meta property="og:site_name" content="0wnerD1ed&#39;s blog">
+<meta property="og:description" content="本章任务  make test BASE&#x3D;1 执行 usershell，然后输入 ch5b_usertest 运行。 merge ch4 的修改（如有需要，可以 make test BASE&#x3D;2 然后输入 ch5_mergetest 运行，以此检查 merge 是否正确，但这不是实验必需要求）。 结合文档和代码理解 fork, exec, wait 的逻辑。结合课堂内容回答本章问答问题（注意第二问">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-08-02T07:21:47.000Z">
+<meta property="article:modified_time" content="2025-08-02T13:53:11.959Z">
+<meta property="article:author" content="0wnerD1ed">
+<meta property="article:tag" content="OS">
+<meta property="article:tag" content="riscv">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://0b1t.tech/uCore/10007.html">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://0b1t.tech/uCore/10007.html","path":"uCore/10007.html","title":"uCore lab3 实验报告"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>uCore lab3 实验报告 | 0wnerD1ed's blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fancyapps-ui/6.0.5/fancybox/fancybox.umd.js" integrity="sha256-UiSieVaV/DXce2LW7QH+o77w+AIoAvSCPBkezriZ2DQ=" crossorigin="anonymous" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pangu/6.1.3/pangu.umd.js" integrity="sha256-erngBMP3zzoIM6eqQ8dmrReh2vqCRgWmORroIfVoDlE=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+  <script src="/js/third-party/fancybox.js" defer></script>
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js" defer></script>
+
+
+<link rel="dns-prefetch" href="blog-waline-mauve.vercel.app">
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<style>.darkmode--activated{--body-bg-color:#282828;--content-bg-color:#333;--card-bg-color:#555;--text-color:#ccc;--blockquote-color:#bbb;--link-color:#ccc;--link-hover-color:#eee;--brand-color:#ddd;--brand-hover-color:#ddd;--table-row-odd-bg-color:#282828;--table-row-hover-bg-color:#363636;--menu-item-bg-color:#555;--btn-default-bg:#222;--btn-default-color:#ccc;--btn-default-border-color:#555;--btn-default-hover-bg:#666;--btn-default-hover-color:#ccc;--btn-default-hover-border-color:#666;--highlight-background:#282b2e;--highlight-foreground:#a9b7c6;--highlight-gutter-background:#34393d;--highlight-gutter-foreground:#9ca9b6}.darkmode--activated img{opacity:.75}.darkmode--activated img:hover{opacity:.9}.darkmode--activated code{color:#69dbdc;background:0 0}button.darkmode-toggle{z-index:9999}.darkmode-ignore,img{display:flex!important}.beian img{display:inline-block!important}</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">0wnerD1ed's blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E7%AB%A0%E4%BB%BB%E5%8A%A1"><span class="nav-number">1.</span> <span class="nav-text">本章任务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E7%A8%8B%E4%BD%9C%E4%B8%9A"><span class="nav-number">2.</span> <span class="nav-text">编程作业</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E4%BA%8E%E4%B9%8B%E5%89%8D%E7%9A%84-syscall"><span class="nav-number">2.1.</span> <span class="nav-text">关于之前的 syscall</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E5%88%9B%E5%BB%BA"><span class="nav-number">2.2.</span> <span class="nav-text">进程创建</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#tips"><span class="nav-number">2.2.1.</span> <span class="nav-text">tips:</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#stride-%E8%B0%83%E5%BA%A6%E7%AE%97%E6%B3%95"><span class="nav-number">2.3.</span> <span class="nav-text">stride 调度算法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0-tips"><span class="nav-number">2.3.1.</span> <span class="nav-text">实现 tips:</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E7%A8%8B%E4%BD%9C%E4%B8%9A%E7%AD%94%E6%A1%88"><span class="nav-number">3.</span> <span class="nav-text">编程作业答案</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%81%E7%A7%BB%E4%B9%8B%E5%89%8D%E7%9A%84-syscall"><span class="nav-number">3.1.</span> <span class="nav-text">迁移之前的 syscall</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E5%88%9B%E5%BB%BA-1"><span class="nav-number">3.2.</span> <span class="nav-text">进程创建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#stride-%E8%B0%83%E5%BA%A6%E7%AE%97%E6%B3%95-1"><span class="nav-number">3.3.</span> <span class="nav-text">stride 调度算法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E7%AD%94%E4%BD%9C%E4%B8%9A"><span class="nav-number">4.</span> <span class="nav-text">问答作业</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#stride-%E7%AE%97%E6%B3%95%E6%B7%B1%E5%85%A5"><span class="nav-number">4.1.</span> <span class="nav-text">stride 算法深入</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E7%AD%94%E4%BD%9C%E4%B8%9A%E7%AD%94%E6%A1%88"><span class="nav-number">5.</span> <span class="nav-text">问答作业答案</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#stride-%E7%AE%97%E6%B3%95%E6%B7%B1%E5%85%A5-1"><span class="nav-number">5.1.</span> <span class="nav-text">stride 算法深入</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%89%E5%81%9A%E9%A2%98%E7%9B%AE"><span class="nav-number">6.</span> <span class="nav-text">选做题目</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%89%E4%BD%9C%E9%A2%98%E7%9B%AE%E5%88%97%E8%A1%A8"><span class="nav-number">6.1.</span> <span class="nav-text">选作题目列表</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="0wnerD1ed"
+      src="https://avatars.githubusercontent.com/u/59904423?s=400&u=e2d918cc9959b82599bb4dbfcebb8b912880b9dc&v=4">
+  <p class="site-author-name" itemprop="name">0wnerD1ed</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/0wnerDied" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;0wnerDied" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:atndko@outlook.sg" title="E-Mail → mailto:atndko@outlook.sg" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://t.me/OwnerDiedddd" title="Telegram → https:&#x2F;&#x2F;t.me&#x2F;OwnerDiedddd" rel="noopener me" target="_blank"><i class="fab fa-telegram fa-fw"></i></a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://0b1t.tech/uCore/10007.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars.githubusercontent.com/u/59904423?s=400&u=e2d918cc9959b82599bb4dbfcebb8b912880b9dc&v=4">
+      <meta itemprop="name" content="0wnerD1ed">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="0wnerD1ed's blog">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="uCore lab3 实验报告 | 0wnerD1ed's blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          uCore lab3 实验报告
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2025-08-02 15:21:47 / 修改时间：21:53:11" itemprop="dateCreated datePublished" datetime="2025-08-02T15:21:47+08:00">2025-08-02</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/uCore/" itemprop="url" rel="index"><span itemprop="name">uCore</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+    <span class="post-meta-item-icon">
+      <i class="far fa-comment"></i>
+    </span>
+    <span class="post-meta-item-text">Waline：</span>
+  
+    <a title="waline" href="/uCore/10007.html#waline" itemprop="discussionUrl">
+      <span class="post-comments-count waline-comment-count" data-path="/uCore/10007.html" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>23k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>1:17</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h2 id="本章任务">本章任务</h2>
+<ul>
+<li><code>make test BASE=1</code> 执行 usershell，然后输入
+<code>ch5b_usertest</code> 运行。</li>
+<li>merge ch4 的修改（如有需要，可以 <code>make test BASE=2</code>
+然后输入 <code>ch5_mergetest</code> 运行，以此检查 merge
+是否正确，但这不是实验必需要求）。</li>
+<li>结合文档和代码理解 fork, exec, wait
+的逻辑。结合课堂内容回答本章问答问题（注意第二问为选做）。</li>
+<li>理解框架的调度机制，尤其要搞明白时钟中断的处理机制以及 yield
+之后下一个进程的选择。在次基础上，完成本节的编程作业 (2) stride
+调度算法。</li>
+<li>完成本章编程作业。</li>
+<li>最终，完成实验报告并 push 你的 ch5 分支到远程仓库。</li>
+</ul>
+<h2 id="编程作业">编程作业</h2>
+<h3 id="关于之前的-syscall">关于之前的 syscall</h3>
+<p>你仍需要迁移上一章的 <code>sys_gettimeofday</code>
+<code>sys_mmap</code> <code>sys_munmap</code>
+以适应新的进程结构。不过，<strong>从本章节开始，不再要求维护
+<code>sys_trace</code> 这一系统调用</strong>。</p>
+<h3 id="进程创建">进程创建</h3>
+<p>大家一定好奇过为啥进程创建要用 fork + execve
+这么一个奇怪的系统调用，就不能直接搞一个新进程吗？思而不学则殆，我们就来试一试！这章的编程练习请大家实现一个完全
+DIY 的系统调用 spawn，用以创建一个新进程。</p>
+<p>spawn 系统调用定义：</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">sys_spawn</span><span class="params">(<span class="type">char</span> *filename)</span></span><br></pre></td></tr></tbody></table></figure>
+<ul>
+<li>syscall ID: 400</li>
+<li>功能：相当于 fork + exec，新建子进程并执行目标程序。</li>
+<li>说明：成功返回子进程 id，否则返回 -1。</li>
+<li>可能的错误：
+<ul>
+<li>无效的文件名。</li>
+<li>进程池满 / 内存不足等资源错误。</li>
+</ul></li>
+</ul>
+<p>实现完成之后，你应该能通过 ch5_spawn* 对应的所有测例，在 shell 中执行
+ch5_usertest 来执行所有测试，应当发现除了 setprio 相关的测例均正确。</p>
+<h4 id="tips">tips:</h4>
+<ul>
+<li>注意 fork 的执行流，新进程 context 的 ra 和 sp
+与父进程不同。所以你不能在内核中通过 fork 和 exec 的简单组合实现
+spawn。</li>
+<li>在 spawn 中不应该有任何形式的内存拷贝。</li>
+</ul>
+<h3 id="stride-调度算法">stride 调度算法</h3>
+<p>lab3
+中我们引入了任务调度的概念，可以在不同任务之间切换，目前我们实现的调度算法十分简单，存在一些问题且不存在优先级。现在我们要为我们的
+os 实现一种带优先级的调度算法：stride 调度算法。</p>
+<p>算法描述如下:</p>
+<ol type="1">
+<li>为每个进程设置一个当前
+stride，表示该进程当前已经运行的 “长度”。另外设置其对应的 pass
+值（只与进程的优先权有关系），表示对应进程在调度后，stride
+需要进行的累加值。</li>
+<li>每次需要调度时，从当前 runnable 态的进程中选择 stride
+最小的进程调度。对于获得调度的进程 P，将对应的 stride 加上其对应的步长
+pass。</li>
+<li>一个时间片后，回到上一步骤，重新调度当前 stride 最小的进程。</li>
+</ol>
+<p>可以证明，如果令 P.pass = BigStride / P.priority 其中 P.pass 为进程的
+pass 值，P.priority 表示进程的优先权（大于 1），而 BigStride
+表示一个预先定义的大常数，则该调度方案为每个进程分配的时间将与其优先级成正比。证明过程我们在这里略去，有兴趣的同学可以在网上查找相关资料。</p>
+<p>其他实验细节：</p>
+<ul>
+<li>stride 调度要求进程优先级 ≥ 2，所以设定进程优先级 ≤ 1
+会导致错误。</li>
+<li>进程初始 stride 设置为 0 即可。</li>
+<li>进程初始优先级设置为 16。</li>
+</ul>
+<p>为了实现该调度算法，内核还要增加 <code>sys_set_priority</code>
+系统调用:</p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">sys_set_priority</span><span class="params">(<span class="type">long</span> <span class="type">long</span> prio)</span></span><br></pre></td></tr></tbody></table></figure>
+<ul>
+<li>功能描述
+<ul>
+<li>syscall ID: 140</li>
+<li>功能：设定进程优先级。</li>
+<li>说明：设定自身进程优先级，只要 prio 在 [2, isize_max] 就成功，返回
+prio，否则返回 -1。</li>
+</ul></li>
+<li>针对测例
+<ul>
+<li>ch5_setprio</li>
+</ul></li>
+</ul>
+<p>完成之后你需要调整框架的代码调度机制，是的可以设置不同进程优先级之后可以按照
+stride 算法进行调度。实现正确后，代码应该能够通过用户测例
+ch5t_stride*。最终输出的 priority 和 exitcode
+应该大致成正比，由于我们的时间片比较粗糙，qemu
+的模拟也不是十分准确，我们最终的 CI 测试会允许最大 30% 的误差。</p>
+<h4 id="实现-tips">实现 tips:</h4>
+<ul>
+<li>你应该给 proc 结构体加入新的字段来支持优先级。</li>
+<li>我们的测例运行时间不很长，不要求处理 stride
+的溢出（详见问答作业，当然处理了更好）。</li>
+<li>为了减少整数除的误差，BIG_STRIDE 一般需要很大，但测例中的优先级都是
+2 的整数次幂，结合第二点，BIG_STRIDE 不需要太大，65536
+是一个不错的数字。</li>
+<li>用户态的 printf
+支持了行缓冲，所以如果你想要增加用户程序的输出，记得换行。</li>
+<li>stride 算法要找到　stride
+最小的进程，使用优先级队列是效率不错的办法，但是我们的实验测例很简单，所以效率完全不是问题。事实上，我很推荐使用暴力扫一遍的办法找最小值。</li>
+<li>注意设置进程的初始优先级。</li>
+</ul>
+<h2 id="编程作业答案">编程作业答案</h2>
+<h3 id="迁移之前的-syscall">迁移之前的 syscall</h3>
+<p>简单地 cherry-pick 过来，解决一下冲突就行了，记得不要留下任何
+<code>sys_trace</code> 的相关代码。</p>
+<figure class="highlight patch"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br></pre></td><td class="code"><pre><span class="line">From 65f6316dbf37e297d56bdeb84775164a5e6f7aef Mon Sep 17 00:00:00 2001</span><br><span class="line">From: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line">Date: Fri, 25 Jul 2025 01:27:26 +0800</span><br><span class="line">Subject: [PATCH 1/7] chapter4 practice</span><br><span class="line"></span><br><span class="line">Signed-off-by: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line"><span class="comment">---</span></span><br><span class="line"> os/syscall.c | 118 ++++++++++++++++++++++++++++++++++++++++++++++++++-</span><br><span class="line"> os/vm.h      |   1 +</span><br><span class="line"> 2 files changed, 117 insertions(+), 2 deletions(-)</span><br><span class="line"></span><br><span class="line"><span class="comment">diff --git a/os/syscall.c b/os/syscall.c</span></span><br><span class="line"><span class="comment">index fa22920..9cbcc81 100644</span></span><br><span class="line"><span class="comment">--- a/os/syscall.c</span></span><br><span class="line"><span class="comment">+++ b/os/syscall.c</span></span><br><span class="line"><span class="meta">@@ -48,6 +48,7 @@</span> uint64 sys_sched_yield()</span><br><span class="line"> 	return 0;</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"><span class="addition">+#if 0</span></span><br><span class="line"> uint64 sys_gettimeofday(uint64 val, int _tz)</span><br><span class="line"> {</span><br><span class="line"> 	struct proc *p = curr_proc();</span><br><span class="line"><span class="meta">@@ -58,6 +59,23 @@</span> uint64 sys_gettimeofday(uint64 val, int _tz)</span><br><span class="line"> 	copyout(p-&gt;pagetable, val, (char *)&amp;t, sizeof(TimeVal));</span><br><span class="line"> 	return 0;</span><br><span class="line"> }</span><br><span class="line"><span class="addition">+#else</span></span><br><span class="line"><span class="addition">+uint64 sys_gettimeofday(uint64 val_va, int _tz)</span></span><br><span class="line"><span class="addition">+{</span></span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+	TimeVal val;</span></span><br><span class="line"><span class="addition">+	uint64 cycle = get_cycle();</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	val.sec = cycle / CPU_FREQ;</span></span><br><span class="line"><span class="addition">+	val.usec = (cycle % CPU_FREQ) * 1000000 / CPU_FREQ;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if (copyout(p-&gt;pagetable, val_va, (char *)&amp;val,</span></span><br><span class="line"><span class="addition">+			sizeof(TimeVal)) &lt; 0)</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	return 0;</span></span><br><span class="line"><span class="addition">+}</span></span><br><span class="line"><span class="addition">+#endif</span></span><br><span class="line"> </span><br><span class="line"> uint64 sys_getpid()</span><br><span class="line"> {</span><br><span class="line"><span class="meta">@@ -114,6 +132,96 @@</span> uint64 sys_sbrk(int n)</span><br><span class="line">         return addr;</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"><span class="addition">+int sys_mmap(uint64 start, uint64 len, int prot, int flags)</span></span><br><span class="line"><span class="addition">+{</span></span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if (start % PGSIZE != 0)</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if ((prot &amp; ~0x7) != 0)</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+	if ((prot &amp; 0x7) == 0)</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if (len == 0)</span></span><br><span class="line"><span class="addition">+		return 0;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	uint64 end = PGROUNDUP(start + len);</span></span><br><span class="line"><span class="addition">+	for (uint64 va = start; va &lt; end; va += PGSIZE) {</span></span><br><span class="line"><span class="addition">+		pte_t *pte = walk(p-&gt;pagetable, va, 0);</span></span><br><span class="line"><span class="addition">+		if (pte != 0 &amp;&amp; (*pte &amp; PTE_V))</span></span><br><span class="line"><span class="addition">+			return -1;</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+#if 0</span></span><br><span class="line"><span class="addition">+	int xperm = 0;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if (prot &amp; 0x2)</span></span><br><span class="line"><span class="addition">+		xperm |= PTE_W;</span></span><br><span class="line"><span class="addition">+	if (prot &amp; 0x4)</span></span><br><span class="line"><span class="addition">+		xperm |= PTE_X;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if (uvmalloc(p-&gt;pagetable, start, end, xperm) == 0)</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+#else // #if 0</span></span><br><span class="line"><span class="addition">+	/*</span></span><br><span class="line"><span class="addition">+	 * Manual page allocation and mapping loop.</span></span><br><span class="line"><span class="addition">+	 * Unlike uvmalloc(), this gives us precise control</span></span><br><span class="line"><span class="addition">+	 * over permission bits to match the exact prot</span></span><br><span class="line"><span class="addition">+	 * flags specified by the user. We allocate physical</span></span><br><span class="line"><span class="addition">+	 * pages one by one, zero them for security,</span></span><br><span class="line"><span class="addition">+	 * set only the requested permission bits (crucial</span></span><br><span class="line"><span class="addition">+	 * for RISC-V compliance where PTE_W=1,PTE_R=0 is</span></span><br><span class="line"><span class="addition">+	 * illegal), and install the mapping via mappages().</span></span><br><span class="line"><span class="addition">+	 */</span></span><br><span class="line"><span class="addition">+	for (uint64 va = start; va &lt; end; va += PGSIZE) {</span></span><br><span class="line"><span class="addition">+		char *pa = kalloc();</span></span><br><span class="line"><span class="addition">+		int pte_flags = PTE_V | PTE_U;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+		if (!pa)</span></span><br><span class="line"><span class="addition">+			return -1;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+		memset(pa, 0, PGSIZE);</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+		if (prot &amp; 0x1)</span></span><br><span class="line"><span class="addition">+			pte_flags |= PTE_R;</span></span><br><span class="line"><span class="addition">+		if (prot &amp; 0x2)</span></span><br><span class="line"><span class="addition">+			pte_flags |= PTE_W;</span></span><br><span class="line"><span class="addition">+		if (prot &amp; 0x4)</span></span><br><span class="line"><span class="addition">+			pte_flags |= PTE_X;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+		if (mappages(p-&gt;pagetable, va, PGSIZE, (uint64)pa, pte_flags) != 0) {</span></span><br><span class="line"><span class="addition">+			kfree(pa);</span></span><br><span class="line"><span class="addition">+			return -1;</span></span><br><span class="line"><span class="addition">+		}</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+#endif // #if 0</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	return 0;</span></span><br><span class="line"><span class="addition">+}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+int sys_munmap(uint64 start, uint64 len)</span></span><br><span class="line"><span class="addition">+{</span></span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if (start % PGSIZE != 0)</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if (len == 0)</span></span><br><span class="line"><span class="addition">+		return 0;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	uint64 end = PGROUNDUP(start + len);</span></span><br><span class="line"><span class="addition">+	for (uint64 va = start; va &lt; end; va += PGSIZE) {</span></span><br><span class="line"><span class="addition">+		pte_t *pte = walk(p-&gt;pagetable, va, 0);</span></span><br><span class="line"><span class="addition">+		if (pte == 0 || (*pte &amp; PTE_V) == 0)</span></span><br><span class="line"><span class="addition">+			return -1;</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	uvmunmap(p-&gt;pagetable, start, (end - start) / PGSIZE, 1);</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	return 0;</span></span><br><span class="line"><span class="addition">+}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"> extern char trap_page[];</span><br><span class="line"> </span><br><span class="line"> void syscall()</span><br><span class="line"><span class="meta">@@ -159,8 +267,14 @@</span> void syscall()</span><br><span class="line"> 		ret = sys_spawn(args[0]);</span><br><span class="line"> 		break;</span><br><span class="line"> 	case SYS_sbrk:</span><br><span class="line"><span class="deletion">-                ret = sys_sbrk(args[0]);</span></span><br><span class="line"><span class="deletion">-                break;</span></span><br><span class="line"><span class="addition">+		ret = sys_sbrk(args[0]);</span></span><br><span class="line"><span class="addition">+		break;</span></span><br><span class="line"><span class="addition">+	case SYS_mmap:</span></span><br><span class="line"><span class="addition">+		ret = sys_mmap(args[0], args[1], args[2], args[3]);</span></span><br><span class="line"><span class="addition">+		break;</span></span><br><span class="line"><span class="addition">+	case SYS_munmap:</span></span><br><span class="line"><span class="addition">+		ret = sys_munmap(args[0], args[1]);</span></span><br><span class="line"><span class="addition">+		break;</span></span><br><span class="line"> 	default:</span><br><span class="line"> 		ret = -1;</span><br><span class="line"> 		errorf("unknown syscall %d", id);</span><br><span class="line"><span class="comment">diff --git a/os/vm.h b/os/vm.h</span></span><br><span class="line"><span class="comment">index 8618f5c..9975f6d 100644</span></span><br><span class="line"><span class="comment">--- a/os/vm.h</span></span><br><span class="line"><span class="comment">+++ b/os/vm.h</span></span><br><span class="line"><span class="meta">@@ -11,6 +11,7 @@</span> pagetable_t uvmcreate(uint64);</span><br><span class="line"> int uvmcopy(pagetable_t, pagetable_t, uint64);</span><br><span class="line"> void uvmfree(pagetable_t, uint64);</span><br><span class="line"> void uvmunmap(pagetable_t, uint64, uint64, int);</span><br><span class="line"><span class="addition">+pte_t *walk(pagetable_t, uint64, int);</span></span><br><span class="line"> uint64 walkaddr(pagetable_t, uint64);</span><br><span class="line"> uint64 useraddr(pagetable_t, uint64);</span><br><span class="line"> int copyout(pagetable_t, uint64, char *, uint64);</span><br><span class="line"><span class="deletion">-- </span></span><br><span class="line">2.50.1</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>简单 <code>make test BASE=2</code> 然后输入
+<code>ch5_mergetest</code> 运行一下，发现运行不了，运行到 mmap
+的测例就会显示
+<code>[PANIC 122] os/vm.c:198: freewalk: leaf</code>，看了一下应该是
+max_page 的原因，于是进行以下修改：</p>
+<figure class="highlight patch"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">From 838f072a0424c4dae3753136c05a91e57f28fc9e Mon Sep 17 00:00:00 2001</span><br><span class="line">From: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line">Date: Fri, 1 Aug 2025 03:14:17 +0800</span><br><span class="line">Subject: [PATCH 2/7] adapt mmap/munmap to ch5</span><br><span class="line"></span><br><span class="line">Signed-off-by: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line"><span class="comment">---</span></span><br><span class="line"> os/syscall.c | 14 ++++++++++++++</span><br><span class="line"> 1 file changed, 14 insertions(+)</span><br><span class="line"></span><br><span class="line"><span class="comment">diff --git a/os/syscall.c b/os/syscall.c</span></span><br><span class="line"><span class="comment">index 9cbcc81..d0cf211 100644</span></span><br><span class="line"><span class="comment">--- a/os/syscall.c</span></span><br><span class="line"><span class="comment">+++ b/os/syscall.c</span></span><br><span class="line"><span class="meta">@@ -197,6 +197,10 @@</span> int sys_mmap(uint64 start, uint64 len, int prot, int flags)</span><br><span class="line"> 	}</span><br><span class="line"> #endif // #if 0</span><br><span class="line"> </span><br><span class="line"><span class="addition">+	uint64 end_page = end / PGSIZE;</span></span><br><span class="line"><span class="addition">+	if (end_page &gt; p-&gt;max_page)</span></span><br><span class="line"><span class="addition">+		p-&gt;max_page = end_page;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"> 	return 0;</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"><span class="meta">@@ -219,6 +223,16 @@</span> int sys_munmap(uint64 start, uint64 len)</span><br><span class="line"> </span><br><span class="line"> 	uvmunmap(p-&gt;pagetable, start, (end - start) / PGSIZE, 1);</span><br><span class="line"> </span><br><span class="line"><span class="addition">+	for (uint64 pg = p-&gt;max_page; pg &gt; 0; pg--) {</span></span><br><span class="line"><span class="addition">+		uint64 va  = (pg - 1) * PGSIZE;</span></span><br><span class="line"><span class="addition">+		pte_t *pte = walk(p-&gt;pagetable, va, 0);</span></span><br><span class="line"><span class="addition">+		if (pte &amp;&amp; (*pte &amp; PTE_V)) {</span></span><br><span class="line"><span class="addition">+			p-&gt;max_page = pg;</span></span><br><span class="line"><span class="addition">+			return 0;</span></span><br><span class="line"><span class="addition">+		}</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+	p-&gt;max_page = 0;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"> 	return 0;</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"><span class="deletion">-- </span></span><br><span class="line">2.50.1</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>改完之后再次运行 <code>make test BASE=2</code> 然后输入
+<code>ch5_mergetest</code>，可以看到最后
+<code>ch5 Mergetests passed!</code>，测试通过。</p>
+<h3 id="进程创建-1">进程创建</h3>
+<p>spawn 的实现比较简单，看看 fork 和 execve 的逻辑就行了：</p>
+<figure class="highlight patch"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br></pre></td><td class="code"><pre><span class="line">From 63314392ebafe3f203477c684709d8b611baef47 Mon Sep 17 00:00:00 2001</span><br><span class="line">From: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line">Date: Fri, 1 Aug 2025 18:46:29 +0800</span><br><span class="line">Subject: [PATCH 3/7] implement spawn syscall</span><br><span class="line"></span><br><span class="line">This change brings a new `spawn` system call to provide an</span><br><span class="line">efficient way to create a new process and execute a program</span><br><span class="line">in a single operation.</span><br><span class="line"></span><br><span class="line">This new system call is designed as a more performant alternative to</span><br><span class="line">the traditional fork-then-exec model. It avoids the overhead of copying</span><br><span class="line">the parent process's entire address space, which is immediately discarded</span><br><span class="line">by exec. Instead, `spawn` creates a new, empty process and directly loads</span><br><span class="line">the specified application into it.</span><br><span class="line"></span><br><span class="line">Key implementation details:</span><br><span class="line"><span class="deletion">- A new system call, `sys_spawn`, is added. It takes a user-space</span></span><br><span class="line">  pointer to a filename as an argument.</span><br><span class="line"><span class="deletion">- The filename is safely copied into the kernel using `copyinstr` to</span></span><br><span class="line">  prevent security vulnerabilities.</span><br><span class="line"><span class="deletion">- A new process is created by calling `allocproc`, which sets up a</span></span><br><span class="line">  clean process state, including a PCB and a kernel stack.</span><br><span class="line"><span class="deletion">- The application's binary is loaded into the new process's address</span></span><br><span class="line">  space using the existing `loader` function.</span><br><span class="line"><span class="deletion">- The parent-child relationship is established to maintain the process</span></span><br><span class="line">  tree, which is essential for the `wait` system call.</span><br><span class="line"><span class="deletion">- Robust error handling is implemented. If any step fails (e.g., invalid</span></span><br><span class="line">  filename, process allocation failure, or loader error), allocated</span><br><span class="line">  resources are cleaned up, and an error code (-1) is returned to the</span><br><span class="line">  calling process.</span><br><span class="line"><span class="deletion">- Expose the function `freeproc` from proc.h.</span></span><br><span class="line"></span><br><span class="line">Signed-off-by: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line"><span class="comment">---</span></span><br><span class="line"> os/proc.h    |  1 +</span><br><span class="line"> os/syscall.c | 42 ++++++++++++++++++++++++++++++++++++++++--</span><br><span class="line"> 2 files changed, 41 insertions(+), 2 deletions(-)</span><br><span class="line"></span><br><span class="line"><span class="comment">diff --git a/os/proc.h b/os/proc.h</span></span><br><span class="line"><span class="comment">index aabc2e8..85a527c 100644</span></span><br><span class="line"><span class="comment">--- a/os/proc.h</span></span><br><span class="line"><span class="comment">+++ b/os/proc.h</span></span><br><span class="line"><span class="meta">@@ -62,6 +62,7 @@</span> int wait(int, int *);</span><br><span class="line"> void add_task(struct proc *);</span><br><span class="line"> struct proc *pop_task();</span><br><span class="line"> struct proc *allocproc();</span><br><span class="line"><span class="addition">+void freeproc(struct proc *p);</span></span><br><span class="line"> int fdalloc(struct file *);</span><br><span class="line"> // swtch.S</span><br><span class="line"> void swtch(struct context *, struct context *);</span><br><span class="line"><span class="comment">diff --git a/os/syscall.c b/os/syscall.c</span></span><br><span class="line"><span class="comment">index d0cf211..b3a354a 100644</span></span><br><span class="line"><span class="comment">--- a/os/syscall.c</span></span><br><span class="line"><span class="comment">+++ b/os/syscall.c</span></span><br><span class="line"><span class="meta">@@ -110,10 +110,48 @@</span> uint64 sys_wait(int pid, uint64 va)</span><br><span class="line"> 	return wait(pid, code);</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"><span class="addition">+/*</span></span><br><span class="line"><span class="addition">+ * sys_spawn - Create a new process and execute a program.</span></span><br><span class="line"><span class="addition">+ * @va: User-space virtual address of the filename to execute.</span></span><br><span class="line"><span class="addition">+ *</span></span><br><span class="line"><span class="addition">+ * Creates a new process in a single step, avoiding the overhead of</span></span><br><span class="line"><span class="addition">+ * fork-then-exec. This is more efficient as it does not copy the</span></span><br><span class="line"><span class="addition">+ * parent's address space.</span></span><br><span class="line"><span class="addition">+ *</span></span><br><span class="line"><span class="addition">+ * Returns:</span></span><br><span class="line"><span class="addition">+ * The new process's PID on success.</span></span><br><span class="line"><span class="addition">+ * -1 on error (e.g., invalid filename, out of memory, or process limit reached).</span></span><br><span class="line"><span class="addition">+ */</span></span><br><span class="line"> uint64 sys_spawn(uint64 va)</span><br><span class="line"> {</span><br><span class="line"><span class="deletion">-	// TODO: your job is to complete the sys call</span></span><br><span class="line"><span class="deletion">-	return -1;</span></span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+	char name[MAX_STR_LEN];</span></span><br><span class="line"><span class="addition">+	struct proc *np;</span></span><br><span class="line"><span class="addition">+	int id;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	/*</span></span><br><span class="line"><span class="addition">+	 * Copy the filename from user space to kernel space.</span></span><br><span class="line"><span class="addition">+	 */</span></span><br><span class="line"><span class="addition">+	if (copyinstr(p-&gt;pagetable, name, va, MAX_STR_LEN) &lt; 0)</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	id = get_id_by_name(name);</span></span><br><span class="line"><span class="addition">+	if (id &lt; 0)</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if ((np = allocproc()) == 0)</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	np-&gt;parent = p;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if (loader(id, np) &lt; 0) {</span></span><br><span class="line"><span class="addition">+		freeproc(np);</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	add_task(np);</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	return np-&gt;pid;</span></span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"> uint64 sys_set_priority(long long prio){</span><br><span class="line"><span class="deletion">-- </span></span><br><span class="line">2.50.1</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p><code>make test BASE=2</code> 然后执行 <code>ch5_usertest</code>
+进行测试，中间会有几个
+<code>[ERROR 156]unknown syscall 140</code>，这不要紧，是因为我们还没实现优先级设置的系统调用导致的，下面实现完
+<code>sys_set_priority</code>
+后就不会再有这些错误了，现在只要看到最后的</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ch5t usertest passed!</span><br><span class="line">ch5 Usertests passed!</span><br></pre></td></tr></tbody></table></figure>
+<p>就证明我们的 spawn 系统调用完成了。</p>
+<h3 id="stride-调度算法-1">stride 调度算法</h3>
+<p>这算是这个实验最复杂的一部分了吧，首先最简单的引入 stride
+调度算法：</p>
+<figure class="highlight patch"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br></pre></td><td class="code"><pre><span class="line">From 707d366e7a892d0b75e4dfc9e276ea13734496e6 Mon Sep 17 00:00:00 2001</span><br><span class="line">From: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line">Date: Fri, 1 Aug 2025 22:17:09 +0800</span><br><span class="line">Subject: [PATCH 4/7] Implement stride scheduling algorithm</span><br><span class="line"></span><br><span class="line">This commit replaces the previous simple round-robin scheduler with the stride scheduling algo</span><br><span class="line">to enable priority-based process scheduling. The new scheduler ensures that processes receive CPU time</span><br><span class="line">proportional to their assigned priority, leading to a more fair and controllable execution environment.</span><br><span class="line"></span><br><span class="line">Key changes include modifications to the process structure in proc.h, where stride and priority</span><br><span class="line">fields have been added to struct proc. The main scheduler logic in proc.c is updated to select the process</span><br><span class="line">with the minimum stride for execution and then increments its stride based on its priority.</span><br><span class="line"></span><br><span class="line">New processes are initialized with a default priority of 16 and a stride of 0 in allocproc().</span><br><span class="line">Child processes created via fork() now inherit the priority and stride from their parent.</span><br><span class="line"></span><br><span class="line">Additionally, a new system call, sys_set_priority, is introduced in syscall.c. This allows a</span><br><span class="line">process to set its own priority, provided it is 2 or greater.</span><br><span class="line"></span><br><span class="line">Signed-off-by: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line"><span class="comment">---</span></span><br><span class="line"> os/const.h   |  4 ++++</span><br><span class="line"> os/proc.c    | 43 ++++++++++++++++++++++++++++++++++++++++++-</span><br><span class="line"> os/proc.h    |  3 +++</span><br><span class="line"> os/syscall.c | 14 ++++++++++++--</span><br><span class="line"> 4 files changed, 61 insertions(+), 3 deletions(-)</span><br><span class="line"></span><br><span class="line"><span class="comment">diff --git a/os/const.h b/os/const.h</span></span><br><span class="line"><span class="comment">index a178e6c..2cce207 100644</span></span><br><span class="line"><span class="comment">--- a/os/const.h</span></span><br><span class="line"><span class="comment">+++ b/os/const.h</span></span><br><span class="line"><span class="meta">@@ -35,4 +35,8 @@</span> enum {</span><br><span class="line"> #define MAX_STR_LEN (200)</span><br><span class="line"> #define IDLE_PID (0)</span><br><span class="line"> </span><br><span class="line"><span class="addition">+// scheduler algo</span></span><br><span class="line"><span class="addition">+#define BIG_STRIDE 65536</span></span><br><span class="line"><span class="addition">+#define DEFAULT_PRIO 16</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"> #endif // CONST_H</span><br><span class="line">\ No newline at end of file</span><br><span class="line"><span class="comment">diff --git a/os/proc.c b/os/proc.c</span></span><br><span class="line"><span class="comment">index ce45bff..c59ef01 100644</span></span><br><span class="line"><span class="comment">--- a/os/proc.c</span></span><br><span class="line"><span class="comment">+++ b/os/proc.c</span></span><br><span class="line"><span class="meta">@@ -85,7 +85,10 @@</span> found:</span><br><span class="line"> 	p-&gt;exit_code = 0;</span><br><span class="line"> 	p-&gt;pagetable = uvmcreate((uint64)p-&gt;trapframe);</span><br><span class="line"> 	p-&gt;program_brk = 0;</span><br><span class="line"><span class="deletion">-        p-&gt;heap_bottom = 0;</span></span><br><span class="line"><span class="addition">+	p-&gt;heap_bottom = 0;</span></span><br><span class="line"><span class="addition">+	p-&gt;stride = 0;</span></span><br><span class="line"><span class="addition">+	p-&gt;priority = DEFAULT_PRIO;</span></span><br><span class="line"><span class="addition">+	p-&gt;pass = BIG_STRIDE / p-&gt;priority;</span></span><br><span class="line"> 	memset(&amp;p-&gt;context, 0, sizeof(p-&gt;context));</span><br><span class="line"> 	memset((void *)p-&gt;kstack, 0, KSTACK_SIZE);</span><br><span class="line"> 	memset((void *)p-&gt;trapframe, 0, TRAP_PAGE_SIZE);</span><br><span class="line"><span class="meta">@@ -99,6 +102,7 @@</span> found:</span><br><span class="line"> //  - swtch to start running that process.</span><br><span class="line"> //  - eventually that process transfers control</span><br><span class="line"> //    via swtch back to the scheduler.</span><br><span class="line"><span class="addition">+#if 0</span></span><br><span class="line"> void scheduler()</span><br><span class="line"> {</span><br><span class="line"> 	struct proc *p;</span><br><span class="line"><span class="meta">@@ -126,6 +130,40 @@</span> void scheduler()</span><br><span class="line"> 		swtch(&amp;idle.context, &amp;p-&gt;context);</span><br><span class="line"> 	}</span><br><span class="line"> }</span><br><span class="line"><span class="addition">+#else</span></span><br><span class="line"><span class="addition">+void scheduler()</span></span><br><span class="line"><span class="addition">+{</span></span><br><span class="line"><span class="addition">+	struct proc *p;</span></span><br><span class="line"><span class="addition">+	struct proc *nxt_proc;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	for (;;) {</span></span><br><span class="line"><span class="addition">+		/*</span></span><br><span class="line"><span class="addition">+		 * Find the process with the smallest stride</span></span><br><span class="line"><span class="addition">+		 */</span></span><br><span class="line"><span class="addition">+		nxt_proc = 0;</span></span><br><span class="line"><span class="addition">+		for (p = pool; p &lt; &amp;pool[NPROC]; p++) {</span></span><br><span class="line"><span class="addition">+			if (p-&gt;state == RUNNABLE) {</span></span><br><span class="line"><span class="addition">+				if (nxt_proc == 0 || p-&gt;stride &lt; nxt_proc-&gt;stride)</span></span><br><span class="line"><span class="addition">+					nxt_proc = p;</span></span><br><span class="line"><span class="addition">+			}</span></span><br><span class="line"><span class="addition">+		}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+		if (nxt_proc) {</span></span><br><span class="line"><span class="addition">+			p = nxt_proc;</span></span><br><span class="line"><span class="addition">+			p-&gt;state = RUNNING;</span></span><br><span class="line"><span class="addition">+			current_proc = p;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+			if (p-&gt;priority &gt; 0)</span></span><br><span class="line"><span class="addition">+				p-&gt;stride += p-&gt;pass;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+			swtch(&amp;idle.context, &amp;p-&gt;context);</span></span><br><span class="line"><span class="addition">+			current_proc = &amp;idle;</span></span><br><span class="line"><span class="addition">+		} else</span></span><br><span class="line"><span class="addition">+			// No runnable processes, wait for interrupt</span></span><br><span class="line"><span class="addition">+			asm volatile("wfi");</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+}</span></span><br><span class="line"><span class="addition">+#endif</span></span><br><span class="line"> </span><br><span class="line"> // Switch to scheduler.  Must hold only p-&gt;lock</span><br><span class="line"> // and have changed proc-&gt;state. Saves and restores</span><br><span class="line"><span class="meta">@@ -185,6 +223,9 @@</span> int fork()</span><br><span class="line"> 	// Cause fork to return 0 in the child.</span><br><span class="line"> 	np-&gt;trapframe-&gt;a0 = 0;</span><br><span class="line"> 	np-&gt;parent = p;</span><br><span class="line"><span class="addition">+	np-&gt;stride = p-&gt;stride;</span></span><br><span class="line"><span class="addition">+	np-&gt;priority = p-&gt;priority;</span></span><br><span class="line"><span class="addition">+	np-&gt;pass = p-&gt;pass;</span></span><br><span class="line"> 	np-&gt;state = RUNNABLE;</span><br><span class="line"> 	add_task(np);</span><br><span class="line"> 	return np-&gt;pid;</span><br><span class="line"><span class="comment">diff --git a/os/proc.h b/os/proc.h</span></span><br><span class="line"><span class="comment">index 85a527c..d7bb108 100644</span></span><br><span class="line"><span class="comment">--- a/os/proc.h</span></span><br><span class="line"><span class="comment">+++ b/os/proc.h</span></span><br><span class="line"><span class="meta">@@ -47,6 +47,9 @@</span> struct proc {</span><br><span class="line"> 	struct file *files[FD_BUFFER_SIZE];</span><br><span class="line"> 	uint64 program_brk;</span><br><span class="line"> 	uint64 heap_bottom;</span><br><span class="line"><span class="addition">+	uint64 stride;</span></span><br><span class="line"><span class="addition">+	int priority;</span></span><br><span class="line"><span class="addition">+	uint64 pass;</span></span><br><span class="line"> };</span><br><span class="line"> </span><br><span class="line"> int cpuid();</span><br><span class="line"><span class="comment">diff --git a/os/syscall.c b/os/syscall.c</span></span><br><span class="line"><span class="comment">index b3a354a..2611e9c 100644</span></span><br><span class="line"><span class="comment">--- a/os/syscall.c</span></span><br><span class="line"><span class="comment">+++ b/os/syscall.c</span></span><br><span class="line"><span class="meta">@@ -155,8 +155,15 @@</span> uint64 sys_spawn(uint64 va)</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"> uint64 sys_set_priority(long long prio){</span><br><span class="line"><span class="deletion">-    // TODO: your job is to complete the sys call</span></span><br><span class="line"><span class="deletion">-    return -1;</span></span><br><span class="line"><span class="addition">+	if (prio &lt; 2)</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	p-&gt;priority = prio;</span></span><br><span class="line"><span class="addition">+	p-&gt;pass = BIG_STRIDE / p-&gt;priority;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	return prio;</span></span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"> </span><br><span class="line"><span class="meta">@@ -318,6 +325,9 @@</span> void syscall()</span><br><span class="line"> 	case SYS_spawn:</span><br><span class="line"> 		ret = sys_spawn(args[0]);</span><br><span class="line"> 		break;</span><br><span class="line"><span class="addition">+	case SYS_setpriority:</span></span><br><span class="line"><span class="addition">+		ret = sys_set_priority(args[0]);</span></span><br><span class="line"><span class="addition">+		break;</span></span><br><span class="line"> 	case SYS_sbrk:</span><br><span class="line"> 		ret = sys_sbrk(args[0]);</span><br><span class="line"> 		break;</span><br><span class="line"><span class="deletion">-- </span></span><br><span class="line">2.50.1</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>开始我以为写得没问题了，结果跑了一下 <code>ch5_usertest</code> 显示
+<code>[PANIC 5] os/queue.c:13: queue shouldn't be overflow</code>。看了一下代码，是因为和原来简单的
+RR 调度冲突了，引入新的调度算法后，原来依靠队列 FIFO
+的调度就不应该再被使用了，于是就有了以下更改：</p>
+<figure class="highlight patch"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br></pre></td><td class="code"><pre><span class="line">From 556473656e043aa5dc748f632ed75a9c4a3d5aaf Mon Sep 17 00:00:00 2001</span><br><span class="line">From: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line">Date: Fri, 1 Aug 2025 22:37:05 +0800</span><br><span class="line">Subject: [PATCH 5/7] refactor scheduler from obsolete task queue</span><br><span class="line"></span><br><span class="line">This change resolves a panic that occurred after implementing the stride scheduler.</span><br><span class="line"></span><br><span class="line">The root cause of the issue was a design mismatch between the new scheduling logic</span><br><span class="line">and legacy code. The Stride scheduler selects the next process by directly iterating</span><br><span class="line">through the global process pool, making the task_queue obsolete. However, functions</span><br><span class="line">like yield(), fork(), and etc were still calling add_task(), which continued to</span><br><span class="line">enqueue processes into a queue that was never dequeued from, inevitably leading to an overflow.</span><br><span class="line"></span><br><span class="line">Signed-off-by: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line"><span class="comment">---</span></span><br><span class="line"> os/loader.c  |  2 +-</span><br><span class="line"> os/proc.c    | 23 +++++++++++++++--------</span><br><span class="line"> os/proc.h    |  1 -</span><br><span class="line"> os/queue.c   |  2 ++</span><br><span class="line"> os/syscall.c |  2 +-</span><br><span class="line"> 5 files changed, 19 insertions(+), 11 deletions(-)</span><br><span class="line"></span><br><span class="line"><span class="comment">diff --git a/os/loader.c b/os/loader.c</span></span><br><span class="line"><span class="comment">index 77be56b..9e3fad4 100644</span></span><br><span class="line"><span class="comment">--- a/os/loader.c</span></span><br><span class="line"><span class="comment">+++ b/os/loader.c</span></span><br><span class="line"><span class="meta">@@ -99,6 +99,6 @@</span> int load_init_app()</span><br><span class="line"> 	}</span><br><span class="line"> 	debugf("load init proc %s", INIT_PROC);</span><br><span class="line"> 	loader(id, p);</span><br><span class="line"><span class="deletion">-	add_task(p);</span></span><br><span class="line"><span class="addition">+	// add_task(p);</span></span><br><span class="line"> 	return 0;</span><br><span class="line"> }</span><br><span class="line"><span class="comment">diff --git a/os/proc.c b/os/proc.c</span></span><br><span class="line"><span class="comment">index c59ef01..a12ffb8 100644</span></span><br><span class="line"><span class="comment">--- a/os/proc.c</span></span><br><span class="line"><span class="comment">+++ b/os/proc.c</span></span><br><span class="line"><span class="meta">@@ -3,7 +3,7 @@</span></span><br><span class="line"> #include "loader.h"</span><br><span class="line"> #include "trap.h"</span><br><span class="line"> #include "vm.h"</span><br><span class="line"><span class="deletion">-#include "queue.h"</span></span><br><span class="line"><span class="addition">+//#include "queue.h"</span></span><br><span class="line"> </span><br><span class="line"> struct proc pool[NPROC];</span><br><span class="line"> __attribute__((aligned(16))) char kstack[NPROC][PAGE_SIZE];</span><br><span class="line"><span class="meta">@@ -12,7 +12,7 @@</span> __attribute__((aligned(4096))) char trapframe[NPROC][TRAP_PAGE_SIZE];</span><br><span class="line"> extern char boot_stack_top[];</span><br><span class="line"> struct proc *current_proc;</span><br><span class="line"> struct proc idle;</span><br><span class="line"><span class="deletion">-struct queue task_queue;</span></span><br><span class="line"><span class="addition">+//struct queue task_queue;</span></span><br><span class="line"> </span><br><span class="line"> int threadid()</span><br><span class="line"> {</span><br><span class="line"><span class="meta">@@ -36,7 +36,7 @@</span> void proc_init()</span><br><span class="line"> 	idle.kstack = (uint64)boot_stack_top;</span><br><span class="line"> 	idle.pid = IDLE_PID;</span><br><span class="line"> 	current_proc = &amp;idle;</span><br><span class="line"><span class="deletion">-	init_queue(&amp;task_queue);</span></span><br><span class="line"><span class="addition">+	// init_queue(&amp;task_queue);</span></span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"> int allocpid()</span><br><span class="line"><span class="meta">@@ -45,6 +45,12 @@</span> int allocpid()</span><br><span class="line"> 	return PID++;</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"><span class="addition">+/*</span></span><br><span class="line"><span class="addition">+ * The fetch_task and add_task function is no longer</span></span><br><span class="line"><span class="addition">+ * needed with the stride scheduler, as the scheduler</span></span><br><span class="line"><span class="addition">+ * now iterates through the process pool directly.</span></span><br><span class="line"><span class="addition">+ */</span></span><br><span class="line"><span class="addition">+#if 0</span></span><br><span class="line"> struct proc *fetch_task()</span><br><span class="line"> {</span><br><span class="line"> 	int index = pop_queue(&amp;task_queue);</span><br><span class="line"><span class="meta">@@ -58,9 +64,10 @@</span> struct proc *fetch_task()</span><br><span class="line"> </span><br><span class="line"> void add_task(struct proc *p)</span><br><span class="line"> {</span><br><span class="line"><span class="deletion">-	push_queue(&amp;task_queue, p - pool);</span></span><br><span class="line"><span class="deletion">-	debugf("add task %d(pid=%d) to task queue\n", p - pool, p-&gt;pid);</span></span><br><span class="line"><span class="addition">+	// push_queue(&amp;task_queue, p - pool);</span></span><br><span class="line"><span class="addition">+	// debugf("add task %d(pid=%d) to task queue\n", p - pool, p-&gt;pid);</span></span><br><span class="line"> }</span><br><span class="line"><span class="addition">+#endif</span></span><br><span class="line"> </span><br><span class="line"> // Look in the process table for an UNUSED proc.</span><br><span class="line"> // If found, initialize state required to run in the kernel.</span><br><span class="line"><span class="meta">@@ -184,7 +191,7 @@</span> void sched()</span><br><span class="line"> void yield()</span><br><span class="line"> {</span><br><span class="line"> 	current_proc-&gt;state = RUNNABLE;</span><br><span class="line"><span class="deletion">-	add_task(current_proc);</span></span><br><span class="line"><span class="addition">+	// add_task(current_proc);</span></span><br><span class="line"> 	sched();</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"><span class="meta">@@ -227,7 +234,7 @@</span> int fork()</span><br><span class="line"> 	np-&gt;priority = p-&gt;priority;</span><br><span class="line"> 	np-&gt;pass = p-&gt;pass;</span><br><span class="line"> 	np-&gt;state = RUNNABLE;</span><br><span class="line"><span class="deletion">-	add_task(np);</span></span><br><span class="line"><span class="addition">+	// add_task(np);</span></span><br><span class="line"> 	return np-&gt;pid;</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"><span class="meta">@@ -269,7 +276,7 @@</span> int wait(int pid, int *code)</span><br><span class="line"> 			return -1;</span><br><span class="line"> 		}</span><br><span class="line"> 		p-&gt;state = RUNNABLE;</span><br><span class="line"><span class="deletion">-		add_task(p);</span></span><br><span class="line"><span class="addition">+		// add_task(p);</span></span><br><span class="line"> 		sched();</span><br><span class="line"> 	}</span><br><span class="line"> }</span><br><span class="line"><span class="comment">diff --git a/os/proc.h b/os/proc.h</span></span><br><span class="line"><span class="comment">index d7bb108..e32d656 100644</span></span><br><span class="line"><span class="comment">--- a/os/proc.h</span></span><br><span class="line"><span class="comment">+++ b/os/proc.h</span></span><br><span class="line"><span class="meta">@@ -63,7 +63,6 @@</span> int fork();</span><br><span class="line"> int exec(char *);</span><br><span class="line"> int wait(int, int *);</span><br><span class="line"> void add_task(struct proc *);</span><br><span class="line"><span class="deletion">-struct proc *pop_task();</span></span><br><span class="line"> struct proc *allocproc();</span><br><span class="line"> void freeproc(struct proc *p);</span><br><span class="line"> int fdalloc(struct file *);</span><br><span class="line"><span class="comment">diff --git a/os/queue.c b/os/queue.c</span></span><br><span class="line"><span class="comment">index 5f04063..60d2860 100644</span></span><br><span class="line"><span class="comment">--- a/os/queue.c</span></span><br><span class="line"><span class="comment">+++ b/os/queue.c</span></span><br><span class="line"><span class="meta">@@ -1,3 +1,4 @@</span></span><br><span class="line"><span class="addition">+#if 0</span></span><br><span class="line"> #include "queue.h"</span><br><span class="line"> #include "defs.h"</span><br><span class="line"> </span><br><span class="line"><span class="meta">@@ -27,3 +28,4 @@</span> int pop_queue(struct queue *q)</span><br><span class="line"> 		q-&gt;empty = 1;</span><br><span class="line"> 	return value;</span><br><span class="line"> }</span><br><span class="line"><span class="addition">+#endif</span></span><br><span class="line"><span class="comment">diff --git a/os/syscall.c b/os/syscall.c</span></span><br><span class="line"><span class="comment">index 2611e9c..6dc9829 100644</span></span><br><span class="line"><span class="comment">--- a/os/syscall.c</span></span><br><span class="line"><span class="comment">+++ b/os/syscall.c</span></span><br><span class="line"><span class="meta">@@ -149,7 +149,7 @@</span> uint64 sys_spawn(uint64 va)</span><br><span class="line"> 		return -1;</span><br><span class="line"> 	}</span><br><span class="line"> </span><br><span class="line"><span class="deletion">-	add_task(np);</span></span><br><span class="line"><span class="addition">+	// add_task(np);</span></span><br><span class="line"> </span><br><span class="line"> 	return np-&gt;pid;</span><br><span class="line"> }</span><br><span class="line"><span class="deletion">-- </span></span><br><span class="line">2.50.1</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>这样修完就没问题了。不过我们还没处理可能的 stride
+的溢出，虽然实验也不要求但是我觉得还是处理一下更好：</p>
+<figure class="highlight patch"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">From 529b7de53ab3dd0ebdc1de3e388797f97540f933 Mon Sep 17 00:00:00 2001</span><br><span class="line">From: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line">Date: Fri, 1 Aug 2025 23:17:25 +0800</span><br><span class="line">Subject: [PATCH 6/7] Prevent stride overflow in scheduler</span><br><span class="line"></span><br><span class="line">This commit addresses a potential long-term stability issue in the stride scheduling algo</span><br><span class="line">where the stride value could overflow its uint64 type. Such an overflow would wrap around</span><br><span class="line">and disrupt the scheduler's fairness.</span><br><span class="line"></span><br><span class="line">To resolve this, the scheduler logic in proc.c has been updated to normalize stride values</span><br><span class="line">during each scheduling cycle. After identifying the runnable process with the minimum</span><br><span class="line">stride, this minimum value is subtracted from the strides of all other runnable processes.</span><br><span class="line"></span><br><span class="line">This operation preserves the relative differences between strides, ensuring the scheduling</span><br><span class="line">order remains correct, while pulling all stride values down to a smaller range and preventing</span><br><span class="line">them from growing indefinitely. This change makes the scheduler robust against overflow without</span><br><span class="line">altering its proportional-share behavior, ensuring system stability over long periods of operation.</span><br><span class="line"></span><br><span class="line">Signed-off-by: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line"><span class="comment">---</span></span><br><span class="line"> os/proc.c | 15 +++++++++++++++</span><br><span class="line"> 1 file changed, 15 insertions(+)</span><br><span class="line"></span><br><span class="line"><span class="comment">diff --git a/os/proc.c b/os/proc.c</span></span><br><span class="line"><span class="comment">index a12ffb8..78429cb 100644</span></span><br><span class="line"><span class="comment">--- a/os/proc.c</span></span><br><span class="line"><span class="comment">+++ b/os/proc.c</span></span><br><span class="line"><span class="meta">@@ -156,6 +156,21 @@</span> void scheduler()</span><br><span class="line"> 		}</span><br><span class="line"> </span><br><span class="line"> 		if (nxt_proc) {</span><br><span class="line"><span class="addition">+			/*</span></span><br><span class="line"><span class="addition">+			 * To prevent stride overflow, subtract the minimum</span></span><br><span class="line"><span class="addition">+			 * stride from all runnable processes. This keeps the</span></span><br><span class="line"><span class="addition">+			 * relative order and prevents the stride values from</span></span><br><span class="line"><span class="addition">+			 * growing indefinitely.</span></span><br><span class="line"><span class="addition">+			 */</span></span><br><span class="line"><span class="addition">+			uint64 min_stride = nxt_proc-&gt;stride;</span></span><br><span class="line"><span class="addition">+			if (min_stride &gt; 0) {</span></span><br><span class="line"><span class="addition">+				for (p = pool; p &lt; &amp;pool[NPROC]; p++) {</span></span><br><span class="line"><span class="addition">+					if (p-&gt;state == RUNNABLE) {</span></span><br><span class="line"><span class="addition">+						p-&gt;stride -= min_stride;</span></span><br><span class="line"><span class="addition">+					}</span></span><br><span class="line"><span class="addition">+				}</span></span><br><span class="line"><span class="addition">+			}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"> 			p = nxt_proc;</span><br><span class="line"> 			p-&gt;state = RUNNING;</span><br><span class="line"> 			current_proc = p;</span><br><span class="line"><span class="deletion">-- </span></span><br><span class="line">2.50.1</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>做了上面的更改之后，我觉得真的是非常完美，一点问题都没有了。结果怎么着，运行完测例后输入
+<code>quit</code> 想退出
+usershell，结果没反应了？？左思右想想不通问题出在哪儿，又回去翻了一下原本的
+<code>scheduler()</code> 函数实现，发现了问题。我在引入 stride
+调度算法的提交中，如果没有 <code>nxt_proc</code>，会进入 wfi
+状态，而在原本的实现中，如果没有新任务，会执行
+<code>panic("all app are over!\n");</code>，这就是我输入
+<code>quit</code>
+后无法退出没有反应的问题所在，一直等待中断可不就没反应了吗？于是就有了下面最后这个修复提交：</p>
+<figure class="highlight patch"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">From f6e510a5fe5e6fe3a8f40e9a883b12d38c5055d7 Mon Sep 17 00:00:00 2001</span><br><span class="line">From: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line">Date: Sat, 2 Aug 2025 00:44:16 +0800</span><br><span class="line">Subject: [PATCH 7/7] use panic() instead of inline assembly wfi</span><br><span class="line"></span><br><span class="line">lol, if there's no existing process, we shouldn't wait for interrupt but</span><br><span class="line">to panic when input is quit.</span><br><span class="line"></span><br><span class="line">Signed-off-by: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line"><span class="comment">---</span></span><br><span class="line"> os/proc.c | 3 +--</span><br><span class="line"> 1 file changed, 1 insertion(+), 2 deletions(-)</span><br><span class="line"></span><br><span class="line"><span class="comment">diff --git a/os/proc.c b/os/proc.c</span></span><br><span class="line"><span class="comment">index 78429cb..2e18321 100644</span></span><br><span class="line"><span class="comment">--- a/os/proc.c</span></span><br><span class="line"><span class="comment">+++ b/os/proc.c</span></span><br><span class="line"><span class="meta">@@ -181,8 +181,7 @@</span> void scheduler()</span><br><span class="line"> 			swtch(&amp;idle.context, &amp;p-&gt;context);</span><br><span class="line"> 			current_proc = &amp;idle;</span><br><span class="line"> 		} else</span><br><span class="line"><span class="deletion">-			// No runnable processes, wait for interrupt</span></span><br><span class="line"><span class="deletion">-			asm volatile("wfi");</span></span><br><span class="line"><span class="addition">+			panic("all app are over!\n");</span></span><br><span class="line"> 	}</span><br><span class="line"> }</span><br><span class="line"> #endif</span><br><span class="line"><span class="deletion">-- </span></span><br><span class="line">2.50.1</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p><del>我再也不用内联汇编了😭😭</del></p>
+<h2 id="问答作业">问答作业</h2>
+<h3 id="stride-算法深入">stride 算法深入</h3>
+<p><em>stride 算法原理非常简单，但是有一个比较大的问题。例如两个 pass =
+10 的进程，使用 8bit 无符号整形储存 stride，p1.stride = 255，p2.stride =
+250，在 p2 执行一个时间片后，理论上下一次应该 p1 执行。</em></p>
+<ul>
+<li><em>实际情况是轮到 p1 执行吗？为什么？</em></li>
+</ul>
+<p><em>我们之前要求进程优先级 &gt;= 2
+其实就是为了解决这个问题。可以证明，<strong>在不考虑溢出的情况下</strong>,
+在进程优先级全部 &gt;= 2 的情况下，如果严格按照算法执行，那么 STRIDE_MAX
+– STRIDE_MIN &lt;= BigStride / 2。</em></p>
+<ul>
+<li><em>为什么？尝试简单说明（传达思想即可，不要求严格证明）。</em></li>
+</ul>
+<p><em>已知以上结论，<strong>在考虑溢出的情况下</strong>，假设我们通过逐个比较得到
+Stride 最小的进程，请设计一个合适的比较函数，用来正确比较两个 Stride
+的真正大小：</em></p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="type">unsigned</span> <span class="type">long</span> <span class="type">long</span> Stride_t;</span><br><span class="line"><span class="type">const</span> Stride_t BIG_STRIDE = <span class="number">0xffffffffffffffffU</span>LL;</span><br><span class="line"><span class="type">int</span> <span class="title function_">cmp</span><span class="params">(Stride_t a, Stride_t b)</span> {</span><br><span class="line">    <span class="comment">// YOUR CODE HERE</span></span><br><span class="line">    <span class="comment">// return 1 if a &gt; b</span></span><br><span class="line">    <span class="comment">// return -1 if a &lt; b</span></span><br><span class="line">    <span class="comment">// return 0 if a == b</span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p><em>例子：假设使用 8 bits 储存 stride, BigStride =
+255。那么：</em></p>
+<ul>
+<li><em>cmp(125, 255) == 1</em></li>
+<li><em>cmp(129, 255) == -1</em></li>
+</ul>
+<h2 id="问答作业答案">问答作业答案</h2>
+<h3 id="stride-算法深入-1">stride 算法深入</h3>
+<p><em>stride 算法原理非常简单，但是有一个比较大的问题。例如两个 pass =
+10 的进程，使用 8bit 无符号整形储存 stride，p1.stride = 255，p2.stride =
+250，在 p2 执行一个时间片后，理论上下一次应该 p1 执行。</em></p>
+<ul>
+<li><p><em>实际情况是轮到 p1 执行吗？为什么？</em></p>
+<p>不是，p1.stride = 255，p2.stride = 250。p2 执行后，p2.stride = (250 +
+10) % 256 = 4。于是 p1.stride = 255, p2.stride = 4，4 &lt;
+255，所以会选择 p2 继续执行。</p></li>
+</ul>
+<p><em>我们之前要求进程优先级 &gt;= 2
+其实就是为了解决这个问题。可以证明，<strong>在不考虑溢出的情况下</strong>,
+在进程优先级全部 &gt;= 2 的情况下，如果严格按照算法执行，那么 STRIDE_MAX
+– STRIDE_MIN &lt;= BigStride / 2。</em></p>
+<ul>
+<li><p><em>为什么？尝试简单说明（传达思想即可，不要求严格证明）。</em></p>
+<p>当所有进程优先级 ≥ 2 时，最大的 stride 增量是 BigStride /
+2，于是在最坏情况下，一个进程一直不执行，其他进程轮流执行。假设进程 A 的
+stride 最小，进程 B 的 stride 最大，当 B 再次被选中执行时，A 和 B 的
+stride 差值最多是 BigStride / 2，因为每次增量最多是
+BigStride/2，所以差值不会超过这个限制。</p></li>
+</ul>
+<p><em>已知以上结论，<strong>在考虑溢出的情况下</strong>，假设我们通过逐个比较得到
+Stride 最小的进程，请设计一个合适的比较函数，用来正确比较两个 Stride
+的真正大小：</em></p>
+<figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="type">unsigned</span> <span class="type">long</span> <span class="type">long</span> Stride_t;</span><br><span class="line"><span class="type">const</span> Stride_t BIG_STRIDE = <span class="number">0xffffffffffffffffU</span>LL;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">cmp</span><span class="params">(Stride_t a, Stride_t b)</span> {</span><br><span class="line">    <span class="keyword">if</span> (a == b)</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    </span><br><span class="line">    Stride_t diff = a - b;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (diff &lt;= BIG_STRIDE / <span class="number">2</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p><em>例子：假设使用 8 bits 储存 stride, BigStride =
+255。那么：</em></p>
+<ul>
+<li><em>cmp(125, 255) == 1</em></li>
+<li><em>cmp(129, 255) == -1</em></li>
+</ul>
+<h2 id="选做题目">选做题目</h2>
+<h3 id="选作题目列表">选作题目列表</h3>
+<ul>
+<li>（6 分）相同页面共享（Same page sharing）fork 时的 Copy on Write</li>
+<li>（4 分）实现多种 (&gt;3 种) 调度算法：可动态提升 / 降低优先级的多级反馈队列、实时调度等</li>
+<li>（7 分）多核支持与多核调度（支持进程迁移和多核模式执行应用程序，但在内核中没有抢占和多核支持）</li>
+</ul>
+<p>这次一道选做题目都没有写，时间不够了，如果之后有时间再补吧。<del>（虽然大概率是没有的</del></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>0wnerD1ed
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://0b1t.tech/uCore/10007.html" title="uCore lab3 实验报告">https://0b1t.tech/uCore/10007.html</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-CN" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/OS/" rel="tag"><i class="fa fa-tag"></i> OS</a>
+              <a href="/tags/riscv/" rel="tag"><i class="fa fa-tag"></i> riscv</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/uCore/50167.html" rel="prev" title="uCore lab2 实验报告">
+                  <i class="fa fa-angle-left"></i> uCore lab2 实验报告
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="waline"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">0wnerD1ed</span>
+  </div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/0wnerDied" class="github-corner" title="在 GitHub 上关注我" aria-label="在 GitHub 上关注我" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+<script class="next-config" data-name="waline" type="application/json">{"lang":"zh-CN","enable":true,"serverURL":"blog-waline-mauve.vercel.app","cssUrl":"https://unpkg.com/@waline/client@v2/dist/waline.css","commentCount":true,"pageview":false,"locale":{"placeholder":"善语结善缘，恶语伤人心"},"pageSize":30,"comment_count":true,"dark":"html[data-darkmode]","meta":[],"el":"#waline","comment":true,"libUrl":"//unpkg.com/@waline/client@v2/dist/waline.js","path":"/uCore/10007.html"}</script>
+<link rel="stylesheet" href="https://unpkg.com/@waline/client@v2/dist/waline.css">
+<script>
+document.addEventListener('page:loaded', () => {
+  NexT.utils.loadComments(CONFIG.waline.el).then(() =>
+    NexT.utils.getScript(CONFIG.waline.libUrl, { condition: window.Waline })
+  ).then(() => 
+    Waline.init(Object.assign({}, CONFIG.waline,{ el: document.querySelector(CONFIG.waline.el) }))
+  );
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/darkmode-js@1.5.7/lib/darkmode-js.min.js"></script>
+
+<script>
+var options = {
+  bottom: '64px',
+  right: '32px',
+  left: 'unset',
+  time: '0.5s',
+  mixColor: 'transparent',
+  backgroundColor: 'transparent',
+  buttonColorDark: '#100f2c',
+  buttonColorLight: '#fff',
+  saveInCookies: true,
+  label: '🌓',
+  autoMatchOsTheme: true
+}
+const darkmode = new Darkmode(options);
+window.darkmode = darkmode;
+darkmode.showWidget();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // 等待Waline元素加载完成
+  const checkWaline = setInterval(function() {
+    const walineEl = document.querySelector('.wl-panel');
+    if (walineEl) {
+      clearInterval(checkWaline);
+      
+      // 监听暗黑模式变化，强制更新评论区样式
+      if (typeof window.darkmode !== 'undefined') {
+        window.darkmode.addEventListener('change', function(event) {
+          setTimeout(function() {
+            const isDark = document.body.classList.contains('darkmode--activated');
+            
+            if (isDark) {
+              // 直接修改DOM元素样式
+              document.querySelectorAll('.wl-panel, .wl-card').forEach(el => {
+                el.style.setProperty('background-color', '#222', 'important');
+                el.style.setProperty('border-color', '#444', 'important');
+              });
+              
+              document.querySelectorAll('.wl-editor, .wl-input, .wl-textarea').forEach(el => {
+                el.style.setProperty('background-color', '#333', 'important');
+                el.style.setProperty('color', '#ddd', 'important');
+                el.style.setProperty('border-color', '#555', 'important');
+              });
+              
+              document.querySelectorAll('.wl-content, .wl-meta, .wl-meta span, .wl-meta a').forEach(el => {
+                el.style.setProperty('color', '#ccc', 'important');
+              });
+            }
+          }, 100);
+        });
+      }
+    }
+  }, 100);
+});
+</script>
+
+</body>
+</html>

@@ -4,7 +4,16 @@
   <url>
     <loc>https://0b1t.tech/uCore/50167.html</loc>
     
-    <lastmod>2025-07-30</lastmod>
+    <lastmod>2025-08-02</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://0b1t.tech/uCore/10007.html</loc>
+    
+    <lastmod>2025-08-02</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -29,7 +38,7 @@
   </url>
   
   <url>
-    <loc>https://0b1t.tech/tags/index.html</loc>
+    <loc>https://0b1t.tech/categories/index.html</loc>
     
     <lastmod>2025-07-23</lastmod>
     
@@ -38,7 +47,7 @@
   </url>
   
   <url>
-    <loc>https://0b1t.tech/categories/index.html</loc>
+    <loc>https://0b1t.tech/tags/index.html</loc>
     
     <lastmod>2025-07-23</lastmod>
     
@@ -76,7 +85,7 @@
 
   <url>
     <loc>https://0b1t.tech/</loc>
-    <lastmod>2025-07-30</lastmod>
+    <lastmod>2025-08-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -84,35 +93,35 @@
   
   <url>
     <loc>https://0b1t.tech/tags/ebpf/</loc>
-    <lastmod>2025-07-30</lastmod>
+    <lastmod>2025-08-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://0b1t.tech/tags/domain-configure/</loc>
-    <lastmod>2025-07-30</lastmod>
+    <lastmod>2025-08-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://0b1t.tech/tags/NN/</loc>
-    <lastmod>2025-07-30</lastmod>
+    <lastmod>2025-08-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://0b1t.tech/tags/OS/</loc>
-    <lastmod>2025-07-30</lastmod>
+    <lastmod>2025-08-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://0b1t.tech/tags/riscv/</loc>
-    <lastmod>2025-07-30</lastmod>
+    <lastmod>2025-08-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
@@ -121,28 +130,28 @@
   
   <url>
     <loc>https://0b1t.tech/categories/kernel/</loc>
-    <lastmod>2025-07-30</lastmod>
+    <lastmod>2025-08-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://0b1t.tech/categories/issue-resolve/</loc>
-    <lastmod>2025-07-30</lastmod>
+    <lastmod>2025-08-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://0b1t.tech/categories/Machine-learning/</loc>
-    <lastmod>2025-07-30</lastmod>
+    <lastmod>2025-08-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://0b1t.tech/categories/uCore/</loc>
-    <lastmod>2025-07-30</lastmod>
+    <lastmod>2025-08-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
