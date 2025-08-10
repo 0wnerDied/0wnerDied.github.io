@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="hcYDp6Fp83zSq_ebw4L0fyy9A85xh7nJVXRc0YIrplg">
+  <meta name="msvalidate.01" content="6607AE0DF3E7D531126AB256C9D013F2">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comic+Sans+MS:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancyapps-ui/6.0.5/fancybox/fancybox.css" integrity="sha256-uTcjoMD6rPt4OyV3Rs02Slxl0BJGMNVKAm/1eYPt2go=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"0b1t.tech","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.23.2","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="做这节实验的时候是真的头疼，光是新增的代码就读了好久，以前也确实没接触过文件系统相关的东西，感觉很折磨。后面写系统调用也是东一榔头西一棒槌的，感觉未来还是得再复盘。 本章任务  ch6b_usertest merge ch5 的改动，然后再次测试 ch6_usertest。 完成本章问答作业。 完成本章编程作业。 最终，完成实验报告并 push 你的 ch6 分支到远程仓库。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="uCore lab4 实验报告">
+<meta property="og:url" content="https://0b1t.tech/uCore/57361.html">
+<meta property="og:site_name" content="0wnerD1ed&#39;s blog">
+<meta property="og:description" content="做这节实验的时候是真的头疼，光是新增的代码就读了好久，以前也确实没接触过文件系统相关的东西，感觉很折磨。后面写系统调用也是东一榔头西一棒槌的，感觉未来还是得再复盘。 本章任务  ch6b_usertest merge ch5 的改动，然后再次测试 ch6_usertest。 完成本章问答作业。 完成本章编程作业。 最终，完成实验报告并 push 你的 ch6 分支到远程仓库。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-08-10T19:34:18.000Z">
+<meta property="article:modified_time" content="2025-08-10T20:32:13.329Z">
+<meta property="article:author" content="0wnerD1ed">
+<meta property="article:tag" content="OS">
+<meta property="article:tag" content="riscv">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://0b1t.tech/uCore/57361.html">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://0b1t.tech/uCore/57361.html","path":"uCore/57361.html","title":"uCore lab4 实验报告"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>uCore lab4 实验报告 | 0wnerD1ed's blog</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fancyapps-ui/6.0.5/fancybox/fancybox.umd.js" integrity="sha256-UiSieVaV/DXce2LW7QH+o77w+AIoAvSCPBkezriZ2DQ=" crossorigin="anonymous" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pangu/6.1.3/pangu.umd.js" integrity="sha256-erngBMP3zzoIM6eqQ8dmrReh2vqCRgWmORroIfVoDlE=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+  <script src="/js/third-party/fancybox.js" defer></script>
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js" defer></script>
+
+
+<link rel="dns-prefetch" href="blog-waline-mauve.vercel.app">
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<style>.darkmode--activated{--body-bg-color:#282828;--content-bg-color:#333;--card-bg-color:#555;--text-color:#ccc;--blockquote-color:#bbb;--link-color:#ccc;--link-hover-color:#eee;--brand-color:#ddd;--brand-hover-color:#ddd;--table-row-odd-bg-color:#282828;--table-row-hover-bg-color:#363636;--menu-item-bg-color:#555;--btn-default-bg:#222;--btn-default-color:#ccc;--btn-default-border-color:#555;--btn-default-hover-bg:#666;--btn-default-hover-color:#ccc;--btn-default-hover-border-color:#666;--highlight-background:#282b2e;--highlight-foreground:#a9b7c6;--highlight-gutter-background:#34393d;--highlight-gutter-foreground:#9ca9b6}.darkmode--activated img{opacity:.75}.darkmode--activated img:hover{opacity:.9}.darkmode--activated code{color:#69dbdc;background:0 0}button.darkmode-toggle{z-index:9999}.darkmode-ignore,img{display:flex!important}.beian img{display:inline-block!important}</style></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">0wnerD1ed's blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E7%AB%A0%E4%BB%BB%E5%8A%A1"><span class="nav-number">1.</span> <span class="nav-text">本章任务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E7%A8%8B%E4%BD%9C%E4%B8%9A"><span class="nav-number">2.</span> <span class="nav-text">编程作业</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A1%AC%E9%93%BE%E6%8E%A5"><span class="nav-number">2.1.</span> <span class="nav-text">硬链接</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#tips"><span class="nav-number">2.2.</span> <span class="nav-text">Tips</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E7%A8%8B%E4%BD%9C%E4%B8%9A%E7%AD%94%E6%A1%88"><span class="nav-number">3.</span> <span class="nav-text">编程作业答案</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E7%AD%94%E4%BD%9C%E4%B8%9A"><span class="nav-number">4.</span> <span class="nav-text">问答作业</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ch6"><span class="nav-number">4.1.</span> <span class="nav-text">ch6</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ch7"><span class="nav-number">4.2.</span> <span class="nav-text">ch7</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E7%AD%94%E4%BD%9C%E4%B8%9A%E7%AD%94%E6%A1%88"><span class="nav-number">5.</span> <span class="nav-text">问答作业答案</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ch6-1"><span class="nav-number">5.1.</span> <span class="nav-text">ch6</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ch7-1"><span class="nav-number">5.2.</span> <span class="nav-text">ch7</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="0wnerD1ed"
+      src="https://avatars.githubusercontent.com/u/59904423?s=400&u=e2d918cc9959b82599bb4dbfcebb8b912880b9dc&v=4">
+  <p class="site-author-name" itemprop="name">0wnerD1ed</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/0wnerDied" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;0wnerDied" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:atndko@outlook.sg" title="E-Mail → mailto:atndko@outlook.sg" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://t.me/OwnerDiedddd" title="Telegram → https:&#x2F;&#x2F;t.me&#x2F;OwnerDiedddd" rel="noopener me" target="_blank"><i class="fab fa-telegram fa-fw"></i></a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://0b1t.tech/uCore/57361.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars.githubusercontent.com/u/59904423?s=400&u=e2d918cc9959b82599bb4dbfcebb8b912880b9dc&v=4">
+      <meta itemprop="name" content="0wnerD1ed">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="0wnerD1ed's blog">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="uCore lab4 实验报告 | 0wnerD1ed's blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          uCore lab4 实验报告
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2025-08-11 03:34:18 / 修改时间：04:32:13" itemprop="dateCreated datePublished" datetime="2025-08-11T03:34:18+08:00">2025-08-11</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/uCore/" itemprop="url" rel="index"><span itemprop="name">uCore</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+    <span class="post-meta-item-icon">
+      <i class="far fa-comment"></i>
+    </span>
+    <span class="post-meta-item-text">Waline：</span>
+  
+    <a title="waline" href="/uCore/57361.html#waline" itemprop="discussionUrl">
+      <span class="post-comments-count waline-comment-count" data-path="/uCore/57361.html" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>17k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>57 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>做这节实验的时候是真的头疼，光是新增的代码就读了好久，以前也确实没接触过文件系统相关的东西，感觉很折磨。后面写系统调用也是东一榔头西一棒槌的，感觉未来还是得再复盘。</p>
+<h2 id="本章任务">本章任务</h2>
+<ul>
+<li><code>ch6b_usertest</code></li>
+<li>merge ch5 的改动，然后再次测试 <code>ch6_usertest</code>。</li>
+<li>完成本章问答作业。</li>
+<li>完成本章编程作业。</li>
+<li>最终，完成实验报告并 push 你的 ch6 分支到远程仓库。</li>
+</ul>
+<h2 id="编程作业">编程作业</h2>
+<h3 id="硬链接">硬链接</h3>
+<p>你的电脑桌面是什么样的？放满了图标吗？反正我的 windows
+是这样的。显然很少人会真的把可执行文件放到桌面上，桌面图标其实都是一些快捷方式。或者用
+unix 的术语来说：软链接。为了减少工作量，我们今天来实现软链接的兄弟：<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Hard_link">硬链接</a>。</p>
+<p>硬链接要求两个不同的目录项指向同一个文件，在我们的文件系统中也就是两个不同名称目录项指向同一个磁盘块。本节要求实现三个系统调用
+<code>sys_linkat</code>、<code>sys_unlinkat</code>、<code>sys_stat</code>。</p>
+<p><strong>linkat</strong>：</p>
+<ul>
+<li>syscall ID: 37</li>
+<li>功能：创建一个文件的一个硬链接（<a target="_blank" rel="noopener" href="https://linux.die.net/man/2/linkat">linkat 标准接口</a>）。</li>
+<li>接口：<code>int linkat(int olddirfd, char* oldpath, int newdirfd, char* newpath, unsigned int flags)</code></li>
+<li>参数：
+<ul>
+<li><code>olddirfd</code>，<code>newdirfd</code>:
+仅为了兼容性考虑，本次实验中始终为 <code>AT_FDCWD</code>
+(-100)，可以忽略。</li>
+<li><code>flags</code>: 仅为了兼容性考虑，本次实验中始终为
+0，可以忽略。</li>
+<li><code>oldpath</code>：原有文件路径。</li>
+<li><code>newpath</code>: 新的链接文件路径。</li>
+</ul></li>
+<li>说明：
+<ul>
+<li>为了方便，不考虑新文件路径已经存在的情况（属于未定义行为）。除非出现新旧名字一致的情况，此时需要返回
+-1。</li>
+<li>返回值：如果出现了错误则返回 -1，否则返回 0。</li>
+</ul></li>
+<li>可能的错误
+<ul>
+<li>链接同名文件。</li>
+</ul></li>
+</ul>
+<p><strong>unlinkat</strong>:</p>
+<ul>
+<li>syscall ID: 35</li>
+<li>功能：取消一个文件路径到文件的链接（<a target="_blank" rel="noopener" href="https://linux.die.net/man/2/unlinkat">unlinkat 标准接口</a>）。</li>
+<li>接口：<code>int unlinkat(int dirfd, char* path, unsigned int flags)</code></li>
+<li>参数：
+<ul>
+<li><code>dirfd</code>: 仅为了兼容性考虑，本次实验中始终为
+<code>AT_FDCWD</code> (-100)，可以忽略。</li>
+<li><code>flags</code>: 仅为了兼容性考虑，本次实验中始终为
+0，可以忽略。</li>
+<li><code>path</code>：文件路径。</li>
+</ul></li>
+<li>说明：
+<ul>
+<li>需要注意 unlink 掉所有硬链接后彻底删除文件的情况。</li>
+</ul></li>
+<li>返回值：如果出现了错误则返回 -1，否则返回 0。</li>
+<li>可能的错误
+<ul>
+<li>文件不存在。</li>
+</ul></li>
+</ul>
+<p><strong>fstat</strong>:</p>
+<ul>
+<li>syscall ID: 80</li>
+<li>功能：获取文件状态。</li>
+<li>接口：<code>int fstat(int fd, struct Stat* st)</code></li>
+<li>参数：
+<ul>
+<li><p><code>fd</code>: 文件描述符</p></li>
+<li><p><code>st</code>: 文件状态结构体</p>
+<p></p><figure class="highlight c"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Stat</span> {</span></span><br><span class="line">  uint64 dev,     <span class="comment">// 文件所在磁盘驱动号，该实现写死为 0 即可。</span></span><br><span class="line">  uint64 ino,     <span class="comment">// inode 文件所在 inode 编号</span></span><br><span class="line">  uint32 mode,    <span class="comment">// 文件类型</span></span><br><span class="line">  uint32 nlink,   <span class="comment">// 硬链接数量，初始为1</span></span><br><span class="line">  uint64 pad[<span class="number">7</span>],  <span class="comment">// 无需考虑，为了兼容性设计</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// 文件类型只需要考虑:</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> DIR 0x040000              <span class="comment">// directory</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> FILE 0x100000             <span class="comment">// ordinary regular file</span></span></span><br></pre></td></tr></tbody></table></figure><p></p></li>
+</ul></li>
+<li>返回值：如果出现了错误则返回 -1，否则返回 0。</li>
+<li>可能的错误
+<ul>
+<li>fd 无效。</li>
+<li>st 地址非法。</li>
+</ul></li>
+</ul>
+<h3 id="tips">Tips</h3>
+<ul>
+<li>需要给 inode 和 dinode 都增加 link
+的计数，但强烈建议不要改变整个数据结构的大小，事实上，推荐你修改一个
+pad。</li>
+<li>os 和 nfs 的修改需要同步，只不过 nfs 比较简单，只需要初始化 link
+计数为 1 就行（可以通过修改 <code>ialloc</code> 来实现）。</li>
+<li>unlink 有删除文件的语义，如果 link 计数为 0，需要删除 inode
+和对应的数据块，为此你需要正确调用
+<code>ivalid</code>、<code>iupdate</code>、<code>iput</code>（如果测试遇到 bug 了不妨再看看这句话），并取消
+<code>iput</code> 中判断条件的注释。你可能需要修改 <code>iput</code>
+注释中的变量名（如果你的计数变量不叫 nlink）。</li>
+</ul>
+<h2 id="编程作业答案">编程作业答案</h2>
+<p>首先，简单把 ch5
+的提交摘过来，或者直接合并分支也行，处理冲突很简单。测试一下
+<code>make test BASE=2</code>，发现编译不通过，是 <code>spawn</code>
+的系统调用迁移到 ch6 后，与新的 loader.c 不兼容导致的，看一下 ch6
+的历史提交更改了什么就能很快修复了：</p>
+<figure class="highlight patch"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line">From 58af914164e469e653ee063a4050251fe8a5d86f Mon Sep 17 00:00:00 2001</span><br><span class="line">From: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line">Date: Sat, 9 Aug 2025 15:06:32 +0800</span><br><span class="line">Subject: [PATCH 08/11] syscall: adapt sys_spawn to ch6</span><br><span class="line"></span><br><span class="line">os/syscall.c: In function 'sys_spawn':</span><br><span class="line">os/syscall.c:188:7: error: implicit declaration of function 'get_id_by_name' [-Werror=implicit-function-declaration]</span><br><span class="line">  188 |  id = get_id_by_name(name);</span><br><span class="line">      |       ^~~~~~~~~~~~~~</span><br><span class="line">os/syscall.c:197:6: error: implicit declaration of function 'loader'; did you mean 'bin_loader'? [-Werror=implicit-function-declaration]</span><br><span class="line">  197 |  if (loader(id, np) &lt; 0) {</span><br><span class="line">      |      ^~~~~~</span><br><span class="line">      |      bin_loader</span><br><span class="line"></span><br><span class="line">This commit refactors the sys_spawn system call to make it compatible with the new</span><br><span class="line">filesystem-based program loading mechanism introduced in ch6.</span><br><span class="line"></span><br><span class="line">The previous implementation of spawn was designed for the ch5 architecture, where applications</span><br><span class="line">were loaded from a pre-compiled, in-memory archive using an internal ID. With the transition to</span><br><span class="line">a proper on-disk filesystem, this loading method became obsolete, causing the spawn system call to fail.</span><br><span class="line"></span><br><span class="line">It now accepts a file path string from the user, uses namei() to resolve this path to</span><br><span class="line">its corresponding inode on the disk. If the file is found, it allocates a new process</span><br><span class="line">and uses the bin_loader() function to load the executable content from the inode into</span><br><span class="line">the new process's address space. Otherwise, use init_stdio() to initialize standard I/O</span><br><span class="line">for the new process to avoid errors like "[ERROR &lt;pid&gt;]invalid fd 1" because of</span><br><span class="line">p-&gt;files[fd], that which files[1] is null. This change fully integrates spawn with the</span><br><span class="line">filesystem, allowing it to correctly load and execute programs from disk.</span><br><span class="line"></span><br><span class="line">Signed-off-by: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line"><span class="comment">---</span></span><br><span class="line"> os/syscall.c | 18 +++++++++++++-----</span><br><span class="line"> 1 file changed, 13 insertions(+), 5 deletions(-)</span><br><span class="line"></span><br><span class="line"><span class="comment">diff --git a/os/syscall.c b/os/syscall.c</span></span><br><span class="line"><span class="comment">index 2cb67f8..d8be06e 100644</span></span><br><span class="line"><span class="comment">--- a/os/syscall.c</span></span><br><span class="line"><span class="comment">+++ b/os/syscall.c</span></span><br><span class="line"><span class="meta">@@ -177,7 +177,7 @@</span> uint64 sys_spawn(uint64 va)</span><br><span class="line"> 	struct proc *p = curr_proc();</span><br><span class="line"> 	char name[MAX_STR_LEN];</span><br><span class="line"> 	struct proc *np;</span><br><span class="line"><span class="deletion">-	int id;</span></span><br><span class="line"><span class="addition">+	struct inode *ip;</span></span><br><span class="line"> </span><br><span class="line"> 	/*</span><br><span class="line"> 	 * Copy the filename from user space to kernel space.</span><br><span class="line"><span class="meta">@@ -185,19 +185,27 @@</span> uint64 sys_spawn(uint64 va)</span><br><span class="line"> 	if (copyinstr(p-&gt;pagetable, name, va, MAX_STR_LEN) &lt; 0)</span><br><span class="line"> 		return -1;</span><br><span class="line"> </span><br><span class="line"><span class="deletion">-	id = get_id_by_name(name);</span></span><br><span class="line"><span class="deletion">-	if (id &lt; 0)</span></span><br><span class="line"><span class="addition">+	if ((ip = namei(name)) == 0)</span></span><br><span class="line"> 		return -1;</span><br><span class="line"> </span><br><span class="line"><span class="deletion">-	if ((np = allocproc()) == 0)</span></span><br><span class="line"><span class="addition">+	if ((np = allocproc()) == 0) {</span></span><br><span class="line"><span class="addition">+		iput(ip);</span></span><br><span class="line"> 		return -1;</span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	/*</span></span><br><span class="line"><span class="addition">+	 * Initialize standard I/O for the new process.</span></span><br><span class="line"><span class="addition">+	 */</span></span><br><span class="line"><span class="addition">+	init_stdio(np);</span></span><br><span class="line"> </span><br><span class="line"> 	np-&gt;parent = p;</span><br><span class="line"> </span><br><span class="line"><span class="deletion">-	if (loader(id, np) &lt; 0) {</span></span><br><span class="line"><span class="addition">+	if (bin_loader(ip, np) &lt; 0) {</span></span><br><span class="line"> 		freeproc(np);</span><br><span class="line"><span class="addition">+		iput(ip);</span></span><br><span class="line"> 		return -1;</span><br><span class="line"> 	}</span><br><span class="line"><span class="addition">+	iput(ip);</span></span><br><span class="line"> </span><br><span class="line"> 	// add_task(np);</span><br><span class="line"> </span><br><span class="line"><span class="deletion">-- </span></span><br><span class="line">2.25.1</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>接下来测试一下
+ch6_usertest，可以看见除了需要实现的三个系统调用以外，别的测例都是通过的，那么接下来实现实验要求的三个系统调用就可以了，这里我为了防止系统调用的函数体冗余，还新写了几个函数。简单一点的实现肯定也是没事的，因为前面实验指导书说过我们的
+os
+的文件系统只有一层，不过实现得更加细致肯定没有问题。修改结构体时别忘了对齐，不然镜像跑不起来。初始化也要相应做好，不然测例通不过。</p>
+<figure class="highlight patch"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br></pre></td><td class="code"><pre><span class="line">From 4296a91d6325835336b6f848882d125d617b6255 Mon Sep 17 00:00:00 2001</span><br><span class="line">From: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line">Date: Sat, 9 Aug 2025 22:44:04 +0800</span><br><span class="line">Subject: [PATCH 09/11] Implement fstat syscall</span><br><span class="line"></span><br><span class="line">Signed-off-by: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line"><span class="comment">---</span></span><br><span class="line"> nfs/fs.c     |  3 ++-</span><br><span class="line"> nfs/fs.h     |  3 ++-</span><br><span class="line"> os/file.h    |  3 ++-</span><br><span class="line"> os/fs.c      |  9 ++++++---</span><br><span class="line"> os/fs.h      | 14 +++++++++++++-</span><br><span class="line"> os/syscall.c | 37 +++++++++++++++++++++++++++++++++++--</span><br><span class="line"> 6 files changed, 60 insertions(+), 9 deletions(-)</span><br><span class="line"></span><br><span class="line"><span class="comment">diff --git a/nfs/fs.c b/nfs/fs.c</span></span><br><span class="line"><span class="comment">index acff784..6a5d4c3 100644</span></span><br><span class="line"><span class="comment">--- a/nfs/fs.c</span></span><br><span class="line"><span class="comment">+++ b/nfs/fs.c</span></span><br><span class="line"><span class="meta">@@ -203,8 +203,9 @@</span> uint ialloc(ushort type)</span><br><span class="line"> </span><br><span class="line"> 	bzero(&amp;din, sizeof(din));</span><br><span class="line"> 	din.type = xshort(type);</span><br><span class="line"><span class="deletion">-	din.size = xint(0);</span></span><br><span class="line"> 	// LAB4: You may want to init link count here</span><br><span class="line"><span class="addition">+	din.nlink = xshort(1);</span></span><br><span class="line"><span class="addition">+	din.size = xint(0);</span></span><br><span class="line"> 	winode(inum, &amp;din);</span><br><span class="line"> 	return inum;</span><br><span class="line"> }</span><br><span class="line"><span class="comment">diff --git a/nfs/fs.h b/nfs/fs.h</span></span><br><span class="line"><span class="comment">index 2e9670a..263d9b0 100644</span></span><br><span class="line"><span class="comment">--- a/nfs/fs.h</span></span><br><span class="line"><span class="comment">+++ b/nfs/fs.h</span></span><br><span class="line"><span class="meta">@@ -45,7 +45,8 @@</span> struct superblock {</span><br><span class="line"> // On-disk inode structure</span><br><span class="line"> struct dinode {</span><br><span class="line"> 	short type; // File type</span><br><span class="line"><span class="deletion">-	short pad[3];</span></span><br><span class="line"><span class="addition">+	short pad[2];</span></span><br><span class="line"><span class="addition">+	short nlink;</span></span><br><span class="line"> 	uint size; // Size of file (bytes)</span><br><span class="line"> 	uint addrs[NDIRECT + 1]; // Data block addresses</span><br><span class="line"> };</span><br><span class="line"><span class="comment">diff --git a/os/file.h b/os/file.h</span></span><br><span class="line"><span class="comment">index 433f0a1..aae675a 100644</span></span><br><span class="line"><span class="comment">--- a/os/file.h</span></span><br><span class="line"><span class="comment">+++ b/os/file.h</span></span><br><span class="line"><span class="meta">@@ -15,9 +15,10 @@</span> struct inode {</span><br><span class="line"> 	int ref; // Reference count</span><br><span class="line"> 	int valid; // inode has been read from disk?</span><br><span class="line"> 	short type; // copy of disk inode</span><br><span class="line"><span class="addition">+	// LAB4: You may need to add link count here</span></span><br><span class="line"><span class="addition">+	short nlink;</span></span><br><span class="line"> 	uint size;</span><br><span class="line"> 	uint addrs[NDIRECT + 1];</span><br><span class="line"><span class="deletion">-	// LAB4: You may need to add link count here</span></span><br><span class="line"> };</span><br><span class="line"> </span><br><span class="line"> // Defines a file in memory that provides information about the current use of the file and the corresponding inode location</span><br><span class="line"><span class="comment">diff --git a/os/fs.c b/os/fs.c</span></span><br><span class="line"><span class="comment">index beb8224..91a3d4e 100644</span></span><br><span class="line"><span class="comment">--- a/os/fs.c</span></span><br><span class="line"><span class="comment">+++ b/os/fs.c</span></span><br><span class="line"><span class="meta">@@ -114,6 +114,7 @@</span> struct inode *ialloc(uint dev, short type)</span><br><span class="line"> 		if (dip-&gt;type == 0) { // a free inode</span><br><span class="line"> 			memset(dip, 0, sizeof(*dip));</span><br><span class="line"> 			dip-&gt;type = type;</span><br><span class="line"><span class="addition">+			dip-&gt;nlink = 1;</span></span><br><span class="line"> 			bwrite(bp);</span><br><span class="line"> 			brelse(bp);</span><br><span class="line"> 			return iget(dev, inum);</span><br><span class="line"><span class="meta">@@ -135,8 +136,9 @@</span> void iupdate(struct inode *ip)</span><br><span class="line"> 	bp = bread(ip-&gt;dev, IBLOCK(ip-&gt;inum, sb));</span><br><span class="line"> 	dip = (struct dinode *)bp-&gt;data + ip-&gt;inum % IPB;</span><br><span class="line"> 	dip-&gt;type = ip-&gt;type;</span><br><span class="line"><span class="deletion">-	dip-&gt;size = ip-&gt;size;</span></span><br><span class="line"> 	// LAB4: you may need to update link count here</span><br><span class="line"><span class="addition">+	dip-&gt;nlink = ip-&gt;nlink;</span></span><br><span class="line"><span class="addition">+	dip-&gt;size = ip-&gt;size;</span></span><br><span class="line"> 	memmove(dip-&gt;addrs, ip-&gt;addrs, sizeof(ip-&gt;addrs));</span><br><span class="line"> 	bwrite(bp);</span><br><span class="line"> 	brelse(bp);</span><br><span class="line"><span class="meta">@@ -188,8 +190,9 @@</span> void ivalid(struct inode *ip)</span><br><span class="line"> 		bp = bread(ip-&gt;dev, IBLOCK(ip-&gt;inum, sb));</span><br><span class="line"> 		dip = (struct dinode *)bp-&gt;data + ip-&gt;inum % IPB;</span><br><span class="line"> 		ip-&gt;type = dip-&gt;type;</span><br><span class="line"><span class="deletion">-		ip-&gt;size = dip-&gt;size;</span></span><br><span class="line"> 		// LAB4: You may need to get lint count here</span><br><span class="line"><span class="addition">+		ip-&gt;nlink = dip-&gt;nlink;</span></span><br><span class="line"><span class="addition">+		ip-&gt;size = dip-&gt;size;</span></span><br><span class="line"> 		memmove(ip-&gt;addrs, dip-&gt;addrs, sizeof(ip-&gt;addrs));</span><br><span class="line"> 		brelse(bp);</span><br><span class="line"> 		ip-&gt;valid = 1;</span><br><span class="line"><span class="meta">@@ -208,7 +211,7 @@</span> void ivalid(struct inode *ip)</span><br><span class="line"> void iput(struct inode *ip)</span><br><span class="line"> {</span><br><span class="line"> 	// LAB4: Unmark the condition and change link count variable name (nlink) if needed</span><br><span class="line"><span class="deletion">-	if (ip-&gt;ref == 1 &amp;&amp; ip-&gt;valid &amp;&amp; 0 /*&amp;&amp; ip-&gt;nlink == 0*/) {</span></span><br><span class="line"><span class="addition">+	if (ip-&gt;ref == 1 &amp;&amp; ip-&gt;valid &amp;&amp; ip-&gt;nlink == 0) {</span></span><br><span class="line"> 		// inode has no links and no other references: truncate and free.</span><br><span class="line"> 		itrunc(ip);</span><br><span class="line"> 		ip-&gt;type = 0;</span><br><span class="line"><span class="comment">diff --git a/os/fs.h b/os/fs.h</span></span><br><span class="line"><span class="comment">index efb4674..ddd640c 100644</span></span><br><span class="line"><span class="comment">--- a/os/fs.h</span></span><br><span class="line"><span class="comment">+++ b/os/fs.h</span></span><br><span class="line"><span class="meta">@@ -44,10 +44,11 @@</span> struct superblock {</span><br><span class="line"> // On-disk inode structure</span><br><span class="line"> struct dinode {</span><br><span class="line"> 	short type; // File type</span><br><span class="line"><span class="deletion">-	short pad[3];</span></span><br><span class="line"><span class="addition">+	short pad[2];</span></span><br><span class="line"> 	// LAB4: you can reduce size of pad array and add link count below,</span><br><span class="line"> 	//       or you can just regard a pad as link count.</span><br><span class="line"> 	//       But keep in mind that you'd better keep sizeof(dinode) unchanged</span><br><span class="line"><span class="addition">+	short nlink;</span></span><br><span class="line"> 	uint size; // Size of file (bytes)</span><br><span class="line"> 	uint addrs[NDIRECT + 1]; // Data block addresses</span><br><span class="line"> };</span><br><span class="line"><span class="meta">@@ -72,6 +73,17 @@</span> struct dirent {</span><br><span class="line"> 	char name[DIRSIZ];</span><br><span class="line"> };</span><br><span class="line"> </span><br><span class="line"><span class="addition">+struct stat {</span></span><br><span class="line"><span class="addition">+	uint64 dev;</span></span><br><span class="line"><span class="addition">+	uint64 ino;</span></span><br><span class="line"><span class="addition">+	uint32 mode;</span></span><br><span class="line"><span class="addition">+	uint32 nlink;</span></span><br><span class="line"><span class="addition">+	uint64 pad[7];</span></span><br><span class="line"><span class="addition">+};</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+#define DIR 0x040000</span></span><br><span class="line"><span class="addition">+#define FILE 0x100000</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"> // file.h</span><br><span class="line"> struct inode;</span><br><span class="line"> </span><br><span class="line"><span class="comment">diff --git a/os/syscall.c b/os/syscall.c</span></span><br><span class="line"><span class="comment">index d8be06e..b880ec6 100644</span></span><br><span class="line"><span class="comment">--- a/os/syscall.c</span></span><br><span class="line"><span class="comment">+++ b/os/syscall.c</span></span><br><span class="line"><span class="meta">@@ -248,10 +248,43 @@</span> uint64 sys_close(int fd)</span><br><span class="line"> 	return 0;</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"><span class="addition">+/*</span></span><br><span class="line"><span class="addition">+ * sys_fstat - get file status</span></span><br><span class="line"><span class="addition">+ * @fd: The file descriptor to query.</span></span><br><span class="line"><span class="addition">+ * @stat: User-space address for the result.</span></span><br><span class="line"><span class="addition">+ *</span></span><br><span class="line"><span class="addition">+ * Retrieves information about an open file.</span></span><br><span class="line"><span class="addition">+ * It writes the data to a stat</span></span><br><span class="line"><span class="addition">+ * structure in user space. The structure</span></span><br><span class="line"><span class="addition">+ * includes device, inode number, type,</span></span><br><span class="line"><span class="addition">+ * and the number of hard links.</span></span><br><span class="line"><span class="addition">+ *</span></span><br><span class="line"><span class="addition">+ * Returns 0 on success, -1 on error.</span></span><br><span class="line"><span class="addition">+ */</span></span><br><span class="line"> int sys_fstat(int fd, uint64 stat)</span><br><span class="line"> {</span><br><span class="line"><span class="deletion">-	//TODO: your job is to complete the syscall</span></span><br><span class="line"><span class="deletion">-	return -1;</span></span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+	struct file *f = p-&gt;files[fd];</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if (fd &lt; 0 || fd &gt; FD_BUFFER_SIZE || f == NULL)</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	struct stat st;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	st.dev = f-&gt;ip-&gt;dev;</span></span><br><span class="line"><span class="addition">+	st.ino = f-&gt;ip-&gt;inum;</span></span><br><span class="line"><span class="addition">+	if (f-&gt;ip-&gt;type == T_DIR)</span></span><br><span class="line"><span class="addition">+		st.mode = DIR;</span></span><br><span class="line"><span class="addition">+	else if (f-&gt;ip-&gt;type == T_FILE)</span></span><br><span class="line"><span class="addition">+		st.mode = FILE;</span></span><br><span class="line"><span class="addition">+	else</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+	st.nlink = f-&gt;ip-&gt;nlink;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if (copyout(p-&gt;pagetable, stat, (char *)&amp;st, sizeof(st)) &lt; 0)</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	return 0;</span></span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"> int sys_linkat(int olddirfd, uint64 oldpath, int newdirfd, uint64 newpath,</span><br><span class="line"><span class="deletion">-- </span></span><br><span class="line">2.25.1</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight patch"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br></pre></td><td class="code"><pre><span class="line">From 5bafc45cca257777c87a0a863db321b65bd3c647 Mon Sep 17 00:00:00 2001</span><br><span class="line">From: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line">Date: Sat, 9 Aug 2025 23:06:05 +0800</span><br><span class="line">Subject: [PATCH 10/11] Implement linkat syscall</span><br><span class="line"></span><br><span class="line">Signed-off-by: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line"><span class="comment">---</span></span><br><span class="line"> os/fs.c      | 33 +++++++++++++++++++++++++++++</span><br><span class="line"> os/fs.h      |  1 +</span><br><span class="line"> os/syscall.c | 59 +++++++++++++++++++++++++++++++++++++++++++++++++++-</span><br><span class="line"> 3 files changed, 92 insertions(+), 1 deletion(-)</span><br><span class="line"></span><br><span class="line"><span class="comment">diff --git a/os/fs.c b/os/fs.c</span></span><br><span class="line"><span class="comment">index 91a3d4e..8c38f4d 100644</span></span><br><span class="line"><span class="comment">--- a/os/fs.c</span></span><br><span class="line"><span class="comment">+++ b/os/fs.c</span></span><br><span class="line"><span class="meta">@@ -455,3 +455,36 @@</span> struct inode *namei(char *path)</span><br><span class="line"> 		panic("fs dumped.\n");</span><br><span class="line"> 	return dirlookup(dp, path + skip, 0);</span><br><span class="line"> }</span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+/*</span></span><br><span class="line"><span class="addition">+ * @path: The full path to resolve.</span></span><br><span class="line"><span class="addition">+ *</span></span><br><span class="line"><span class="addition">+ * Finds the inode of a parent directory.</span></span><br><span class="line"><span class="addition">+ * It parses the given path to find</span></span><br><span class="line"><span class="addition">+ * the last component. Then it returns</span></span><br><span class="line"><span class="addition">+ * the inode of the containing directory.</span></span><br><span class="line"><span class="addition">+ * This is a helper for link and unlink.</span></span><br><span class="line"><span class="addition">+ *</span></span><br><span class="line"><span class="addition">+ * Returns inode of parent, or 0 on error.</span></span><br><span class="line"><span class="addition">+ */</span></span><br><span class="line"><span class="addition">+struct inode *nameiparent(char *path)</span></span><br><span class="line"><span class="addition">+{</span></span><br><span class="line"><span class="addition">+	char *s;</span></span><br><span class="line"><span class="addition">+	struct inode *ip;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	// Find the last slash in the path string.</span></span><br><span class="line"><span class="addition">+	for (s = path + strlen(path) - 1; s &gt;= path &amp;&amp; *s != '/'; s--);</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	// If no slash, parent is the root directory.</span></span><br><span class="line"><span class="addition">+	if (s &lt; path)</span></span><br><span class="line"><span class="addition">+		return root_dir();</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	// Temporarily truncate string at the slash</span></span><br><span class="line"><span class="addition">+    // to get the parent path.</span></span><br><span class="line"><span class="addition">+	*s = 0;</span></span><br><span class="line"><span class="addition">+	ip = namei(path);</span></span><br><span class="line"><span class="addition">+	// Restore the slash.</span></span><br><span class="line"><span class="addition">+	*s = '/';</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	return ip;</span></span><br><span class="line"><span class="addition">+}</span></span><br><span class="line"><span class="comment">diff --git a/os/fs.h b/os/fs.h</span></span><br><span class="line"><span class="comment">index ddd640c..01d6e79 100644</span></span><br><span class="line"><span class="comment">--- a/os/fs.h</span></span><br><span class="line"><span class="comment">+++ b/os/fs.h</span></span><br><span class="line"><span class="meta">@@ -99,6 +99,7 @@</span> void iunlock(struct inode *);</span><br><span class="line"> void iunlockput(struct inode *);</span><br><span class="line"> void iupdate(struct inode *);</span><br><span class="line"> struct inode *namei(char *);</span><br><span class="line"><span class="addition">+struct inode *nameiparent(char *path);</span></span><br><span class="line"> struct inode *root_dir();</span><br><span class="line"> int readi(struct inode *, int, uint64, uint, uint);</span><br><span class="line"> int writei(struct inode *, int, uint64, uint, uint);</span><br><span class="line"><span class="comment">diff --git a/os/syscall.c b/os/syscall.c</span></span><br><span class="line"><span class="comment">index b880ec6..1f7b761 100644</span></span><br><span class="line"><span class="comment">--- a/os/syscall.c</span></span><br><span class="line"><span class="comment">+++ b/os/syscall.c</span></span><br><span class="line"><span class="meta">@@ -287,10 +287,67 @@</span> int sys_fstat(int fd, uint64 stat)</span><br><span class="line"> 	return 0;</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"><span class="addition">+/*</span></span><br><span class="line"><span class="addition">+ * @oldpath: The existing file to link.</span></span><br><span class="line"><span class="addition">+ * @newpath: The new link name to create.</span></span><br><span class="line"><span class="addition">+ *</span></span><br><span class="line"><span class="addition">+ * Creates a new hard link to an</span></span><br><span class="line"><span class="addition">+ * existing file. It finds the inode</span></span><br><span class="line"><span class="addition">+ * of the old path. Then it increments</span></span><br><span class="line"><span class="addition">+ * the link count. A new directory entry</span></span><br><span class="line"><span class="addition">+ * is created for the new path. This</span></span><br><span class="line"><span class="addition">+ * entry points to the same inode.</span></span><br><span class="line"><span class="addition">+ * Directories cannot be hard-linked.</span></span><br><span class="line"><span class="addition">+ *</span></span><br><span class="line"><span class="addition">+ * Returns 0 on success, -1 on error.</span></span><br><span class="line"><span class="addition">+ */</span></span><br><span class="line"> int sys_linkat(int olddirfd, uint64 oldpath, int newdirfd, uint64 newpath,</span><br><span class="line"> 	       uint64 flags)</span><br><span class="line"> {</span><br><span class="line"><span class="deletion">-	//TODO: your job is to complete the syscall</span></span><br><span class="line"><span class="addition">+	char old[MAXPATH], new[MAXPATH], *filename;</span></span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+	struct inode *dp, *ip;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if (copyinstr(p-&gt;pagetable, old, oldpath, MAXPATH) &lt; 0 ||</span></span><br><span class="line"><span class="addition">+		copyinstr(p-&gt;pagetable, new, newpath, MAXPATH) &lt; 0)</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	// Can't be linked to itself.</span></span><br><span class="line"><span class="addition">+	if (strncmp(old, new, MAXPATH) == 0)</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if ((ip = namei(old)) == 0)</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	ivalid(ip);</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if (ip-&gt;type == T_DIR) {</span></span><br><span class="line"><span class="addition">+		iput(ip);</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	ip-&gt;nlink++;</span></span><br><span class="line"><span class="addition">+	iupdate(ip);</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if ((dp = nameiparent(new)) == 0)</span></span><br><span class="line"><span class="addition">+		goto fail;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	for (filename = new + strlen(new) - 1;</span></span><br><span class="line"><span class="addition">+		 filename &gt;= new &amp;&amp; *filename != '/'; filename--);</span></span><br><span class="line"><span class="addition">+	filename++;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if (dirlink(dp, new, ip-&gt;inum) &lt; 0) {</span></span><br><span class="line"><span class="addition">+		iput(dp);</span></span><br><span class="line"><span class="addition">+		goto fail;</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+	iput(dp);</span></span><br><span class="line"><span class="addition">+	iput(ip);</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	return 0;</span></span><br><span class="line"><span class="addition">+fail:</span></span><br><span class="line"><span class="addition">+	ip-&gt;nlink--;</span></span><br><span class="line"><span class="addition">+	iupdate(ip);</span></span><br><span class="line"><span class="addition">+	iput(ip);</span></span><br><span class="line"> 	return -1;</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"><span class="deletion">-- </span></span><br><span class="line">2.25.1</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight patch"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br></pre></td><td class="code"><pre><span class="line">From 9064998e654b199eb4994876bda479c096f87b97 Mon Sep 17 00:00:00 2001</span><br><span class="line">From: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line">Date: Sat, 9 Aug 2025 23:17:53 +0800</span><br><span class="line">Subject: [PATCH 11/11] Implement unlinkat syscall</span><br><span class="line"></span><br><span class="line">Signed-off-by: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line"><span class="comment">---</span></span><br><span class="line"> os/fs.c      | 54 +++++++++++++++++++++++++++++++++++++++++++++++++</span><br><span class="line"> os/fs.h      |  2 ++</span><br><span class="line"> os/syscall.c | 57 ++++++++++++++++++++++++++++++++++++++++++++++++++--</span><br><span class="line"> 3 files changed, 111 insertions(+), 2 deletions(-)</span><br><span class="line"></span><br><span class="line"><span class="comment">diff --git a/os/fs.c b/os/fs.c</span></span><br><span class="line"><span class="comment">index 8c38f4d..41f7180 100644</span></span><br><span class="line"><span class="comment">--- a/os/fs.c</span></span><br><span class="line"><span class="comment">+++ b/os/fs.c</span></span><br><span class="line"><span class="meta">@@ -488,3 +488,57 @@</span> struct inode *nameiparent(char *path)</span><br><span class="line"> </span><br><span class="line"> 	return ip;</span><br><span class="line"> }</span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+/*</span></span><br><span class="line"><span class="addition">+ * @dp:   The directory inode to modify.</span></span><br><span class="line"><span class="addition">+ * @off:  Offset of the entry to remove.</span></span><br><span class="line"><span class="addition">+ *</span></span><br><span class="line"><span class="addition">+ * Removes a directory entry by zeroing it.</span></span><br><span class="line"><span class="addition">+ * It first reads the entry to ensure</span></span><br><span class="line"><span class="addition">+ * it is a valid, non-empty one.</span></span><br><span class="line"><span class="addition">+ * Then it overwrites the entry with</span></span><br><span class="line"><span class="addition">+ * zeros, effectively unlinking it.</span></span><br><span class="line"><span class="addition">+ *</span></span><br><span class="line"><span class="addition">+ * Returns 0 on success, panics on error.</span></span><br><span class="line"><span class="addition">+ */</span></span><br><span class="line"><span class="addition">+int dirunlink(struct inode *dp, uint off)</span></span><br><span class="line"><span class="addition">+{</span></span><br><span class="line"><span class="addition">+	struct dirent de;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if (readi(dp, 0, (uint64)&amp;de, off, sizeof(de)) != sizeof(de))</span></span><br><span class="line"><span class="addition">+		panic("dirunlink: read");</span></span><br><span class="line"><span class="addition">+	if (de.inum == 0)</span></span><br><span class="line"><span class="addition">+		panic("dirunlink: trying to unlink empty entry");</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	memset(&amp;de, 0, sizeof(de));</span></span><br><span class="line"><span class="addition">+	if (writei(dp, 0, (uint64)&amp;de, off, sizeof(de)) != sizeof(de))</span></span><br><span class="line"><span class="addition">+		panic("dirunlink: writei");</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	return 0;</span></span><br><span class="line"><span class="addition">+}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+/**</span></span><br><span class="line"><span class="addition">+ * @dp: The directory inode to check.</span></span><br><span class="line"><span class="addition">+ *</span></span><br><span class="line"><span class="addition">+ * Iterates through directory entries.</span></span><br><span class="line"><span class="addition">+ * It checks for any valid entries</span></span><br><span class="line"><span class="addition">+ * other than "." and "..". The loop</span></span><br><span class="line"><span class="addition">+ * starts after the first two entries.</span></span><br><span class="line"><span class="addition">+ *</span></span><br><span class="line"><span class="addition">+ * Returns 1 if empty, 0 otherwise.</span></span><br><span class="line"><span class="addition">+ */</span></span><br><span class="line"><span class="addition">+int isdirempty(struct inode *dp)</span></span><br><span class="line"><span class="addition">+{</span></span><br><span class="line"><span class="addition">+	struct dirent de;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	// Iterate through directory entries. </span></span><br><span class="line"><span class="addition">+	// Skip the first two entries, "." and "..".</span></span><br><span class="line"><span class="addition">+	for (uint off = 2 * sizeof(de); off &lt; dp-&gt;size; off += sizeof(de)) {</span></span><br><span class="line"><span class="addition">+		if (readi(dp, 0, (uint64)&amp;de, off, sizeof(de)) != sizeof(de))</span></span><br><span class="line"><span class="addition">+			panic("isdirempty: readi");</span></span><br><span class="line"><span class="addition">+		if (de.inum != 0)</span></span><br><span class="line"><span class="addition">+			return 0;</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	return 1;</span></span><br><span class="line"><span class="addition">+}</span></span><br><span class="line"><span class="comment">diff --git a/os/fs.h b/os/fs.h</span></span><br><span class="line"><span class="comment">index 01d6e79..d47bd76 100644</span></span><br><span class="line"><span class="comment">--- a/os/fs.h</span></span><br><span class="line"><span class="comment">+++ b/os/fs.h</span></span><br><span class="line"><span class="meta">@@ -105,4 +105,6 @@</span> int readi(struct inode *, int, uint64, uint, uint);</span><br><span class="line"> int writei(struct inode *, int, uint64, uint, uint);</span><br><span class="line"> void itrunc(struct inode *);</span><br><span class="line"> int dirls(struct inode *);</span><br><span class="line"><span class="addition">+int dirunlink(struct inode *dp, uint off);</span></span><br><span class="line"><span class="addition">+int isdirempty(struct inode *dp);</span></span><br><span class="line"> #endif //!__FS_H__</span><br><span class="line"><span class="comment">diff --git a/os/syscall.c b/os/syscall.c</span></span><br><span class="line"><span class="comment">index 1f7b761..278276c 100644</span></span><br><span class="line"><span class="comment">--- a/os/syscall.c</span></span><br><span class="line"><span class="comment">+++ b/os/syscall.c</span></span><br><span class="line"><span class="meta">@@ -351,10 +351,63 @@</span> fail:</span><br><span class="line"> 	return -1;</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"><span class="addition">+/*</span></span><br><span class="line"><span class="addition">+ * @name:   The path of the link to remove.</span></span><br><span class="line"><span class="addition">+ *</span></span><br><span class="line"><span class="addition">+ * Removes a link from a directory.</span></span><br><span class="line"><span class="addition">+ * It finds the parent directory and</span></span><br><span class="line"><span class="addition">+ * the target inode. If the target is</span></span><br><span class="line"><span class="addition">+ * a non-empty directory, it fails.</span></span><br><span class="line"><span class="addition">+ * The directory entry is then cleared.</span></span><br><span class="line"><span class="addition">+ * Finally, it decrements the inode's</span></span><br><span class="line"><span class="addition">+ * link count. If the link count</span></span><br><span class="line"><span class="addition">+ * drops to zero, the inode and its</span></span><br><span class="line"><span class="addition">+ * data blocks are freed by iput.</span></span><br><span class="line"><span class="addition">+ *</span></span><br><span class="line"><span class="addition">+ * Returns 0 on success, -1 on error.</span></span><br><span class="line"><span class="addition">+ */</span></span><br><span class="line"> int sys_unlinkat(int dirfd, uint64 name, uint64 flags)</span><br><span class="line"> {</span><br><span class="line"><span class="deletion">-	//TODO: your job is to complete the syscall</span></span><br><span class="line"><span class="deletion">-	return -1;</span></span><br><span class="line"><span class="addition">+	char path[MAXPATH], *filename;</span></span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+	struct inode *dp, *ip;</span></span><br><span class="line"><span class="addition">+	uint off;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if (copyinstr(p-&gt;pagetable, path, name, MAXPATH) &lt; 0)</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	for (filename = path + strlen(path) - 1;</span></span><br><span class="line"><span class="addition">+		 filename &gt;= path &amp;&amp; *filename != '/'; filename--);</span></span><br><span class="line"><span class="addition">+	filename++;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if ((dp = nameiparent(path)) == 0)</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if ((ip = dirlookup(dp, filename, &amp;off)) == 0) {</span></span><br><span class="line"><span class="addition">+		iput(dp);</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	ivalid(ip);</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if (ip-&gt;type == T_DIR &amp;&amp; !isdirempty(ip)) {</span></span><br><span class="line"><span class="addition">+		iput(dp);</span></span><br><span class="line"><span class="addition">+		iput(ip);</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if (dirunlink(dp, off) != 0) {</span></span><br><span class="line"><span class="addition">+		iput(dp);</span></span><br><span class="line"><span class="addition">+		iput(ip);</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	ip-&gt;nlink--;</span></span><br><span class="line"><span class="addition">+	iupdate(ip);</span></span><br><span class="line"><span class="addition">+	iput(dp);</span></span><br><span class="line"><span class="addition">+	iput(ip);</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	return 0;</span></span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"> uint64 sys_sbrk(int n)</span><br><span class="line"><span class="deletion">-- </span></span><br><span class="line">2.25.1</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>上面就是我对新增系统调用的完整实现了，我是按
+<code>fstat</code>、<code>linkat</code>、<code>unlinkat</code>
+的顺序实现的。懒得再写详细的 commit message，只做了一点简单的注释。再次
+<code>make test BASE=2</code> 然后运行
+<code>ch6_usertest</code>，最后看到 <code>ch6 Usertests passed!</code>
+就行了。</p>
+<h2 id="问答作业">问答作业</h2>
+<h3 id="ch6">ch6</h3>
+<ol type="1">
+<li>在我们的文件系统中，root inode 起着什么作用？如果 root
+inode 中的内容损坏了，会发生什么？</li>
+</ol>
+<h3 id="ch7">ch7</h3>
+<ol type="1">
+<li>举出使用 pipe 的一个实际应用的例子。</li>
+</ol>
+<ul>
+<li>tips:
+<ul>
+<li>想想你平时咋使用 linux terminal 的？</li>
+<li>如何使用 cat 和 wc 完成一个文件的行数统计？</li>
+</ul></li>
+</ul>
+<ol start="2" type="1">
+<li>如果需要在多个进程间互相通信，则需要为每一对进程建立一个管道，非常繁琐，请设计一个更易用的多进程通信机制。</li>
+</ol>
+<h2 id="问答作业答案">问答作业答案</h2>
+<h3 id="ch6-1">ch6</h3>
+<ol type="1">
+<li><p>在我们的文件系统中，root inode 起着什么作用？如果 root inode
+中的内容损坏了，会发生什么？</p>
+<p>root inode 代表根目录所对应的
+inode，也是整个文件系统的起点，对其他的所有文件的操作都是在根目录的前提下完成的，如果损坏，那么整个文件系统就无法正常操作文件。</p></li>
+</ol>
+<h3 id="ch7-1">ch7</h3>
+<ol type="1">
+<li>举出使用 pipe 的一个实际应用的例子。</li>
+</ol>
+<ul>
+<li><p>tips:</p>
+<ul>
+<li>想想你平时咋使用 linux terminal 的？</li>
+<li>如何使用 cat 和 wc 完成一个文件的行数统计？</li>
+</ul>
+<p>对一个文本文件排序并去重：<code>cat data.txt | sort | uniq</code>。</p>
+<p>用 cat 和 wc
+完成一个文件的行数统计：<code>cat &lt;filename&gt; | wc -l</code>。</p></li>
+</ul>
+<ol start="2" type="1">
+<li><p>如果需要在多个进程间互相通信，则需要为每一对进程建立一个管道，非常繁琐，请设计一个更易用的多进程通信机制。</p>
+<p>传统管道方案中，<span class="math inline"><em>n</em></span>
+个进程间通信需要建立 <span class="math inline"><em>n</em>(<em>n</em> − 1)/2</span>
+个管道，连接复杂度为 <span class="math inline"><em>O</em>(<em>n</em><sup>2</sup>)</span>，管理困难繁琐。我认为，可以在内核中维护一个全局的消息缓冲区，所有进程的消息都写入这个统一的缓冲区。为每个进程维护独立的读取偏移量，这样每个进程可以按自己的进度读取消息，避免消息被其他进程读取后丢失的问题。为了避免安全问题，全局消息缓冲区只能在内核态访问，用户进程无法直接读写，并且所有消息操作必须通过系统调用进行，内核负责权限检查。</p></li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>0wnerD1ed
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://0b1t.tech/uCore/57361.html" title="uCore lab4 实验报告">https://0b1t.tech/uCore/57361.html</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-CN" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/OS/" rel="tag"><i class="fa fa-tag"></i> OS</a>
+              <a href="/tags/riscv/" rel="tag"><i class="fa fa-tag"></i> riscv</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/uCore/10007.html" rel="prev" title="uCore lab3 实验报告">
+                  <i class="fa fa-angle-left"></i> uCore lab3 实验报告
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="waline"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">0wnerD1ed</span>
+  </div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/0wnerDied" class="github-corner" title="在 GitHub 上关注我" aria-label="在 GitHub 上关注我" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+<script class="next-config" data-name="waline" type="application/json">{"lang":"zh-CN","enable":true,"serverURL":"blog-waline-mauve.vercel.app","cssUrl":"https://unpkg.com/@waline/client@v2/dist/waline.css","commentCount":true,"pageview":false,"locale":{"placeholder":"善语结善缘，恶语伤人心"},"pageSize":30,"comment_count":true,"dark":"html[data-darkmode]","meta":[],"el":"#waline","comment":true,"libUrl":"//unpkg.com/@waline/client@v2/dist/waline.js","path":"/uCore/57361.html"}</script>
+<link rel="stylesheet" href="https://unpkg.com/@waline/client@v2/dist/waline.css">
+<script>
+document.addEventListener('page:loaded', () => {
+  NexT.utils.loadComments(CONFIG.waline.el).then(() =>
+    NexT.utils.getScript(CONFIG.waline.libUrl, { condition: window.Waline })
+  ).then(() => 
+    Waline.init(Object.assign({}, CONFIG.waline,{ el: document.querySelector(CONFIG.waline.el) }))
+  );
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/darkmode-js@1.5.7/lib/darkmode-js.min.js"></script>
+
+<script>
+var options = {
+  bottom: '64px',
+  right: '32px',
+  left: 'unset',
+  time: '0.5s',
+  mixColor: 'transparent',
+  backgroundColor: 'transparent',
+  buttonColorDark: '#100f2c',
+  buttonColorLight: '#fff',
+  saveInCookies: true,
+  label: '🌓',
+  autoMatchOsTheme: true
+}
+const darkmode = new Darkmode(options);
+window.darkmode = darkmode;
+darkmode.showWidget();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // 等待Waline元素加载完成
+  const checkWaline = setInterval(function() {
+    const walineEl = document.querySelector('.wl-panel');
+    if (walineEl) {
+      clearInterval(checkWaline);
+      
+      // 监听暗黑模式变化，强制更新评论区样式
+      if (typeof window.darkmode !== 'undefined') {
+        window.darkmode.addEventListener('change', function(event) {
+          setTimeout(function() {
+            const isDark = document.body.classList.contains('darkmode--activated');
+            
+            if (isDark) {
+              // 直接修改DOM元素样式
+              document.querySelectorAll('.wl-panel, .wl-card').forEach(el => {
+                el.style.setProperty('background-color', '#222', 'important');
+                el.style.setProperty('border-color', '#444', 'important');
+              });
+              
+              document.querySelectorAll('.wl-editor, .wl-input, .wl-textarea').forEach(el => {
+                el.style.setProperty('background-color', '#333', 'important');
+                el.style.setProperty('color', '#ddd', 'important');
+                el.style.setProperty('border-color', '#555', 'important');
+              });
+              
+              document.querySelectorAll('.wl-content, .wl-meta, .wl-meta span, .wl-meta a').forEach(el => {
+                el.style.setProperty('color', '#ccc', 'important');
+              });
+            }
+          }, 100);
+        });
+      }
+    }
+  }, 100);
+});
+</script>
+
+</body>
+</html>
