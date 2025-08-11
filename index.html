@@ -176,7 +176,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-count">9</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -215,6 +215,151 @@
     </div>
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://0b1t.tech/uCore/8465.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars.githubusercontent.com/u/59904423?s=400&u=e2d918cc9959b82599bb4dbfcebb8b912880b9dc&v=4">
+      <meta itemprop="name" content="0wnerD1ed">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="0wnerD1ed's blog">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content=" | 0wnerD1ed's blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/uCore/8465.html" class="post-title-link" itemprop="url">uCore lab5 实验报告</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2025-08-12 02:11:04 / 修改时间：02:57:47" itemprop="dateCreated datePublished" datetime="2025-08-12T02:11:04+08:00">2025-08-12</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/uCore/" itemprop="url" rel="index"><span itemprop="name">uCore</span></a>
+        </span>
+    </span>
+
+  
+  
+  <span class="post-meta-item">
+    
+    <span class="post-meta-item-icon">
+      <i class="far fa-comment"></i>
+    </span>
+    <span class="post-meta-item-text">Waline：</span>
+  
+    <a title="waline" href="/uCore/8465.html#waline" itemprop="discussionUrl">
+      <span class="post-comments-count waline-comment-count" data-path="/uCore/8465.html" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>21k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>1:10</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p>这次实验应该是最难的了，虽然不用考虑内核 / 用户态的切换，也不用移植前面实验的内容，但是光读一遍新增的锁就很累了。还要对一些算法有一定认识，后面再细讲。</p>
+<h2 id="本章任务">本章任务</h2>
+<ul>
+<li>本次任务对应 lab5，也是本学期最后一次实验，祝你好运。</li>
+<li>老规矩，先 <code>make test BASE=1</code> 看下啥情况。</li>
+<li><strong>理解框架的多线程机制，了解几种锁的运行原理。在此基础上，实现本章编程作业死锁检测。</strong>
+<ul>
+<li>如果时间有限，多线程机制的一些细节大可跳过，但至少应知道多线程基本原理和本章在任务调度粒度上的调整</li>
+<li>与实验息息相关的是互斥锁 (mutex) 与信号量 (semaphore)，条件变量 (condvar) 供阅读</li>
+<li><strong>框架包含 <code>LAB5</code>
+字样的注释中给出了一个供参考的实现位置和顺序，你可以按顺序完成（下面的标号与注释中的一种）：</strong>
+<ul>
+<li>1: 定义并初始化部分 PCB
+的部分变量，包括控制死锁检测启动与死锁检测算法用到的变量，你可以先定义一部分，后面发现有需要时再做添加；</li>
+<li>2: 完成系统调用
+<code>sys_enable_deadlock_detect</code>，只需要修改变量，不必考虑是否正确实现了死锁。完成这一步后你可以顺利跑完
+<code>ch8_sem2_deadlock</code>，这个测例开启了死锁检测但并没有死锁；</li>
+<li>3:
+尝试写一个函数实现下面提到的死锁检测算法，注释中给了供参考的函数签名。这是一个和
+OS 独立的函数，你可以自行设计数据单独运行它以测试；</li>
+<li>4-1: 维护 mutex
+相关的死锁检测变量，并调用死锁检测算法，完成后你可以顺利跑完测例
+<code>ch8_mut1_deadlock</code>；</li>
+<li>4-2: 维护 semaphore
+相关的死锁检测变量，并调用死锁检测算法，完成后你可以顺利跑完测例
+<code>ch8_sem1_deadlock</code>；</li>
+</ul></li>
+</ul></li>
+<li>最终，完成实验报告并 push 你的 ch8 分支到远程仓库。push
+代码后会自动执行 CI，代码给分以 CI 给分为准。</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/uCore/8465.html#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 

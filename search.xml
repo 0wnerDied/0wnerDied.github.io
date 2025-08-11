@@ -2145,4 +2145,356 @@ inode，也是整个文件系统的起点，对其他的所有文件的操作都
         <tag>riscv</tag>
       </tags>
   </entry>
+  <entry>
+    <title>uCore lab5 实验报告</title>
+    <url>/uCore/8465.html</url>
+    <content><![CDATA[<p>这次实验应该是最难的了，虽然不用考虑内核 / 用户态的切换，也不用移植前面实验的内容，但是光读一遍新增的锁就很累了。还要对一些算法有一定认识，后面再细讲。</p>
+<h2 id="本章任务">本章任务</h2>
+<ul>
+<li>本次任务对应 lab5，也是本学期最后一次实验，祝你好运。</li>
+<li>老规矩，先 <code>make test BASE=1</code> 看下啥情况。</li>
+<li><strong>理解框架的多线程机制，了解几种锁的运行原理。在此基础上，实现本章编程作业死锁检测。</strong>
+<ul>
+<li>如果时间有限，多线程机制的一些细节大可跳过，但至少应知道多线程基本原理和本章在任务调度粒度上的调整</li>
+<li>与实验息息相关的是互斥锁 (mutex) 与信号量 (semaphore)，条件变量 (condvar) 供阅读</li>
+<li><strong>框架包含 <code>LAB5</code>
+字样的注释中给出了一个供参考的实现位置和顺序，你可以按顺序完成（下面的标号与注释中的一种）：</strong>
+<ul>
+<li>1: 定义并初始化部分 PCB
+的部分变量，包括控制死锁检测启动与死锁检测算法用到的变量，你可以先定义一部分，后面发现有需要时再做添加；</li>
+<li>2: 完成系统调用
+<code>sys_enable_deadlock_detect</code>，只需要修改变量，不必考虑是否正确实现了死锁。完成这一步后你可以顺利跑完
+<code>ch8_sem2_deadlock</code>，这个测例开启了死锁检测但并没有死锁；</li>
+<li>3:
+尝试写一个函数实现下面提到的死锁检测算法，注释中给了供参考的函数签名。这是一个和
+OS 独立的函数，你可以自行设计数据单独运行它以测试；</li>
+<li>4-1: 维护 mutex
+相关的死锁检测变量，并调用死锁检测算法，完成后你可以顺利跑完测例
+<code>ch8_mut1_deadlock</code>；</li>
+<li>4-2: 维护 semaphore
+相关的死锁检测变量，并调用死锁检测算法，完成后你可以顺利跑完测例
+<code>ch8_sem1_deadlock</code>；</li>
+</ul></li>
+</ul></li>
+<li>最终，完成实验报告并 push 你的 ch8 分支到远程仓库。push
+代码后会自动执行 CI，代码给分以 CI 给分为准。</li>
+</ul>
+<h2 id="编程作业">编程作业</h2>
+<details>
+<summary>
+⚠警告
+</summary>
+<p>本次实验框架变动较大，且改动较为复杂，为降低同学们的工作量，本次实验不要求合并之前的实验内容，可以直接
+checkout 到 ch8 框架开始实验，最终只需通过 ch8
+系列的测例和前面章节的基础测例即可。</p>
+</details>
+<details>
+<summary>
+🖊注解
+</summary>
+<p>本次实验实现死锁检测算法本身只需要 40 行左右代码，但加上系统调用实现、变量声明与初始化、以及在锁的创建、锁、释放时维护死锁检测
+Available、Allocation、Request 数组，总代码量预计在 100
+行左右。助教的参考实现约为 90 行。</p>
+</details>
+<h3 id="死锁检测">死锁检测</h3>
+<p>目前的 mutex 和 semaphore
+相关的系统调用不会分析资源的依赖情况，用户程序可能出现死锁。
+我们希望在系统中加入死锁检测机制，当发现可能发生死锁时拒绝对应的资源获取请求。一种检测死锁的算法如下：</p>
+<p>定义如下三个数据结构：</p>
+<ul>
+<li>可利用资源向量 Available：含有 m
+个元素的一维数组，每个元素代表可利用的某一类资源的数目，其初值是该类资源的全部可用数目，其值随该类资源的分配和回收而动态地改变。Available [j]
+= k，表示第 j 类资源的可用数量为 k。</li>
+<li>分配矩阵 Allocation：n * m
+矩阵，表示每类资源已分配给每个线程的资源数。Allocation [i, j] =
+g，则表示线程 i 当前己分得第 j 类资源的数量为 g。</li>
+<li>需求矩阵 Request：n * m
+的矩阵，表示每个线程还需要的各类资源数量。Request [i, j] = d，则表示线程
+i 还需要第 j 类资源的数量为 d。</li>
+</ul>
+<p>算法运行过程如下：</p>
+<ol type="1">
+<li>设置两个向量: 工作向量
+Work，表示操作系统可提供给线程继续运行所需的各类资源数目，它含有 m
+个元素。初始时，Work = Available；结束向量
+Finish，表示系统是否有足够的资源分配给线程，使之运行完成。初始时
+Finish [0 ~ n - 1] =
+false，表示所有线程都没结束；当有足够资源分配给线程时，设置 Finish [i] =
+true。</li>
+<li>从线程集合中找到一个能满足下述条件的线程 i</li>
+</ol>
+<blockquote>
+<ol type="1">
+<li>Finish[i] == false;</li>
+<li>Request[i, 0 ~ n - 1] ≤ Work[0 ~ n - 1];</li>
+</ol>
+</blockquote>
+<p>若找到，执行步骤 3，否则执行步骤 4。</p>
+<ol start="3" type="1">
+<li>当线程 i
+获得资源后，可顺利执行，直至完成，并释放出分配给它的资源，故应执行:</li>
+</ol>
+<blockquote>
+<ol type="1">
+<li>Work[0 ~ n - 1] = Work[0 ~ n - 1] + Allocation[i, 0 ~ n - 1];</li>
+<li>Finish[i] = true;</li>
+</ol>
+</blockquote>
+<p>跳转回步骤 2</p>
+<ol start="4" type="1">
+<li>如果 Finish [0 ~ n - 1] 都为
+true，则表示系统处于安全状态；否则表示系统处于不安全状态，即出现死锁。</li>
+</ol>
+<p>出于兼容性和灵活性考虑，我们允许进程按需开启或关闭死锁检测功能。为此我们将实现一个新的系统调用：<code>sys_enable_deadlock_detect</code>。</p>
+<p><strong>enable_deadlock_detect：</strong></p>
+<ul>
+<li>syscall ID: 469</li>
+<li>功能：为当前进程启用或禁用死锁检测功能。</li>
+<li>接口：<code>int enable_deadlock_detect(int is_enable)</code></li>
+<li>参数：
+<ul>
+<li><code>is_enable</code>: 为 1 表示启用死锁检测，0
+表示禁用死锁检测。</li>
+</ul></li>
+<li>说明：
+<ul>
+<li>开启死锁检测功能后，<code>mutex_lock</code> 和
+<code>semaphore_down</code> 如果检测到死锁，应拒绝相应操作并返回
+<code>-0xDEAD</code> (十六进制值)。</li>
+<li>简便起见可对 mutex 和 semaphore 分别进行检测，无需考虑二者 (以及
+<code>waittid</code> 等) 混合使用导致的死锁。</li>
+</ul></li>
+<li>返回值：如果出现了错误则返回 -1，否则返回 0。</li>
+<li>可能的错误
+<ul>
+<li>参数不合法</li>
+<li>死锁检测开启失败</li>
+</ul></li>
+</ul>
+<h2 id="编程作业答案">编程作业答案</h2>
+<p>就按实验要求的顺序一步一步实现吧，下面是我的更改：</p>
+<figure class="highlight patch"><table><tbody><tr><td class="code"><pre><span class="line">From 4ff1db2543e1394afd4b5a862fbb552e7f08b7d3 Mon Sep 17 00:00:00 2001</span><br><span class="line">From: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line">Date: Mon, 11 Aug 2025 23:12:01 +0800</span><br><span class="line">Subject: [PATCH 1/6] proc: Initialize needed variables in PCB</span><br><span class="line"></span><br><span class="line">Signed-off-by: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line"><span class="comment">---</span></span><br><span class="line"> os/proc.c | 7 +++++++</span><br><span class="line"> os/proc.h | 7 +++++++</span><br><span class="line"> 2 files changed, 14 insertions(+)</span><br><span class="line"></span><br><span class="line"><span class="comment">diff --git a/os/proc.c b/os/proc.c</span></span><br><span class="line"><span class="comment">index 9baaeb3..c964b99 100644</span></span><br><span class="line"><span class="comment">--- a/os/proc.c</span></span><br><span class="line"><span class="comment">+++ b/os/proc.c</span></span><br><span class="line"><span class="meta">@@ -143,6 +143,13 @@</span> found:</span><br><span class="line"> 	p-&gt;next_semaphore_id = 0;</span><br><span class="line"> 	p-&gt;next_condvar_id = 0;</span><br><span class="line"> 	// LAB5: (1) you may initialize your new proc variables here</span><br><span class="line"><span class="addition">+	p-&gt;deadlock_detect_enabled = 0;</span></span><br><span class="line"><span class="addition">+	memset(p-&gt;mutex_avail, 0, sizeof(p-&gt;mutex_avail));</span></span><br><span class="line"><span class="addition">+	memset(p-&gt;mutex_alloc, 0, sizeof(p-&gt;mutex_alloc));</span></span><br><span class="line"><span class="addition">+	memset(p-&gt;mutex_req, 0, sizeof(p-&gt;mutex_req));</span></span><br><span class="line"><span class="addition">+	memset(p-&gt;sem_avail, 0, sizeof(p-&gt;sem_avail));</span></span><br><span class="line"><span class="addition">+	memset(p-&gt;sem_alloc, 0, sizeof(p-&gt;sem_alloc));</span></span><br><span class="line"><span class="addition">+	memset(p-&gt;sem_req, 0, sizeof(p-&gt;sem_req));</span></span><br><span class="line"> 	return p;</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"><span class="comment">diff --git a/os/proc.h b/os/proc.h</span></span><br><span class="line"><span class="comment">index 0398e36..ba43261 100644</span></span><br><span class="line"><span class="comment">--- a/os/proc.h</span></span><br><span class="line"><span class="comment">+++ b/os/proc.h</span></span><br><span class="line"><span class="meta">@@ -66,6 +66,13 @@</span> struct proc {</span><br><span class="line"> 	// LAB5: (1) Define your variables for deadlock detect here.</span><br><span class="line"> 	//			 You may need a flag to record if detection enabled,</span><br><span class="line"> 	//       and some arrays for detection algorithm.</span><br><span class="line"><span class="addition">+	int deadlock_detect_enabled;</span></span><br><span class="line"><span class="addition">+	int mutex_avail[LOCK_POOL_SIZE];</span></span><br><span class="line"><span class="addition">+	int mutex_alloc[NTHREAD][LOCK_POOL_SIZE];</span></span><br><span class="line"><span class="addition">+	int mutex_req[NTHREAD][LOCK_POOL_SIZE];</span></span><br><span class="line"><span class="addition">+	int sem_avail[LOCK_POOL_SIZE];</span></span><br><span class="line"><span class="addition">+	int sem_alloc[NTHREAD][LOCK_POOL_SIZE];</span></span><br><span class="line"><span class="addition">+	int sem_req[NTHREAD][LOCK_POOL_SIZE];</span></span><br><span class="line"> };</span><br><span class="line"> </span><br><span class="line"> int cpuid();</span><br><span class="line"><span class="deletion">-- </span></span><br><span class="line">2.25.1</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight patch"><table><tbody><tr><td class="code"><pre><span class="line">From e5dfeb92213efd43fba0830e0f75175c55c33d83 Mon Sep 17 00:00:00 2001</span><br><span class="line">From: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line">Date: Mon, 11 Aug 2025 23:17:04 +0800</span><br><span class="line">Subject: [PATCH 2/6] Implement enable_deadlock_detect syscall</span><br><span class="line"></span><br><span class="line">Signed-off-by: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line"><span class="comment">---</span></span><br><span class="line"> os/syscall.c | 14 ++++++++++++++</span><br><span class="line"> 1 file changed, 14 insertions(+)</span><br><span class="line"></span><br><span class="line"><span class="comment">diff --git a/os/syscall.c b/os/syscall.c</span></span><br><span class="line"><span class="comment">index 84eab14..05c919b 100644</span></span><br><span class="line"><span class="comment">--- a/os/syscall.c</span></span><br><span class="line"><span class="comment">+++ b/os/syscall.c</span></span><br><span class="line"><span class="meta">@@ -362,6 +362,17 @@</span> int sys_condvar_wait(int cond_id, int mutex_id)</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"> // LAB5: (2) you may need to define function enable_deadlock_detect here</span><br><span class="line"><span class="addition">+int sys_enable_deadlock_detect(int is_enable)</span></span><br><span class="line"><span class="addition">+{</span></span><br><span class="line"><span class="addition">+	if (is_enable != 0 &amp;&amp; is_enable != 1)</span></span><br><span class="line"><span class="addition">+		return -1;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	p-&gt;deadlock_detect_enabled = is_enable;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	return 0;</span></span><br><span class="line"><span class="addition">+}</span></span><br><span class="line"> </span><br><span class="line"> extern char trap_page[];</span><br><span class="line"> </span><br><span class="line"><span class="meta">@@ -455,6 +466,9 @@</span> void syscall()</span><br><span class="line"> 		ret = sys_condvar_wait(args[0], args[1]);</span><br><span class="line"> 		break;</span><br><span class="line"> 	// LAB5: (2) you may need to add case SYS_enable_deadlock_detect here</span><br><span class="line"><span class="addition">+	case SYS_enable_deadlock_detect:</span></span><br><span class="line"><span class="addition">+		ret = sys_enable_deadlock_detect(args[0]);</span></span><br><span class="line"><span class="addition">+		break;</span></span><br><span class="line"> 	default:</span><br><span class="line"> 		ret = -1;</span><br><span class="line"> 		errorf("unknown syscall %d", id);</span><br><span class="line"><span class="deletion">-- </span></span><br><span class="line">2.25.1</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight patch"><table><tbody><tr><td class="code"><pre><span class="line">From 448844a705e085d827ef5ece51ef0c64487e6501 Mon Sep 17 00:00:00 2001</span><br><span class="line">From: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line">Date: Mon, 11 Aug 2025 23:46:13 +0800</span><br><span class="line">Subject: [PATCH 3/6] Implement deadlock detect algo</span><br><span class="line"></span><br><span class="line">Signed-off-by: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line"><span class="comment">---</span></span><br><span class="line"> os/syscall.c | 53 ++++++++++++++++++++++++++++++++++++++++++++++++++++</span><br><span class="line"> 1 file changed, 53 insertions(+)</span><br><span class="line"></span><br><span class="line"><span class="comment">diff --git a/os/syscall.c b/os/syscall.c</span></span><br><span class="line"><span class="comment">index 05c919b..03610ba 100644</span></span><br><span class="line"><span class="comment">--- a/os/syscall.c</span></span><br><span class="line"><span class="comment">+++ b/os/syscall.c</span></span><br><span class="line"><span class="meta">@@ -248,7 +248,60 @@</span> int sys_waittid(int tid)</span><br><span class="line"> *						const int request[NTHREAD][LOCK_POOL_SIZE])</span><br><span class="line"> *				for both mutex and semaphore detect, you can also</span><br><span class="line"> *				use this idea or just ignore it.</span><br><span class="line"><span class="addition">+*	@thread_cnt:	The total number of threads in the system.</span></span><br><span class="line"><span class="addition">+*	@resource_cnt:	The total number of resource types, this corresponds</span></span><br><span class="line"><span class="addition">+					to the number of currently created mutexes or</span></span><br><span class="line"><span class="addition">+					semaphores (e.g., p-&gt;next_mutex_id).</span></span><br><span class="line"> */</span><br><span class="line"><span class="addition">+int deadlock_detect(int thread_cnt,</span></span><br><span class="line"><span class="addition">+		 int resource_cnt, int *avail,</span></span><br><span class="line"><span class="addition">+		 int alloc[NTHREAD][LOCK_POOL_SIZE],</span></span><br><span class="line"><span class="addition">+		 int req[NTHREAD][LOCK_POOL_SIZE])</span></span><br><span class="line"><span class="addition">+{</span></span><br><span class="line"><span class="addition">+	// Initialize Work and Finish arrays.</span></span><br><span class="line"><span class="addition">+	int work[LOCK_POOL_SIZE], finish[NTHREAD];</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	for (int j = 0; j &lt; resource_cnt; j++)</span></span><br><span class="line"><span class="addition">+		work[j] = avail[j];</span></span><br><span class="line"><span class="addition">+	for (int i = 0; i &lt; thread_cnt; i++)</span></span><br><span class="line"><span class="addition">+		finish[i] = 0;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	// Find a thread that can finish and release its resources.</span></span><br><span class="line"><span class="addition">+	while (1) {</span></span><br><span class="line"><span class="addition">+		int found = 0;</span></span><br><span class="line"><span class="addition">+		for (int i = 0; i &lt; thread_cnt; i++) {</span></span><br><span class="line"><span class="addition">+			// Find a thread [i] which is not finished and its request can be satisfied</span></span><br><span class="line"><span class="addition">+			if (finish[i] == 0) {</span></span><br><span class="line"><span class="addition">+				int unsatisfied = 0;</span></span><br><span class="line"><span class="addition">+				for (int j = 0; j &lt; resource_cnt; j++) {</span></span><br><span class="line"><span class="addition">+					if (req[i][j] &gt; work[j]) {</span></span><br><span class="line"><span class="addition">+						unsatisfied = 1;</span></span><br><span class="line"><span class="addition">+						break;</span></span><br><span class="line"><span class="addition">+					}</span></span><br><span class="line"><span class="addition">+				}</span></span><br><span class="line"><span class="addition">+				// If found, pretend to release its resources</span></span><br><span class="line"><span class="addition">+				if (!unsatisfied) {</span></span><br><span class="line"><span class="addition">+					for (int j = 0; j &lt; resource_cnt; j++)</span></span><br><span class="line"><span class="addition">+						work[j] += alloc[i][j];</span></span><br><span class="line"><span class="addition">+					finish[i] = 1;</span></span><br><span class="line"><span class="addition">+					found = 1;</span></span><br><span class="line"><span class="addition">+				}</span></span><br><span class="line"><span class="addition">+			}</span></span><br><span class="line"><span class="addition">+		}</span></span><br><span class="line"><span class="addition">+		// If no such thread was found in a full pass, exit the loop</span></span><br><span class="line"><span class="addition">+		if (!found)</span></span><br><span class="line"><span class="addition">+			break;</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	// Check if all threads are finished.</span></span><br><span class="line"><span class="addition">+	for (int i = 0; i &lt; thread_cnt; i++) {</span></span><br><span class="line"><span class="addition">+		if (finish[i] == 0)</span></span><br><span class="line"><span class="addition">+			// If any thread cannot finish, the system is in an unsafe state, detect deadlock.</span></span><br><span class="line"><span class="addition">+			return 1;</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	return 0;</span></span><br><span class="line"><span class="addition">+}</span></span><br><span class="line"> </span><br><span class="line"> int sys_mutex_create(int blocking)</span><br><span class="line"> {</span><br><span class="line"><span class="deletion">-- </span></span><br><span class="line">2.25.1</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight patch"><table><tbody><tr><td class="code"><pre><span class="line">From fa4e86f787b90e4517d941cc74e3e3131ef7cf68 Mon Sep 17 00:00:00 2001</span><br><span class="line">From: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line">Date: Tue, 12 Aug 2025 00:09:59 +0800</span><br><span class="line">Subject: [PATCH 4/6] Maintain deadlock detector and variables for mutex</span><br><span class="line"></span><br><span class="line">Signed-off-by: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line"><span class="comment">---</span></span><br><span class="line"> os/syscall.c | 55 +++++++++++++++++++++++++++++++++++++++++++++++++---</span><br><span class="line"> 1 file changed, 52 insertions(+), 3 deletions(-)</span><br><span class="line"></span><br><span class="line"><span class="comment">diff --git a/os/syscall.c b/os/syscall.c</span></span><br><span class="line"><span class="comment">index 03610ba..bb2791d 100644</span></span><br><span class="line"><span class="comment">--- a/os/syscall.c</span></span><br><span class="line"><span class="comment">+++ b/os/syscall.c</span></span><br><span class="line"><span class="meta">@@ -311,7 +311,14 @@</span> int sys_mutex_create(int blocking)</span><br><span class="line"> 		return -1;</span><br><span class="line"> 	}</span><br><span class="line"> 	// LAB5: (4-1) You may want to maintain some variables for detect here</span><br><span class="line"><span class="deletion">-	int mutex_id = m - curr_proc()-&gt;mutex_pool;</span></span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+	int mutex_id = m - p-&gt;mutex_pool;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	// If deadlock detection is enabled, initialize</span></span><br><span class="line"><span class="addition">+	// the state for this new resource.</span></span><br><span class="line"><span class="addition">+	if (p-&gt;deadlock_detect_enabled)</span></span><br><span class="line"><span class="addition">+		p-&gt;mutex_avail[mutex_id] = 1;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"> 	debugf("create mutex %d", mutex_id);</span><br><span class="line"> 	return mutex_id;</span><br><span class="line"> }</span><br><span class="line"><span class="meta">@@ -324,7 +331,37 @@</span> int sys_mutex_lock(int mutex_id)</span><br><span class="line"> 	}</span><br><span class="line"> 	// LAB5: (4-1) You may want to maintain some variables for detect</span><br><span class="line"> 	//       or call your detect algorithm here</span><br><span class="line"><span class="deletion">-	mutex_lock(&amp;curr_proc()-&gt;mutex_pool[mutex_id]);</span></span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+	struct thread *t = curr_thread();</span></span><br><span class="line"><span class="addition">+	struct mutex *m = &amp;p-&gt;mutex_pool[mutex_id];</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if (p-&gt;deadlock_detect_enabled) {</span></span><br><span class="line"><span class="addition">+		p-&gt;mutex_req[t-&gt;tid][mutex_id] = 1;</span></span><br><span class="line"><span class="addition">+		// Check for potential deadlock ONLY if the resource is</span></span><br><span class="line"><span class="addition">+		// not immediately available. If the mutex is already</span></span><br><span class="line"><span class="addition">+		// locked, the thread will have to wait. This is a</span></span><br><span class="line"><span class="addition">+		// potential deadlock situation.</span></span><br><span class="line"><span class="addition">+		if (m-&gt;locked) {</span></span><br><span class="line"><span class="addition">+			if (deadlock_detect(NTHREAD, p-&gt;next_mutex_id,</span></span><br><span class="line"><span class="addition">+				 p-&gt;mutex_avail, p-&gt;mutex_alloc, p-&gt;mutex_req)) {</span></span><br><span class="line"><span class="addition">+				p-&gt;mutex_req[t-&gt;tid][mutex_id] = 0;</span></span><br><span class="line"><span class="addition">+				return -0xDEAD;</span></span><br><span class="line"><span class="addition">+			}</span></span><br><span class="line"><span class="addition">+		}</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	mutex_lock(m);</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	// Update state matrices after successfully acquiring the lock.</span></span><br><span class="line"><span class="addition">+	if (p-&gt;deadlock_detect_enabled) {</span></span><br><span class="line"><span class="addition">+		// The request has been fulfilled, clear it now.</span></span><br><span class="line"><span class="addition">+		p-&gt;mutex_req[t-&gt;tid][mutex_id] = 0;</span></span><br><span class="line"><span class="addition">+		// Now the resource is allocated to this thread.</span></span><br><span class="line"><span class="addition">+		p-&gt;mutex_alloc[t-&gt;tid][mutex_id] = 1;</span></span><br><span class="line"><span class="addition">+		// It's unavailable now.</span></span><br><span class="line"><span class="addition">+		p-&gt;mutex_avail[mutex_id] = 0;</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"> 	return 0;</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"><span class="meta">@@ -335,7 +372,19 @@</span> int sys_mutex_unlock(int mutex_id)</span><br><span class="line"> 		return -1;</span><br><span class="line"> 	}</span><br><span class="line"> 	// LAB5: (4-1) You may want to maintain some variables for detect here</span><br><span class="line"><span class="deletion">-	mutex_unlock(&amp;curr_proc()-&gt;mutex_pool[mutex_id]);</span></span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+	struct thread *t = curr_thread();</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	// Update state matrices to reflect the resource release.</span></span><br><span class="line"><span class="addition">+	if (p-&gt;deadlock_detect_enabled) {</span></span><br><span class="line"><span class="addition">+		// No longer holds the resource. Clear it.</span></span><br><span class="line"><span class="addition">+		p-&gt;mutex_alloc[t-&gt;tid][mutex_id] = 0;</span></span><br><span class="line"><span class="addition">+		// Now it's available.</span></span><br><span class="line"><span class="addition">+		p-&gt;mutex_avail[mutex_id] = 1;</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	mutex_unlock(&amp;p-&gt;mutex_pool[mutex_id]);</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"> 	return 0;</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"><span class="deletion">-- </span></span><br><span class="line">2.25.1</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight patch"><table><tbody><tr><td class="code"><pre><span class="line">From ee4d9d1c584cb450a83256e53d17adeb3ebe2d05 Mon Sep 17 00:00:00 2001</span><br><span class="line">From: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line">Date: Tue, 12 Aug 2025 00:31:44 +0800</span><br><span class="line">Subject: [PATCH 5/6] Maintain deadlock detector and variables for sem</span><br><span class="line"></span><br><span class="line">Signed-off-by: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line"><span class="comment">---</span></span><br><span class="line"> os/syscall.c | 53 +++++++++++++++++++++++++++++++++++++++++++++++++---</span><br><span class="line"> 1 file changed, 50 insertions(+), 3 deletions(-)</span><br><span class="line"></span><br><span class="line"><span class="comment">diff --git a/os/syscall.c b/os/syscall.c</span></span><br><span class="line"><span class="comment">index bb2791d..6149a98 100644</span></span><br><span class="line"><span class="comment">--- a/os/syscall.c</span></span><br><span class="line"><span class="comment">+++ b/os/syscall.c</span></span><br><span class="line"><span class="meta">@@ -396,7 +396,14 @@</span> int sys_semaphore_create(int res_count)</span><br><span class="line"> 		return -1;</span><br><span class="line"> 	}</span><br><span class="line"> 	// LAB5: (4-2) You may want to maintain some variables for detect here</span><br><span class="line"><span class="deletion">-	int sem_id = s - curr_proc()-&gt;semaphore_pool;</span></span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+	int sem_id = s - p-&gt;semaphore_pool;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	// If deadlock detection is enabled,</span></span><br><span class="line"><span class="addition">+	// initialize the state for this new resource.</span></span><br><span class="line"><span class="addition">+	if (p-&gt;deadlock_detect_enabled)</span></span><br><span class="line"><span class="addition">+		p-&gt;sem_avail[sem_id] = res_count;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"> 	debugf("create semaphore %d", sem_id);</span><br><span class="line"> 	return sem_id;</span><br><span class="line"> }</span><br><span class="line"><span class="meta">@@ -409,7 +416,18 @@</span> int sys_semaphore_up(int semaphore_id)</span><br><span class="line"> 		return -1;</span><br><span class="line"> 	}</span><br><span class="line"> 	// LAB5: (4-2) You may want to maintain some variables for detect here</span><br><span class="line"><span class="deletion">-	semaphore_up(&amp;curr_proc()-&gt;semaphore_pool[semaphore_id]);</span></span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+	struct thread *t = curr_thread();</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	// Update state matrices to reflect V operation.</span></span><br><span class="line"><span class="addition">+	if (p-&gt;deadlock_detect_enabled) {</span></span><br><span class="line"><span class="addition">+		// To release a semaphore, decrease the thread's allocation of this resource.</span></span><br><span class="line"><span class="addition">+		p-&gt;sem_alloc[t-&gt;tid][semaphore_id]--;</span></span><br><span class="line"><span class="addition">+		// Consequently, the number of available instances of this resource increases.</span></span><br><span class="line"><span class="addition">+		p-&gt;sem_avail[semaphore_id]++;</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	semaphore_up(&amp;p-&gt;semaphore_pool[semaphore_id]);</span></span><br><span class="line"> 	return 0;</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"><span class="meta">@@ -422,7 +440,36 @@</span> int sys_semaphore_down(int semaphore_id)</span><br><span class="line"> 	}</span><br><span class="line"> 	// LAB5: (4-2) You may want to maintain some variables for detect</span><br><span class="line"> 	//       or call your detect algorithm here</span><br><span class="line"><span class="deletion">-	semaphore_down(&amp;curr_proc()-&gt;semaphore_pool[semaphore_id]);</span></span><br><span class="line"><span class="addition">+	struct proc *p = curr_proc();</span></span><br><span class="line"><span class="addition">+	struct thread *t = curr_thread();</span></span><br><span class="line"><span class="addition">+	struct semaphore *s = &amp;p-&gt;semaphore_pool[semaphore_id];</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	if (p-&gt;deadlock_detect_enabled) {</span></span><br><span class="line"><span class="addition">+		p-&gt;sem_req[t-&gt;tid][semaphore_id] = 1;</span></span><br><span class="line"><span class="addition">+		// Check for potential deadlock if the thread might wait.</span></span><br><span class="line"><span class="addition">+		// A thread will wait if the semaphore count is not positive.</span></span><br><span class="line"><span class="addition">+		if (s-&gt;count &lt;= 0) {</span></span><br><span class="line"><span class="addition">+			if (deadlock_detect(NTHREAD, p-&gt;next_semaphore_id,</span></span><br><span class="line"><span class="addition">+					p-&gt;sem_avail, p-&gt;sem_alloc, p-&gt;sem_req)) {</span></span><br><span class="line"><span class="addition">+				// Cancel the request.</span></span><br><span class="line"><span class="addition">+				p-&gt;sem_req[t-&gt;tid][semaphore_id] = 0;</span></span><br><span class="line"><span class="addition">+				return -0xDEAD;</span></span><br><span class="line"><span class="addition">+			}</span></span><br><span class="line"><span class="addition">+		}</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	semaphore_down(s);</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	// Update state matrices after successfully acquiring the resource.</span></span><br><span class="line"><span class="addition">+	if (p-&gt;deadlock_detect_enabled) {</span></span><br><span class="line"><span class="addition">+		// The request has been fulfilled, clear it now.</span></span><br><span class="line"><span class="addition">+		p-&gt;sem_req[t-&gt;tid][semaphore_id] = 0;</span></span><br><span class="line"><span class="addition">+		// Increase the thread's allocation of this resource.</span></span><br><span class="line"><span class="addition">+		p-&gt;sem_alloc[t-&gt;tid][semaphore_id]++;</span></span><br><span class="line"><span class="addition">+		// Decrease the thread's available of this resource.</span></span><br><span class="line"><span class="addition">+		p-&gt;sem_avail[semaphore_id]--;</span></span><br><span class="line"><span class="addition">+	}</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"> 	return 0;</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"><span class="deletion">-- </span></span><br><span class="line">2.25.1</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>最后这个提交不是必需的，只是我看 <code>mutex_lock</code> 和
+<code>semaphore_down</code>
+里面的重复判断有点难受，所以简化了一下实现，<del>感觉好看多了</del>：</p>
+<figure class="highlight patch"><table><tbody><tr><td class="code"><pre><span class="line">From 97ef7e592e8118b1a0f1ccf53d320f88d94d196d Mon Sep 17 00:00:00 2001</span><br><span class="line">From: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line">Date: Tue, 12 Aug 2025 01:26:20 +0800</span><br><span class="line">Subject: [PATCH 6/6] refactor mutex_lock and semaphore_down syscall</span><br><span class="line"></span><br><span class="line">Signed-off-by: 0wnerDied &lt;z1281552865@gmail.com&gt;</span><br><span class="line"><span class="comment">---</span></span><br><span class="line"> os/syscall.c | 90 ++++++++++++++++++++++++++++------------------------</span><br><span class="line"> 1 file changed, 49 insertions(+), 41 deletions(-)</span><br><span class="line"></span><br><span class="line"><span class="comment">diff --git a/os/syscall.c b/os/syscall.c</span></span><br><span class="line"><span class="comment">index 6149a98..c38d7c5 100644</span></span><br><span class="line"><span class="comment">--- a/os/syscall.c</span></span><br><span class="line"><span class="comment">+++ b/os/syscall.c</span></span><br><span class="line"><span class="meta">@@ -335,33 +335,37 @@</span> int sys_mutex_lock(int mutex_id)</span><br><span class="line"> 	struct thread *t = curr_thread();</span><br><span class="line"> 	struct mutex *m = &amp;p-&gt;mutex_pool[mutex_id];</span><br><span class="line"> </span><br><span class="line"><span class="deletion">-	if (p-&gt;deadlock_detect_enabled) {</span></span><br><span class="line"><span class="deletion">-		p-&gt;mutex_req[t-&gt;tid][mutex_id] = 1;</span></span><br><span class="line"><span class="deletion">-		// Check for potential deadlock ONLY if the resource is</span></span><br><span class="line"><span class="deletion">-		// not immediately available. If the mutex is already</span></span><br><span class="line"><span class="deletion">-		// locked, the thread will have to wait. This is a</span></span><br><span class="line"><span class="deletion">-		// potential deadlock situation.</span></span><br><span class="line"><span class="deletion">-		if (m-&gt;locked) {</span></span><br><span class="line"><span class="deletion">-			if (deadlock_detect(NTHREAD, p-&gt;next_mutex_id,</span></span><br><span class="line"><span class="deletion">-				 p-&gt;mutex_avail, p-&gt;mutex_alloc, p-&gt;mutex_req)) {</span></span><br><span class="line"><span class="deletion">-				p-&gt;mutex_req[t-&gt;tid][mutex_id] = 0;</span></span><br><span class="line"><span class="deletion">-				return -0xDEAD;</span></span><br><span class="line"><span class="deletion">-			}</span></span><br><span class="line"><span class="addition">+	if (!p-&gt;deadlock_detect_enabled)</span></span><br><span class="line"><span class="addition">+		goto acquire_lock;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	p-&gt;mutex_req[t-&gt;tid][mutex_id] = 1;</span></span><br><span class="line"><span class="addition">+	// Check for potential deadlock ONLY if the resource is</span></span><br><span class="line"><span class="addition">+	// not immediately available. If the mutex is already</span></span><br><span class="line"><span class="addition">+	// locked, the thread will have to wait. This is a</span></span><br><span class="line"><span class="addition">+	// potential deadlock situation.</span></span><br><span class="line"><span class="addition">+	if (m-&gt;locked) {</span></span><br><span class="line"><span class="addition">+		if (deadlock_detect(NTHREAD, p-&gt;next_mutex_id,</span></span><br><span class="line"><span class="addition">+			 p-&gt;mutex_avail, p-&gt;mutex_alloc, p-&gt;mutex_req)) {</span></span><br><span class="line"><span class="addition">+			p-&gt;mutex_req[t-&gt;tid][mutex_id] = 0;</span></span><br><span class="line"><span class="addition">+			return -0xDEAD;</span></span><br><span class="line"> 		}</span><br><span class="line"> 	}</span><br><span class="line"> </span><br><span class="line"><span class="addition">+acquire_lock:</span></span><br><span class="line"> 	mutex_lock(m);</span><br><span class="line"> </span><br><span class="line"><span class="deletion">-	// Update state matrices after successfully acquiring the lock.</span></span><br><span class="line"><span class="deletion">-	if (p-&gt;deadlock_detect_enabled) {</span></span><br><span class="line"><span class="deletion">-		// The request has been fulfilled, clear it now.</span></span><br><span class="line"><span class="deletion">-		p-&gt;mutex_req[t-&gt;tid][mutex_id] = 0;</span></span><br><span class="line"><span class="deletion">-		// Now the resource is allocated to this thread.</span></span><br><span class="line"><span class="deletion">-		p-&gt;mutex_alloc[t-&gt;tid][mutex_id] = 1;</span></span><br><span class="line"><span class="deletion">-		// It's unavailable now.</span></span><br><span class="line"><span class="deletion">-		p-&gt;mutex_avail[mutex_id] = 0;</span></span><br><span class="line"><span class="deletion">-	}</span></span><br><span class="line"><span class="addition">+	if (!p-&gt;deadlock_detect_enabled)</span></span><br><span class="line"><span class="addition">+		goto ret;</span></span><br><span class="line"> </span><br><span class="line"><span class="addition">+	// Update state matrices after successfully acquiring the lock.</span></span><br><span class="line"><span class="addition">+	// The request has been fulfilled, clear it now.</span></span><br><span class="line"><span class="addition">+	p-&gt;mutex_req[t-&gt;tid][mutex_id] = 0;</span></span><br><span class="line"><span class="addition">+	// Now the resource is allocated to this thread.</span></span><br><span class="line"><span class="addition">+	p-&gt;mutex_alloc[t-&gt;tid][mutex_id] = 1;</span></span><br><span class="line"><span class="addition">+	// It's unavailable now.</span></span><br><span class="line"><span class="addition">+	p-&gt;mutex_avail[mutex_id] = 0;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+ret:</span></span><br><span class="line"> 	return 0;</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"><span class="meta">@@ -444,32 +448,36 @@</span> int sys_semaphore_down(int semaphore_id)</span><br><span class="line"> 	struct thread *t = curr_thread();</span><br><span class="line"> 	struct semaphore *s = &amp;p-&gt;semaphore_pool[semaphore_id];</span><br><span class="line"> </span><br><span class="line"><span class="deletion">-	if (p-&gt;deadlock_detect_enabled) {</span></span><br><span class="line"><span class="deletion">-		p-&gt;sem_req[t-&gt;tid][semaphore_id] = 1;</span></span><br><span class="line"><span class="deletion">-		// Check for potential deadlock if the thread might wait.</span></span><br><span class="line"><span class="deletion">-		// A thread will wait if the semaphore count is not positive.</span></span><br><span class="line"><span class="deletion">-		if (s-&gt;count &lt;= 0) {</span></span><br><span class="line"><span class="deletion">-			if (deadlock_detect(NTHREAD, p-&gt;next_semaphore_id,</span></span><br><span class="line"><span class="deletion">-					p-&gt;sem_avail, p-&gt;sem_alloc, p-&gt;sem_req)) {</span></span><br><span class="line"><span class="deletion">-				// Cancel the request.</span></span><br><span class="line"><span class="deletion">-				p-&gt;sem_req[t-&gt;tid][semaphore_id] = 0;</span></span><br><span class="line"><span class="deletion">-				return -0xDEAD;</span></span><br><span class="line"><span class="deletion">-			}</span></span><br><span class="line"><span class="addition">+	if (!p-&gt;deadlock_detect_enabled)</span></span><br><span class="line"><span class="addition">+		goto acquire_sem;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+	p-&gt;sem_req[t-&gt;tid][semaphore_id] = 1;</span></span><br><span class="line"><span class="addition">+	// Check for potential deadlock if the thread might wait.</span></span><br><span class="line"><span class="addition">+	// A thread will wait if the semaphore count is not positive.</span></span><br><span class="line"><span class="addition">+	if (s-&gt;count &lt;= 0) {</span></span><br><span class="line"><span class="addition">+		if (deadlock_detect(NTHREAD, p-&gt;next_semaphore_id,</span></span><br><span class="line"><span class="addition">+			 p-&gt;sem_avail, p-&gt;sem_alloc, p-&gt;sem_req)) {</span></span><br><span class="line"><span class="addition">+			// Cancel the request.</span></span><br><span class="line"><span class="addition">+			p-&gt;sem_req[t-&gt;tid][semaphore_id] = 0;</span></span><br><span class="line"><span class="addition">+			return -0xDEAD;</span></span><br><span class="line"> 		}</span><br><span class="line"> 	}</span><br><span class="line"> </span><br><span class="line"><span class="addition">+acquire_sem:</span></span><br><span class="line"> 	semaphore_down(s);</span><br><span class="line"> </span><br><span class="line"><span class="deletion">-	// Update state matrices after successfully acquiring the resource.</span></span><br><span class="line"><span class="deletion">-	if (p-&gt;deadlock_detect_enabled) {</span></span><br><span class="line"><span class="deletion">-		// The request has been fulfilled, clear it now.</span></span><br><span class="line"><span class="deletion">-		p-&gt;sem_req[t-&gt;tid][semaphore_id] = 0;</span></span><br><span class="line"><span class="deletion">-		// Increase the thread's allocation of this resource.</span></span><br><span class="line"><span class="deletion">-		p-&gt;sem_alloc[t-&gt;tid][semaphore_id]++;</span></span><br><span class="line"><span class="deletion">-		// Decrease the thread's available of this resource.</span></span><br><span class="line"><span class="deletion">-		p-&gt;sem_avail[semaphore_id]--;</span></span><br><span class="line"><span class="deletion">-	}</span></span><br><span class="line"><span class="addition">+	if (!p-&gt;deadlock_detect_enabled)</span></span><br><span class="line"><span class="addition">+		goto ret;</span></span><br><span class="line"> </span><br><span class="line"><span class="addition">+	// Update state matrices after successfully acquiring the resource.</span></span><br><span class="line"><span class="addition">+	// The request has been fulfilled, clear it now.</span></span><br><span class="line"><span class="addition">+	p-&gt;sem_req[t-&gt;tid][semaphore_id] = 0;</span></span><br><span class="line"><span class="addition">+	// Increase the thread's allocation of this resource.</span></span><br><span class="line"><span class="addition">+	p-&gt;sem_alloc[t-&gt;tid][semaphore_id]++;</span></span><br><span class="line"><span class="addition">+	// Decrease the thread's available of this resource.</span></span><br><span class="line"><span class="addition">+	p-&gt;sem_avail[semaphore_id]--;</span></span><br><span class="line"><span class="addition">+</span></span><br><span class="line"><span class="addition">+ret:</span></span><br><span class="line"> 	return 0;</span><br><span class="line"> }</span><br><span class="line"> </span><br><span class="line"><span class="deletion">-- </span></span><br><span class="line">2.25.1</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>上面的提交我就不详细解释了，注释都有。</p>
+<h2 id="问答作业">问答作业</h2>
+<ol type="1">
+<li>在我们的多线程实现中，当主线程 (即 0 号线程)
+退出时，视为整个进程退出，
+此时需要结束该进程管理的所有线程并回收其资源。</li>
+</ol>
+<ul>
+<li>需要回收的资源有哪些？</li>
+<li>其他线程的 <code>struct thread</code>
+可能在哪些位置被引用，分别是否需要回收，为什么？</li>
+</ul>
+<ol start="2" type="1">
+<li><p>对比以下两种 <code>mutex_unlock</code>
+中阻塞锁的实现，二者有什么区别？这些区别可能会导致什么问题？（假设无论哪种实现，对应的
+<code>mutex_lock</code> 均正确处理了 <code>m-&gt;locked</code>）</p>
+<p></p><figure class="highlight c"><table><tbody><tr><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">mutex_unlock_v1</span><span class="params">(<span class="keyword">struct</span> mutex *m)</span></span><br><span class="line">{</span><br><span class="line">  <span class="keyword">if</span> (m-&gt;blocking) {</span><br><span class="line">      m-&gt;locked = <span class="number">0</span>;</span><br><span class="line">      <span class="class"><span class="keyword">struct</span> <span class="title">thread</span> *<span class="title">t</span> =</span> id_to_task(pop_queue(&amp;m-&gt;wait_queue));</span><br><span class="line">      <span class="keyword">if</span> (t != <span class="literal">NULL</span>) {</span><br><span class="line">        t-&gt;state = RUNNABLE;</span><br><span class="line">        add_task(t);</span><br><span class="line">      }</span><br><span class="line">  } <span class="keyword">else</span> ...</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> mutex_unlock_v2(<span class="keyword">struct</span> mutex *m)</span><br><span class="line">{</span><br><span class="line">  <span class="keyword">if</span> (m-&gt;blocking) {</span><br><span class="line">      <span class="keyword">struct</span> thread *t = id_to_task(pop_queue(&amp;m-&gt;wait_queue));</span><br><span class="line">      <span class="keyword">if</span> (t == <span class="literal">NULL</span>) {</span><br><span class="line">        m-&gt;locked = <span class="number">0</span>;</span><br><span class="line">      } <span class="keyword">else</span> {</span><br><span class="line">        t-&gt;state = RUNNABLE;</span><br><span class="line">        add_task(t);</span><br><span class="line">      }</span><br><span class="line">  } <span class="keyword">else</span> ...</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure><p></p></li>
+</ol>
+<h2 id="问答作业答案">问答作业答案</h2>
+<ol type="1">
+<li>在我们的多线程实现中，当主线程 (即 0 号线程)
+退出时，视为整个进程退出，
+此时需要结束该进程管理的所有线程并回收其资源。</li>
+</ol>
+<ul>
+<li><p>需要回收的资源有哪些？</p>
+<p>当主线程退出导致整个进程终止时，需要回收所有相关资源以防泄漏。主要包括：内存资源，通过
+<code>freepagetable</code>
+函数释放整个用户地址空间（代码、数据、堆以及所有线程的用户栈），并回收每个线程的内核栈、<code>trapframe</code>
+页、页表结构本身以及像管道（Pipe）一样由内核动态分配的内存；进程与线程的控制结构，将全局
+pool 数组中的 <code>struct proc</code> 条目和其下所有的
+<code>struct thread</code>
+条目清理并标记为未使用状态，以供后续分配；文件与设备资源，关闭进程打开的所有文件描述符，并正确处理文件的引用计数；同步与调度资源，包括将进程中所有线程从调度器的就绪队列以及各类同步原语的等待队列中彻底移除。</p></li>
+<li><p>其他线程的 <code>struct thread</code>
+可能在哪些位置被引用，分别是否需要回收，为什么？</p>
+<p>在一个运行的系统中，除了进程自身的 <code>threads</code>
+数组，其他线程的 <code>struct thread</code>
+引用主要存在于两个关键位置，并且都必须被回收。首先是全局的就绪队列（<code>task_queue</code>），等待调度的线程
+ID 会存放在这里。当进程终止时，必须将其所有 <code>RUNNABLE</code>
+的线程从这个队列中移除，否则调度器未来可能会尝试运行一个已被销毁的线程，这样就会访问到无效的内存，从而导致系统崩溃。其次是各类同步原语（如互斥锁、信号量）的等待队列中，因阻塞而处于
+SLEEPING 状态的线程 ID
+会存放在这里，这些也必须被移除，否则这些线程将永远无法被唤醒，造成线程资源永久泄漏，并可能导致其他依赖这些资源的进程产生问题。</p></li>
+</ul>
+<ol start="2" type="1">
+<li><p>对比以下两种 <code>mutex_unlock</code>
+中阻塞锁的实现，二者有什么区别？这些区别可能会导致什么问题？（假设无论哪种实现，对应的
+<code>mutex_lock</code> 均正确处理了 <code>m-&gt;locked</code>）</p>
+<p></p><figure class="highlight c"><table><tbody><tr><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">mutex_unlock_v1</span><span class="params">(<span class="keyword">struct</span> mutex *m)</span></span><br><span class="line">{</span><br><span class="line">  <span class="keyword">if</span> (m-&gt;blocking) {</span><br><span class="line">      m-&gt;locked = <span class="number">0</span>;</span><br><span class="line">      <span class="class"><span class="keyword">struct</span> <span class="title">thread</span> *<span class="title">t</span> =</span> id_to_task(pop_queue(&amp;m-&gt;wait_queue));</span><br><span class="line">      <span class="keyword">if</span> (t != <span class="literal">NULL</span>) {</span><br><span class="line">        t-&gt;state = RUNNABLE;</span><br><span class="line">        add_task(t);</span><br><span class="line">      }</span><br><span class="line">  } <span class="keyword">else</span> ...</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> mutex_unlock_v2(<span class="keyword">struct</span> mutex *m)</span><br><span class="line">{</span><br><span class="line">  <span class="keyword">if</span> (m-&gt;blocking) {</span><br><span class="line">      <span class="keyword">struct</span> thread *t = id_to_task(pop_queue(&amp;m-&gt;wait_queue));</span><br><span class="line">      <span class="keyword">if</span> (t == <span class="literal">NULL</span>) {</span><br><span class="line">        m-&gt;locked = <span class="number">0</span>;</span><br><span class="line">      } <span class="keyword">else</span> {</span><br><span class="line">        t-&gt;state = RUNNABLE;</span><br><span class="line">        add_task(t);</span><br><span class="line">      }</span><br><span class="line">  } <span class="keyword">else</span> ...</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure><p></p>
+<p><code>mutex_unlock_v1</code> 先解锁再唤醒，也就是先将
+<code>m-&gt;locked</code> 置为
+0，再唤醒等待队列中的线程。这样会导致在锁被释放到等待线程被唤醒之间的微小时间窗口内，如果有更高优先级的线程进入，这个线程会抢先获得锁，导致本应获得锁的等待线程被再次阻塞，引发线程饥饿问题，并因无效的唤醒和上下文切换而带来性能开销。<code>mutex_unlock_v2</code>
+就没有这个问题，它先检查等待队列，如果队列不为空，会直接将等待线程置为就绪态，同时保持锁的状态为
+<code>locked</code>，也就相当于把锁的所有权直接传递到下一个线程，只有当等待队列为空时，才将锁真正释放。这样就保证了
+FIFO 的公平性。</p></li>
+</ol>
+<h2 id="用到的算法">用到的算法</h2>
+<p>最后提一下这个实验里很重要的银行家算法吧，让 Gemini 讲一下：</p>
+<p><strong>银行家算法（Banker’s
+Algorithm）</strong>是一种在操作系统中用于<strong>避免死锁（Deadlock
+Avoidance）</strong>的著名算法，由艾兹格・迪科斯彻（Edsger Dijkstra）在
+1965 年为 THE 操作系统设计。</p>
+<h3 id="核心思想">核心思想</h3>
+<p>银行家算法的名字来源于它模拟了银行家向客户贷款的场景：</p>
+<ul>
+<li><strong>银行家（操作系统）</strong>：拥有一定数量的资金（系统资源）。</li>
+<li><strong>客户（进程）</strong>：有多个客户，每个客户在开始时会声明他完成项目所需的最大资金额（进程所需的最大资源量）。</li>
+<li><strong>贷款（资源分配）</strong>：客户可以分批次申请贷款，但总额不能超过他声明的最大值。</li>
+<li><strong>还款（资源释放）</strong>：客户完成项目后，会把所有借款一次性还给银行。</li>
+</ul>
+<p>银行家的策略是：<strong>只有当他确信，即使批准了当前的贷款请求，也存在一种安全的放贷顺序，能让所有客户都最终完成项目并还款，他才会批准这次贷款。</strong>
+否则，他会拒绝请求，让客户等待，直到有其他客户还款，资金变得充裕。</p>
+<p>通过这种方式，银行（操作系统）永远不会进入一个无法收回所有贷款（无法满足所有进程的资源需求）的 “坏账” 状态，从而避免了死锁。</p>
+<h3 id="关键数据结构">关键数据结构</h3>
+<p>为了实现这个算法，操作系统需要维护以下几个核心的数据结构（假设有
+<code>n</code> 个进程和 <code>m</code> 种资源）：</p>
+<ol type="1">
+<li><strong><code>Available</code> (可用资源向量)</strong>
+<ul>
+<li>一个长度为 <code>m</code> 的向量。</li>
+<li><code>Available[j] = k</code> 表示系统中当前有 <code>k</code> 个
+<code>Rj</code> 类型的可用资源。</li>
+</ul></li>
+<li><strong><code>Max</code> (最大需求矩阵)</strong>
+<ul>
+<li>一个 <code>n x m</code> 的矩阵。</li>
+<li><code>Max[i][j] = k</code> 表示进程 <code>Pi</code> 最多需要
+<code>k</code> 个 <code>Rj</code>
+类型的资源。这个值是在进程创建时就声明的。</li>
+</ul></li>
+<li><strong><code>Allocation</code> (已分配矩阵)</strong>
+<ul>
+<li>一个 <code>n x m</code> 的矩阵。</li>
+<li><code>Allocation[i][j] = k</code> 表示进程 <code>Pi</code>
+当前已经被分配了 <code>k</code> 个 <code>Rj</code> 类型的资源。</li>
+</ul></li>
+<li><strong><code>Need</code> (需求矩阵)</strong>
+<ul>
+<li>一个 <code>n x m</code> 的矩阵。</li>
+<li><code>Need[i][j] = k</code> 表示进程 <code>Pi</code>
+<strong>还</strong>需要 <code>k</code> 个 <code>Rj</code>
+类型的资源才能完成任务。</li>
+<li>这个矩阵不是凭空来的，而是通过计算得出的：
+<strong><code>Need[i][j] = Max[i][j] - Allocation[i][j]</code></strong></li>
+</ul></li>
+</ol>
+<h3 id="核心算法">核心算法</h3>
+<p>银行家算法主要包含两个部分：<strong>安全性算法</strong>和<strong>资源请求算法</strong>。</p>
+<h4 id="安全性算法-safety-algorithm">安全性算法 (Safety Algorithm)</h4>
+<p>这个算法用于检查当前系统状态是否是<strong>安全</strong>的。一个状态是安全的，指的是系统能找到一个<strong>安全序列（Safe
+Sequence）</strong>。</p>
+<p><strong>安全序列</strong>是指一个进程的排列
+<code>&lt;P1, P2, ..., Pn&gt;</code>，按照这个顺序为每个进程分配其所需的全部资源，可以保证每个进程都能顺利执行完毕。</p>
+<p><strong>算法步骤：</strong></p>
+<ol type="1">
+<li><strong>初始化</strong>：
+<ul>
+<li>创建一个工作向量
+<code>Work</code>，<code>Work = Available</code>。</li>
+<li>创建一个布尔向量 <code>Finish</code>，长度为
+<code>n</code>，初始时所有元素都为
+<code>false</code>。<code>Finish[i] = false</code> 表示进程
+<code>Pi</code> 尚未完成。</li>
+</ul></li>
+<li><strong>寻找可完成的进程</strong>：
+<ul>
+<li>在所有进程中，寻找一个满足以下两个条件的进程 <code>Pi</code>：
+<ul>
+<li><code>Finish[i] == false</code> (该进程还没完成)</li>
+<li><code>Need[i] &lt;= Work</code>
+(该进程所需资源小于或等于当前系统可用资源)</li>
+</ul></li>
+<li>如果找不到这样的进程，则跳转到第 4 步。</li>
+</ul></li>
+<li><strong>模拟执行与释放</strong>：
+<ul>
+<li>如果找到了这样的进程
+<code>Pi</code>，则假定它执行完毕并释放了所有资源。</li>
+<li>更新 <code>Work</code>：<code>Work = Work + Allocation[i]</code> (把
+<code>Pi</code> 占有的资源加回到可用资源中)</li>
+<li>标记 <code>Pi</code> 为完成：<code>Finish[i] = true</code></li>
+<li>返回第 2 步，继续寻找下一个可以完成的进程。</li>
+</ul></li>
+<li><strong>判断结果</strong>：
+<ul>
+<li>如果 <code>Finish</code> 向量中所有的元素都为
+<code>true</code>，则说明系统处于<strong>安全状态</strong>，并且已经找到了一个安全序列。</li>
+<li>否则，系统处于<strong>不安全状态</strong>。</li>
+</ul></li>
+</ol>
+<h4 id="资源请求算法-resource-request-algorithm">资源请求算法
+(Resource-Request Algorithm)</h4>
+<p>当进程 <code>Pi</code>
+发出资源请求时，系统按以下步骤操作。假设请求向量为
+<code>Request_i</code>，<code>Request_i[j] = k</code> 表示进程
+<code>Pi</code> 请求 <code>k</code> 个 <code>Rj</code> 类型的资源。</p>
+<ol type="1">
+<li><strong>检查请求的合法性</strong>：
+<ul>
+<li>判断 <code>Request_i &lt;= Need[i]</code> 是否成立。</li>
+<li>如果
+<code>false</code>，说明进程请求的资源超过了它之前声明的最大需求，这是一个错误，应终止该进程。</li>
+</ul></li>
+<li><strong>检查系统是否有足够资源</strong>：
+<ul>
+<li>判断 <code>Request_i &lt;= Available</code> 是否成立。</li>
+<li>如果 <code>false</code>，说明系统当前没有足够的资源来满足请求，进程
+<code>Pi</code> 必须<strong>等待</strong>。</li>
+</ul></li>
+<li><strong>尝试分配（假装分配）</strong>：
+<ul>
+<li>如果前两步都通过，系统会<strong>尝试</strong>将资源分配给
+<code>Pi</code>，并更新数据结构：
+<ul>
+<li><code>Available = Available - Request_i</code></li>
+<li><code>Allocation[i] = Allocation[i] + Request_i</code></li>
+<li><code>Need[i] = Need[i] - Request_i</code></li>
+</ul></li>
+</ul></li>
+<li><strong>执行安全性检查</strong>：
+<ul>
+<li>调用<strong>安全性算法</strong>，检查经过第 3
+步更新后的系统状态是否仍然是安全的。</li>
+<li><strong>如果安全</strong>：正式批准 <code>Pi</code>
+的请求，分配完成。</li>
+<li><strong>如果不安全</strong>：系统必须<strong>撤销</strong>第 3
+步的尝试分配操作（将 <code>Available</code>, <code>Allocation</code>,
+<code>Need</code> 恢复原状），并让进程 <code>Pi</code>
+<strong>等待</strong>。</li>
+</ul></li>
+</ol>
+<h3 id="优缺点">优缺点</h3>
+<ul>
+<li><strong>优点</strong>：
+<ul>
+<li>能够有效地避免死锁的发生。</li>
+<li>资源利用率相较于一些更保守的策略（如一次性分配所有资源）要高。</li>
+</ul></li>
+<li><strong>缺点</strong>：
+<ul>
+<li><strong>需要预知最大资源需求</strong>：这在实际的通用操作系统中很难做到，因为程序的行为是动态的。</li>
+<li><strong>进程数量和资源种类必须固定</strong>：算法要求参与者集合是稳定不变的。</li>
+<li><strong>开销大</strong>：每次资源请求都需要运行一次安全性算法，其时间复杂度为
+O (m * n²)，这在大型系统中可能是无法接受的。</li>
+<li><strong>资源释放模型不灵活</strong>：算法要求进程在执行完毕后一次性释放所有资源，而实际情况中进程可能是边执行边释放资源的。</li>
+</ul></li>
+</ul>
+]]></content>
+      <categories>
+        <category>uCore</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>riscv</tag>
+      </tags>
+  </entry>
 </search>
