@@ -1,5 +1,5 @@
 ---
-title: ida_for_mac_light_theme
+title: macOS 下禁止 ida 主题颜色自动跟随系统主题颜色的方法
 categories:
   - tools
 tags:
@@ -9,6 +9,7 @@ date: 2025-09-25 00:49:11
 ---
 
 用 mac 打 pwn 也是快一年了，最近又想把深色的 ida 主题改成浅色（之前在 Windows 上用惯了），所以研究了一下怎么在保持系统为深色模式的前提下强制 ida 浅色。
+
 （我也是想不通 ida 的脑回路，给了三个主题选项，跟随系统、深色、黑色，就是没有浅色，辣鸡！
 
 ## 工具准备
