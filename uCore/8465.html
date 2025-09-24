@@ -18,9 +18,9 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancyapps-ui/6.0.5/fancybox/fancybox.css" integrity="sha256-uTcjoMD6rPt4OyV3Rs02Slxl0BJGMNVKAm/1eYPt2go=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancyapps-ui/5.0.36/fancybox/fancybox.css" integrity="sha256-zM8WXtG4eUn7dKKNMTuoWZub++VnSfaOpA/8PJfvTBo=" crossorigin="anonymous">
 
-<script class="next-config" data-name="main" type="application/json">{"hostname":"0b1t.tech","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.23.2","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js" defer></script>
+<script class="next-config" data-name="main" type="application/json">{"hostname":"0b1t.tech","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js" defer></script>
 
     <meta name="description" content="这次实验应该是最难的了，虽然不用考虑内核 &#x2F; 用户态的切换，也不用移植前面实验的内容，但是光读一遍新增的锁就很累了。还要对一些算法有一定认识，后面再细讲。 本章任务  本次任务对应 lab5，也是本学期最后一次实验，祝你好运。 老规矩，先 make test BASE&#x3D;1 看下啥情况。 理解框架的多线程机制，了解几种锁的运行原理。在此基础上，实现本章编程作业死锁检测。  如果时间有限，多线程机制的">
 <meta property="og:type" content="article">
@@ -30,7 +30,7 @@
 <meta property="og:description" content="这次实验应该是最难的了，虽然不用考虑内核 &#x2F; 用户态的切换，也不用移植前面实验的内容，但是光读一遍新增的锁就很累了。还要对一些算法有一定认识，后面再细讲。 本章任务  本次任务对应 lab5，也是本学期最后一次实验，祝你好运。 老规矩，先 make test BASE&#x3D;1 看下啥情况。 理解框架的多线程机制，了解几种锁的运行原理。在此基础上，实现本章编程作业死锁检测。  如果时间有限，多线程机制的">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-08-11T18:11:04.000Z">
-<meta property="article:modified_time" content="2025-08-11T18:57:47.467Z">
+<meta property="article:modified_time" content="2025-09-24T17:12:50.509Z">
 <meta property="article:author" content="0wnerD1ed">
 <meta property="article:tag" content="OS">
 <meta property="article:tag" content="riscv">
@@ -55,11 +55,11 @@
 
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fancyapps-ui/6.0.5/fancybox/fancybox.umd.js" integrity="sha256-UiSieVaV/DXce2LW7QH+o77w+AIoAvSCPBkezriZ2DQ=" crossorigin="anonymous" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pangu/6.1.3/pangu.umd.js" integrity="sha256-erngBMP3zzoIM6eqQ8dmrReh2vqCRgWmORroIfVoDlE=" crossorigin="anonymous" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fancyapps-ui/5.0.36/fancybox/fancybox.umd.js" integrity="sha256-hiUEBwFEpLF6DlB8sGXlKo4kPZ46Ui4qGpd0vrVkOm4=" crossorigin="anonymous" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pangu/4.0.7/pangu.min.js" integrity="sha256-j+yj56cdEY2CwkVtGyz18fNybFGpMGJ8JxG3GSyO2+I=" crossorigin="anonymous" defer></script>
 <script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous" defer></script>
 <script src="/js/third-party/search/local-search.js" defer></script>
 
 
@@ -184,18 +184,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-count">10</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-count">5</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-count">6</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -261,9 +261,15 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2025-08-12 02:11:04 / 修改时间：02:57:47" itemprop="dateCreated datePublished" datetime="2025-08-12T02:11:04+08:00">2025-08-12</time>
+      <time title="创建时间：2025-08-12 02:11:04" itemprop="dateCreated datePublished" datetime="2025-08-12T02:11:04+08:00">2025-08-12</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2025-09-25 01:12:50" itemprop="dateModified" datetime="2025-09-25T01:12:50+08:00">2025-09-25</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -310,7 +316,7 @@
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>1:10</span>
+      <span>70 分钟</span>
     </span>
 </div>
 
@@ -386,7 +392,7 @@ i 还需要第 j 类资源的数量为 d。</li>
 </ul>
 <p>算法运行过程如下：</p>
 <ol type="1">
-<li>设置两个向量: 工作向量
+<li>设置两个向量：工作向量
 Work，表示操作系统可提供给线程继续运行所需的各类资源数目，它含有 m
 个元素。初始时，Work = Available；结束向量
 Finish，表示系统是否有足够的资源分配给线程，使之运行完成。初始时
@@ -421,7 +427,7 @@ true，则表示系统处于安全状态；否则表示系统处于不安全状�
 <p><strong>enable_deadlock_detect：</strong></p>
 <ul>
 <li>syscall ID: 469</li>
-<li>功能：为当前进程启用或禁用死锁检测功能。</li>
+<li> 功能：为当前进程启用或禁用死锁检测功能。</li>
 <li>接口：<code>int enable_deadlock_detect(int is_enable)</code></li>
 <li>参数：
 <ul>
@@ -532,26 +538,26 @@ Avoidance）</strong>的著名算法，由艾兹格・迪科斯彻（Edsger Dijk
 <ol type="1">
 <li><strong><code>Available</code> (可用资源向量)</strong>
 <ul>
-<li>一个长度为 <code>m</code> 的向量。</li>
+<li> 一个长度为 <code>m</code> 的向量。</li>
 <li><code>Available[j] = k</code> 表示系统中当前有 <code>k</code> 个
 <code>Rj</code> 类型的可用资源。</li>
 </ul></li>
 <li><strong><code>Max</code> (最大需求矩阵)</strong>
 <ul>
-<li>一个 <code>n x m</code> 的矩阵。</li>
+<li> 一个 <code>n x m</code> 的矩阵。</li>
 <li><code>Max[i][j] = k</code> 表示进程 <code>Pi</code> 最多需要
 <code>k</code> 个 <code>Rj</code>
 类型的资源。这个值是在进程创建时就声明的。</li>
 </ul></li>
 <li><strong><code>Allocation</code> (已分配矩阵)</strong>
 <ul>
-<li>一个 <code>n x m</code> 的矩阵。</li>
+<li> 一个 <code>n x m</code> 的矩阵。</li>
 <li><code>Allocation[i][j] = k</code> 表示进程 <code>Pi</code>
 当前已经被分配了 <code>k</code> 个 <code>Rj</code> 类型的资源。</li>
 </ul></li>
 <li><strong><code>Need</code> (需求矩阵)</strong>
 <ul>
-<li>一个 <code>n x m</code> 的矩阵。</li>
+<li> 一个 <code>n x m</code> 的矩阵。</li>
 <li><code>Need[i][j] = k</code> 表示进程 <code>Pi</code>
 <strong>还</strong>需要 <code>k</code> 个 <code>Rj</code>
 类型的资源才能完成任务。</li>
@@ -585,7 +591,7 @@ Sequence）</strong>。</p>
 <li><code>Need[i] &lt;= Work</code>
 (该进程所需资源小于或等于当前系统可用资源)</li>
 </ul></li>
-<li>如果找不到这样的进程，则跳转到第 4 步。</li>
+<li> 如果找不到这样的进程，则跳转到第 4 步。</li>
 </ul></li>
 <li><strong>模拟执行与释放</strong>：
 <ul>
@@ -593,7 +599,7 @@ Sequence）</strong>。</p>
 <code>Pi</code>，则假定它执行完毕并释放了所有资源。</li>
 <li>更新 <code>Work</code>：<code>Work = Work + Allocation[i]</code> (把
 <code>Pi</code> 占有的资源加回到可用资源中)</li>
-<li>标记 <code>Pi</code> 为完成：<code>Finish[i] = true</code></li>
+<li> 标记 <code>Pi</code> 为完成：<code>Finish[i] = true</code></li>
 <li>返回第 2 步，继续寻找下一个可以完成的进程。</li>
 </ul></li>
 <li><strong>判断结果</strong>：
@@ -699,6 +705,9 @@ O (m * n²)，这在大型系统中可能是无法接受的。</li>
                 </a>
             </div>
             <div class="post-nav-item">
+                <a href="/tools/49774.html" rel="next" title="ida_for_mac_light_theme">
+                  ida_for_mac_light_theme <i class="fa fa-angle-right"></i>
+                </a>
             </div>
           </div>
     </footer>
