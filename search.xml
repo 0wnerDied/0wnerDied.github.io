@@ -721,11 +721,12 @@ DNS， <img src="/issue-resolve/49265/2-check.png" class="" title="check"> 这�
       </tags>
   </entry>
   <entry>
-    <title>ida_for_mac_light_theme</title>
+    <title>macOS 下禁止 ida 主题颜色自动跟随系统主题颜色的方法</title>
     <url>/tools/49774.html</url>
     <content><![CDATA[<p>用 mac 打 pwn 也是快一年了，最近又想把深色的 ida 主题改成浅色（之前在
 Windows 上用惯了），所以研究了一下怎么在保持系统为深色模式的前提下强制
-ida 浅色。 （我也是想不通 ida
+ida 浅色。</p>
+<p>（我也是想不通 ida
 的脑回路，给了三个主题选项，跟随系统、深色、黑色，就是没有浅色，辣鸡！</p>
 <h2 id="工具准备">工具准备</h2>
 <p>首先肯定是要安装好 ida 啦，然后的话随便有个文本编辑器，或者命令行
